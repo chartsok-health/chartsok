@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /a \"c:\\\\Development\\\\chartsok\")",
+      "Bash(node:*)",
+      "Bash(npm --version:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(move .claude ...claude_backup)",
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:www.askotter.ai)",
+      "Bash(curl:*)"
+    ]
+  }
+}
