@@ -12,7 +12,7 @@ const MotionBox = motion.create(Box);
 export default function FAQ() {
   const { t } = useI18n();
   const faqs = t('faq.items');
-  const [expanded, setExpanded] = useState(0);
+  const [expanded, setExpanded] = useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -60,7 +60,7 @@ export default function FAQ() {
               onChange={handleChange(index)}
               elevation={0}
               sx={{
-                mb: expanded === index ? 6 : 2,
+                mb: 3,
                 bgcolor: 'white',
                 border: '1px solid',
                 borderColor: expanded === index ? 'primary.main' : 'grey.200',
@@ -68,6 +68,10 @@ export default function FAQ() {
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 '&:before': { display: 'none' },
+                '&.Mui-expanded': {
+                  mb: 3,
+                  mt: 0,
+                },
                 '&:hover': {
                   borderColor: 'primary.main',
                 },
@@ -105,7 +109,6 @@ export default function FAQ() {
                   sx={{
                     color: 'text.secondary',
                     lineHeight: 1.8,
-                    mb: 1,
                   }}
                 >
                   {faq.answer}

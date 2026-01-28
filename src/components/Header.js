@@ -28,23 +28,34 @@ import { motion } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import TranslateIcon from '@mui/icons-material/Translate';
-import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
-
-const MotionBox = motion.create(Box);
+import AuthModal from './AuthModal';
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalView, setAuthModalView] = useState('login');
+  const [mounted, setMounted] = useState(false);
   const { t, locale, toggleLocale } = useI18n();
   const { user, logout } = useAuth();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = mounted ? isMobileQuery : false;
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const openAuthModal = (view) => {
+    setAuthModalView(view);
+    setAuthModalOpen(true);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,6 +63,27 @@ export default function Header() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle hash navigation on page load
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      // Small delay to ensure page has rendered
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          const isMobileView = window.innerWidth < 900;
+          const headerOffset = isMobileView ? 64 : 77;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.scrollY - headerOffset;
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
+          });
+        }
+      }, 100);
+    }
   }, []);
 
   const navItems = [
@@ -62,9 +94,17 @@ export default function Header() {
   ];
 
   const scrollToSection = (id) => {
+    // Check if we're on the home page
+    if (window.location.pathname !== '/') {
+      // Navigate to home page with hash
+      router.push(`/#${id}`);
+      return;
+    }
+
     const element = document.getElementById(id);
     if (element) {
-      const headerOffset = 92;
+      const isMobileView = window.innerWidth < 900;
+      const headerOffset = isMobileView ? 64 : 77;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - headerOffset;
 
@@ -96,37 +136,9 @@ export default function Header() {
           <CloseIcon />
         </IconButton>
       </Box>
-      <List sx={{ pt: 2 }}>
-        {navItems.map((item) => (
-          <ListItem key={item.id} disablePadding>
-            <ListItemButton
-              onClick={() => handleNavClick(item.id)}
-              sx={{ py: 2, px: 3 }}
-            >
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{ fontWeight: 500 }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => {
-              toggleLocale();
-              handleDrawerToggle();
-            }}
-            sx={{ py: 2, px: 3 }}
-          >
-            <TranslateIcon sx={{ mr: 2, color: 'primary.main' }} />
-            <ListItemText
-              primary={locale === 'ko' ? 'English' : '한국어'}
-              primaryTypographyProps={{ fontWeight: 500 }}
-            />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Box sx={{ px: 3, mt: 4 }}>
+
+      {/* Auth buttons at top */}
+      <Box sx={{ px: 3, pt: 3, pb: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
         {user ? (
           <>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
@@ -177,12 +189,13 @@ export default function Header() {
         ) : (
           <>
             <Button
-              component={Link}
-              href="/auth/signup"
               variant="contained"
               fullWidth
               size="large"
-              onClick={handleDrawerToggle}
+              onClick={() => {
+                handleDrawerToggle();
+                openAuthModal('signup');
+              }}
               sx={{
                 mb: 2,
                 py: 1.5,
@@ -192,12 +205,13 @@ export default function Header() {
               {t('nav.getStarted')}
             </Button>
             <Button
-              component={Link}
-              href="/auth/login"
               variant="outlined"
               fullWidth
               size="large"
-              onClick={handleDrawerToggle}
+              onClick={() => {
+                handleDrawerToggle();
+                openAuthModal('login');
+              }}
               sx={{ py: 1.5 }}
             >
               {t('nav.login')}
@@ -205,6 +219,38 @@ export default function Header() {
           </>
         )}
       </Box>
+
+      {/* Navigation items */}
+      <List sx={{ pt: 1 }}>
+        {navItems.map((item) => (
+          <ListItem key={item.id} disablePadding>
+            <ListItemButton
+              onClick={() => handleNavClick(item.id)}
+              sx={{ py: 2, px: 3 }}
+            >
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{ fontWeight: 500 }}
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => {
+              toggleLocale();
+              handleDrawerToggle();
+            }}
+            sx={{ py: 2, px: 3 }}
+          >
+            <TranslateIcon sx={{ mr: 2, color: 'primary.main' }} />
+            <ListItemText
+              primary={locale === 'ko' ? 'English' : '한국어'}
+              primaryTypographyProps={{ fontWeight: 500 }}
+            />
+          </ListItemButton>
+        </ListItem>
+      </List>
     </Box>
   );
 
@@ -226,9 +272,10 @@ export default function Header() {
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ minHeight: { xs: 64, md: 76 } }}>
             {/* Logo */}
-            <MotionBox
+            <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300 }}
+              style={{ display: 'flex' }}
             >
               <Typography
                 variant="h6"
@@ -236,7 +283,11 @@ export default function Header() {
                 href="/"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (window.location.pathname !== '/') {
+                    router.push('/');
+                  } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
                 }}
                 sx={{
                   fontWeight: 800,
@@ -262,7 +313,7 @@ export default function Header() {
                   }}
                 />
               </Typography>
-            </MotionBox>
+            </motion.div>
 
             <Box sx={{ flexGrow: 1 }} />
 
@@ -368,8 +419,7 @@ export default function Header() {
                 ) : (
                   <>
                     <Button
-                      component={Link}
-                      href="/auth/login"
+                      onClick={() => openAuthModal('login')}
                       variant="text"
                       sx={{
                         mr: 1,
@@ -379,10 +429,13 @@ export default function Header() {
                     >
                       {t('nav.login')}
                     </Button>
-                    <MotionBox whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{ display: 'inline-block' }}
+                    >
                       <Button
-                        component={Link}
-                        href="/auth/signup"
+                        onClick={() => openAuthModal('signup')}
                         variant="contained"
                         sx={{
                           px: 3,
@@ -397,7 +450,7 @@ export default function Header() {
                       >
                         {t('nav.getStarted')}
                       </Button>
-                    </MotionBox>
+                    </motion.div>
                   </>
                 )}
               </>
@@ -432,6 +485,13 @@ export default function Header() {
 
       {/* Toolbar spacer */}
       <Toolbar sx={{ minHeight: { xs: 64, md: 76 } }} />
+
+      {/* Auth Modal */}
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialView={authModalView}
+      />
     </>
   );
 }

@@ -10,6 +10,22 @@ import { useI18n } from '@/lib/i18n';
 export default function Footer() {
   const { t } = useI18n();
 
+  const scrollToSection = (id) => {
+    if (!id || id === '#') return;
+    const sectionId = id.replace('#', '');
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const isMobileView = window.innerWidth < 900;
+      const headerOffset = isMobileView ? 64 : 77;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   const footerSections = [
     {
       title: t('footer.product'),
@@ -137,12 +153,20 @@ export default function Footer() {
                 {section.links.map((link) => (
                   <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
                     <Link
-                      href={link.href}
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        scrollToSection(link.href);
+                      }}
                       sx={{
                         color: 'rgba(255, 255, 255, 0.6)',
                         textDecoration: 'none',
                         fontSize: '0.875rem',
                         transition: 'color 0.2s ease',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
                         '&:hover': {
                           color: 'primary.main',
                         },
