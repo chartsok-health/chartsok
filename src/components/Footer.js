@@ -56,7 +56,7 @@ export default function Footer() {
         pb: 4,
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Grid container spacing={4}>
           {/* Brand */}
           <Grid size={{ xs: 12, lg: 4 }}>

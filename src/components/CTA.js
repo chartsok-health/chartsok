@@ -60,7 +60,7 @@ export default function CTA() {
         }}
       />
 
-      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
         <MotionBox
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -143,26 +143,29 @@ export default function CTA() {
             </MotionBox>
           </Stack>
 
-          <Typography
-            variant="body2"
+          <Box
+            component="span"
             sx={{
               color: 'rgba(255, 255, 255, 0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 1,
+              fontSize: '0.875rem',
             }}
           >
             <Box
+              component="span"
               sx={{
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
                 bgcolor: '#10B981',
+                display: 'inline-block',
               }}
             />
             {t('cta.note')}
-          </Typography>
+          </Box>
         </MotionBox>
       </Container>
     </Box>

@@ -1,10 +1,10 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Stats from '@/components/Stats';
+import HowItWorks from '@/components/HowItWorks';
 import Features from '@/components/Features';
 import Demo from '@/components/Demo';
-import HowItWorks from '@/components/HowItWorks';
-import UserRoles from '@/components/UserRoles';
+import Specialties from '@/components/Specialties';
 import Testimonials from '@/components/Testimonials';
 import Pricing from '@/components/Pricing';
 import FAQ from '@/components/FAQ';
@@ -18,10 +18,10 @@ export default function Home() {
       <main>
         <Hero />
         <Stats />
+        <HowItWorks />
         <Features />
         <Demo />
-        <HowItWorks />
-        <UserRoles />
+        <Specialties />
         <Testimonials />
         <Pricing />
         <FAQ />

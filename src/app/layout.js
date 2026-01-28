@@ -2,15 +2,26 @@ import './globals.css';
 import ThemeRegistry from '@/components/ThemeRegistry';
 
 export const metadata = {
-  title: 'ChartSok (차트쏙) - AI 진료 기록 솔루션',
-  description: '의사의 음성을 자동으로 SOAP 형식의 진료 기록으로 변환합니다. 환자와 보호자도 진료 내용을 쉽게 확인할 수 있습니다.',
-  keywords: ['의료 차트', 'AI', 'SOAP', '진료 기록', '음성 인식', '의료 기록'],
+  title: 'ChartSok (차트쏙) - AI 의료 차트 자동화 솔루션',
+  description: '진료에만 집중하세요. AI가 진료 내용을 실시간으로 듣고 SOAP 형식의 차트를 자동 생성합니다. 내과, 이비인후과, 정형외과, 피부과, 소아과, 정신건강의학과 전문 AI 지원.',
+  keywords: ['의료 차트', 'AI', 'SOAP', '진료 기록', '음성 인식', '의료 기록', 'EMR 연동', '차트 자동화', '진료 기록 자동화'],
   authors: [{ name: 'ChartSok Team' }],
+  metadataBase: new URL('https://chartsok.com'),
   openGraph: {
-    title: 'ChartSok (차트쏙) - AI 진료 기록 솔루션',
-    description: '진료에 집중하세요, 기록은 AI가 합니다',
+    title: 'ChartSok (차트쏙) - AI 의료 차트 자동화 솔루션',
+    description: '진료에 집중하세요, 기록은 AI가 합니다. 진료 시간 73% 절감.',
     type: 'website',
     locale: 'ko_KR',
+    siteName: 'ChartSok',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ChartSok (차트쏙) - AI 의료 차트 자동화',
+    description: '진료에 집중하세요, 기록은 AI가 합니다',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

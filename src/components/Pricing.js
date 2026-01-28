@@ -23,7 +23,7 @@ export default function Pricing() {
         bgcolor: 'white',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -119,6 +119,7 @@ export default function Pricing() {
               <MotionCard
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8, scale: 1.02 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 elevation={0}
@@ -130,11 +131,12 @@ export default function Pricing() {
                   borderColor: plan.popular ? 'primary.main' : 'grey.200',
                   transition: 'all 0.3s ease',
                   overflow: 'visible',
+                  cursor: 'pointer',
                   '&:hover': {
                     borderColor: 'primary.main',
                     boxShadow: plan.popular
-                      ? '0 20px 60px rgba(75, 156, 211, 0.4)'
-                      : '0 16px 40px rgba(0, 0, 0, 0.08)',
+                      ? '0 24px 60px rgba(75, 156, 211, 0.5)'
+                      : '0 20px 50px rgba(0, 0, 0, 0.12)',
                   },
                 }}
               >
@@ -220,27 +222,52 @@ export default function Pricing() {
                     )}
                   </Box>
 
-                  <Button
-                    variant={plan.popular ? 'contained' : 'outlined'}
-                    fullWidth
-                    size="large"
-                    sx={{
-                      mb: 3,
-                      py: 1.5,
-                      fontWeight: 600,
-                      ...(plan.popular
-                        ? {
-                            bgcolor: 'white',
-                            color: 'primary.main',
-                            '&:hover': {
-                              bgcolor: 'grey.100',
-                            },
-                          }
-                        : {}),
-                    }}
-                  >
-                    {plan.cta}
-                  </Button>
+                  {plan.popular ? (
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      size="large"
+                      sx={{
+                        mb: 3,
+                        py: 1.5,
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2,
+                        color: '#FFFFFF',
+                        fontSize: '1rem',
+                        '&:hover': {
+                          borderColor: '#FFFFFF',
+                          borderWidth: 2,
+                          bgcolor: 'rgba(255, 255, 255, 0.15)',
+                        },
+                      }}
+                    >
+                      {plan.cta}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      size="large"
+                      sx={{
+                        mb: 3,
+                        py: 1.5,
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: 'primary.main',
+                        borderWidth: 2,
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'rgba(75, 156, 211, 0.08)',
+                          borderColor: 'primary.main',
+                          borderWidth: 2,
+                        },
+                      }}
+                    >
+                      {plan.cta}
+                    </Button>
+                  )}
 
                   <List disablePadding>
                     {plan.features.map((feature, i) => (

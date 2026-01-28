@@ -292,9 +292,9 @@ export default function Hero() {
                     {Array.from({ length: 24 }).map((_, i) => (
                       <MotionBox
                         key={i}
-                        animate={{ height: [6, Math.random() * 24 + 6, 6] }}
+                        animate={{ height: [6, 12 + (i % 5) * 5, 6] }}
                         transition={{
-                          duration: 0.6 + Math.random() * 0.3,
+                          duration: 0.6 + (i % 3) * 0.1,
                           repeat: Infinity,
                           ease: 'easeInOut',
                         }}
@@ -376,8 +376,8 @@ export default function Hero() {
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                 sx={{
                   position: 'absolute',
-                  top: { xs: -15, sm: -20 },
-                  right: { xs: -10, sm: -15 },
+                  top: { xs: -20, sm: -25 },
+                  right: { xs: -15, sm: -20 },
                   width: { xs: 48, sm: 56 },
                   height: { xs: 48, sm: 56 },
                   borderRadius: '50%',
@@ -386,6 +386,7 @@ export default function Hero() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 8px 24px rgba(75, 156, 211, 0.4)',
+                  zIndex: 10,
                 }}
               >
                 <MicIcon sx={{ color: 'white', fontSize: { xs: 22, sm: 26 } }} />
@@ -397,8 +398,8 @@ export default function Hero() {
                 transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
                 sx={{
                   position: 'absolute',
-                  bottom: { xs: 20, sm: 30 },
-                  left: { xs: -10, sm: -25 },
+                  bottom: { xs: -20, sm: -15 },
+                  left: { xs: -15, sm: -35 },
                   bgcolor: 'white',
                   borderRadius: 2,
                   boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
@@ -406,6 +407,7 @@ export default function Hero() {
                   border: '1px solid',
                   borderColor: 'grey.100',
                   display: { xs: 'none', sm: 'block' },
+                  zIndex: 10,
                 }}
               >
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>

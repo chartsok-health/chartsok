@@ -64,7 +64,7 @@ export default function Stats() {
         }}
       />
 
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Grid container spacing={{ xs: 3, sm: 4 }} justifyContent="center">
           {stats.map((stat, index) => (
             <Grid size={{ xs: 6, sm: 6, md: 3 }} key={index}>

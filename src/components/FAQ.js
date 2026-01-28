@@ -26,7 +26,7 @@ export default function FAQ() {
         bgcolor: 'grey.50',
       }}
     >
-      <Container maxWidth="md">
+      <Container maxWidth="xl">
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -60,7 +60,7 @@ export default function FAQ() {
               onChange={handleChange(index)}
               elevation={0}
               sx={{
-                mb: 2,
+                mb: expanded === index ? 6 : 2,
                 bgcolor: 'white',
                 border: '1px solid',
                 borderColor: expanded === index ? 'primary.main' : 'grey.200',
@@ -99,12 +99,13 @@ export default function FAQ() {
                   {faq.question}
                 </Typography>
               </AccordionSummary>
-              <AccordionDetails sx={{ px: 3, pb: 3, pt: 0 }}>
+              <AccordionDetails sx={{ px: 3, pb: 4, pt: 0 }}>
                 <Typography
                   variant="body1"
                   sx={{
                     color: 'text.secondary',
                     lineHeight: 1.8,
+                    mb: 1,
                   }}
                 >
                   {faq.answer}
