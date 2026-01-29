@@ -59,8 +59,11 @@ const weeklyStats = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
+
+  // Get display name from userProfile (onboarding data) or fallback to user's displayName
+  const displayName = userProfile?.doctorName || user?.displayName || '선생님';
 
   const stats = [
     {
@@ -115,7 +118,7 @@ export default function DashboardPage() {
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800, color: 'secondary.main', mb: 0.5 }}>
-              안녕하세요, {user?.displayName || '선생님'} 👋
+              안녕하세요, {displayName} 👋
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               오늘 하루도 ChartSok과 함께 효율적인 진료를 시작하세요.
