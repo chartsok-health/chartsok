@@ -14,8 +14,7 @@ import {
   Card,
   CardContent,
   Alert,
-  Switch,
-  FormControlLabel,
+  LinearProgress,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import MicIcon from '@mui/icons-material/Mic';
@@ -41,13 +40,12 @@ export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [liveTranscript, setLiveTranscript] = useState([]);
-  const [currentText, setCurrentText] = useState('');
-  const [currentSpeaker, setCurrentSpeaker] = useState('의사');
+  const [liveText, setLiveText] = useState(''); // Live interim text
+  const [liveHistory, setLiveHistory] = useState([]); // Live finalized text (no speaker)
   const [audioLevels, setAudioLevels] = useState(Array(20).fill(20));
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState('');
   const [error, setError] = useState(null);
-  const [permissionDenied, setPermissionDenied] = useState(false);
-  const [autoToggle, setAutoToggle] = useState(true); // Auto-toggle on by default
 
   // Refs
   const mediaRecorderRef = useRef(null);
@@ -57,22 +55,11 @@ export default function RecordPage() {
   const audioContextRef = useRef(null);
   const transcriptionRef = useRef(null);
   const recognitionRef = useRef(null);
-  const currentSpeakerRef = useRef('의사');
   const recordingTimeRef = useRef(0);
-  const autoToggleRef = useRef(true);
-
-  // Keep refs in sync with state
-  useEffect(() => {
-    currentSpeakerRef.current = currentSpeaker;
-  }, [currentSpeaker]);
 
   useEffect(() => {
     recordingTimeRef.current = recordingTime;
   }, [recordingTime]);
-
-  useEffect(() => {
-    autoToggleRef.current = autoToggle;
-  }, [autoToggle]);
 
   // Timer effect
   useEffect(() => {
@@ -85,21 +72,20 @@ export default function RecordPage() {
     return () => clearInterval(interval);
   }, [isRecording, isPaused]);
 
-  // Auto-scroll transcription
+  // Auto-scroll
   useEffect(() => {
     if (transcriptionRef.current) {
       transcriptionRef.current.scrollTop = transcriptionRef.current.scrollHeight;
     }
-  }, [liveTranscript, currentText]);
+  }, [liveHistory, liveText]);
 
-  // Audio level visualization
+  // Audio visualization
   useEffect(() => {
     let animationFrame;
     const updateLevels = () => {
       if (analyserRef.current && isRecording && !isPaused) {
         const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
         analyserRef.current.getByteFrequencyData(dataArray);
-
         const bands = 20;
         const bandSize = Math.floor(dataArray.length / bands);
         const levels = [];
@@ -132,13 +118,10 @@ export default function RecordPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Initialize Web Speech API
+  // Web Speech API for live preview only
   const initSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError('이 브라우저는 음성 인식을 지원하지 않습니다. Chrome 브라우저를 사용해 주세요.');
-      return null;
-    }
+    if (!SpeechRecognition) return null;
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -158,43 +141,24 @@ export default function RecordPage() {
         }
       }
 
-      // Update current text being spoken (interim)
-      setCurrentText(interimTranscript);
+      setLiveText(interimTranscript);
 
-      // Add final transcript to live list with current speaker
       if (finalTranscript) {
         const timestamp = formatTime(recordingTimeRef.current);
-        const speaker = currentSpeakerRef.current;
-
-        setLiveTranscript((prev) => [
-          ...prev,
-          { text: finalTranscript.trim(), timestamp, speaker },
-        ]);
-        setCurrentText('');
-
-        // Auto-toggle speaker after each utterance (conversation turn-taking)
-        if (autoToggleRef.current) {
-          setCurrentSpeaker((prev) => (prev === '의사' ? '환자' : '의사'));
-        }
+        setLiveHistory((prev) => [...prev, { text: finalTranscript.trim(), timestamp }]);
+        setLiveText('');
       }
     };
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      if (event.error === 'not-allowed') {
-        setPermissionDenied(true);
-        setError('마이크 접근 권한이 필요합니다.');
-      }
     };
 
     recognition.onend = () => {
-      // Restart if still recording
       if (recognitionRef.current && !isPaused) {
         try {
           recognitionRef.current.start();
-        } catch (e) {
-          // Already started
-        }
+        } catch (e) {}
       }
     };
 
@@ -203,21 +167,20 @@ export default function RecordPage() {
 
   const handleStartRecording = async () => {
     setError(null);
-    setPermissionDenied(false);
 
     try {
-      // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          sampleRate: 16000,
         },
       });
 
       streamRef.current = stream;
 
-      // Setup audio analyser for visualization
+      // Audio analyser
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       audioContextRef.current = audioContext;
       const source = audioContext.createMediaStreamSource(stream);
@@ -226,7 +189,7 @@ export default function RecordPage() {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      // Setup MediaRecorder for audio backup
+      // MediaRecorder
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/webm')
@@ -236,7 +199,6 @@ export default function RecordPage() {
             : 'audio/wav';
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
-
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -248,7 +210,7 @@ export default function RecordPage() {
 
       mediaRecorder.start(1000);
 
-      // Initialize and start speech recognition
+      // Web Speech for live preview
       const recognition = initSpeechRecognition();
       if (recognition) {
         recognitionRef.current = recognition;
@@ -258,13 +220,11 @@ export default function RecordPage() {
       setIsRecording(true);
       setIsPaused(false);
       setRecordingTime(0);
-      setLiveTranscript([]);
-      setCurrentText('');
-      setCurrentSpeaker('의사'); // Doctor starts first
+      setLiveHistory([]);
+      setLiveText('');
     } catch (err) {
       console.error('Error starting recording:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setPermissionDenied(true);
         setError('마이크 접근 권한이 필요합니다. 브라우저 설정에서 마이크를 허용해 주세요.');
       } else {
         setError('녹음을 시작할 수 없습니다: ' + err.message);
@@ -298,50 +258,132 @@ export default function RecordPage() {
 
     setIsRecording(false);
     setIsPaused(false);
-    setCurrentText('');
+    setLiveText('');
 
-    // Check if we have transcription
-    if (liveTranscript.length === 0) {
-      setError('녹음된 내용이 없습니다. 다시 시도해 주세요.');
+    // Wait for MediaRecorder
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    if (audioChunksRef.current.length === 0) {
+      setError('녹음된 오디오가 없습니다.');
       return;
     }
 
-    // Save transcription directly - we already have speaker info from auto-toggle
-    sessionStorage.setItem('transcription', JSON.stringify(liveTranscript));
-    sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
-    router.push('/dashboard/record/result');
+    // Process with AI for speaker diarization
+    setIsProcessing(true);
+    setProcessingStatus('오디오 분석 준비 중...');
+
+    try {
+      const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+
+      const getExt = (mime) => {
+        if (mime.includes('webm')) return 'webm';
+        if (mime.includes('mp4')) return 'mp4';
+        if (mime.includes('ogg')) return 'ogg';
+        return 'wav';
+      };
+
+      const formData = new FormData();
+      const audioFile = new File([audioBlob], `recording.${getExt(mimeType)}`, { type: mimeType });
+      formData.append('audio', audioFile);
+
+      // Try AssemblyAI first (real speaker diarization)
+      setProcessingStatus('AI가 화자를 분석 중... (음성 특성 분석)');
+
+      let response = await fetch('/api/transcribe-assembly', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.segments && data.segments.length > 0) {
+          const transcription = data.segments.map((seg, idx) => ({
+            speaker: seg.speaker,
+            text: seg.text,
+            timestamp: formatTime(Math.floor((seg.start || 0) / 1000)),
+          }));
+
+          sessionStorage.setItem('transcription', JSON.stringify(transcription));
+          sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
+          router.push('/dashboard/record/result');
+          return;
+        }
+      }
+
+      // Fallback to OpenAI
+      setProcessingStatus('대체 AI로 분석 중...');
+
+      const formData2 = new FormData();
+      formData2.append('audio', audioFile);
+      formData2.append('context', '');
+
+      response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData2,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.segments && data.segments.length > 0) {
+          const transcription = data.segments.map((seg, idx) => ({
+            speaker: seg.speaker,
+            text: seg.text,
+            timestamp: idx === 0 ? '00:00' : '',
+          }));
+
+          sessionStorage.setItem('transcription', JSON.stringify(transcription));
+          sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
+          router.push('/dashboard/record/result');
+          return;
+        }
+      }
+
+      // Final fallback - use live history
+      if (liveHistory.length > 0) {
+        const transcription = liveHistory.map((item, idx) => ({
+          speaker: idx % 2 === 0 ? '의사' : '환자',
+          text: item.text,
+          timestamp: item.timestamp,
+        }));
+        sessionStorage.setItem('transcription', JSON.stringify(transcription));
+        sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
+        router.push('/dashboard/record/result');
+      } else {
+        setError('녹음된 내용이 없습니다.');
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      console.error('Processing error:', err);
+      if (liveHistory.length > 0) {
+        const transcription = liveHistory.map((item, idx) => ({
+          speaker: idx % 2 === 0 ? '의사' : '환자',
+          text: item.text,
+          timestamp: item.timestamp,
+        }));
+        sessionStorage.setItem('transcription', JSON.stringify(transcription));
+        sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
+        router.push('/dashboard/record/result');
+      } else {
+        setError('처리 중 오류: ' + err.message);
+        setIsProcessing(false);
+      }
+    }
   };
 
   const handlePauseResume = () => {
     if (isPaused) {
-      // Resume
       mediaRecorderRef.current?.resume();
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (e) {
-          // Already started
-        }
+        try { recognitionRef.current.start(); } catch (e) {}
       }
     } else {
-      // Pause
       mediaRecorderRef.current?.pause();
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     }
     setIsPaused(!isPaused);
-  };
-
-  // Manual speaker correction - tap on transcript item to change speaker
-  const handleSpeakerCorrection = (index) => {
-    setLiveTranscript((prev) =>
-      prev.map((item, i) =>
-        i === index
-          ? { ...item, speaker: item.speaker === '의사' ? '환자' : '의사' }
-          : item
-      )
-    );
   };
 
   return (
@@ -359,7 +401,7 @@ export default function RecordPage() {
               새 진료 녹음
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              대화가 끝나면 자동으로 화자가 전환됩니다 (의사 → 환자 → 의사)
+              녹음이 끝나면 AI가 음성 특성으로 의사와 환자를 자동 구분합니다
             </Typography>
           </Box>
           <Chip
@@ -371,15 +413,70 @@ export default function RecordPage() {
         </Box>
       </MotionBox>
 
-      {/* Error Alert */}
+      {/* Error */}
       {error && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
+      {/* Processing Overlay */}
+      {isProcessing && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(255,255,255,0.97)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          >
+            <AutoAwesomeIcon sx={{ fontSize: 80, color: 'primary.main', mb: 4 }} />
+          </motion.div>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 2 }}>
+            AI가 화자를 분석 중입니다
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
+            {processingStatus}
+          </Typography>
+          <Box sx={{ width: 300, mb: 3 }}>
+            <LinearProgress sx={{ height: 8, borderRadius: 4 }} />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 4, mt: 2 }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <LocalHospitalIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+              <Typography variant="caption" sx={{ color: 'grey.600', display: 'block' }}>
+                의사 음성
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <SwapHorizIcon sx={{ fontSize: 40, color: 'grey.400', mb: 1 }} />
+              <Typography variant="caption" sx={{ color: 'grey.400', display: 'block' }}>
+                자동 구분
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <PersonIcon sx={{ fontSize: 40, color: 'grey.600', mb: 1 }} />
+              <Typography variant="caption" sx={{ color: 'grey.600', display: 'block' }}>
+                환자 음성
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
       <Grid container spacing={3}>
-        {/* Left: Recording Controls */}
+        {/* Left: Controls */}
         <Grid size={{ xs: 12, lg: 5 }}>
           <MotionPaper
             initial={{ opacity: 0, y: 20 }}
@@ -393,7 +490,6 @@ export default function RecordPage() {
               borderColor: isRecording ? 'error.main' : 'grey.200',
               textAlign: 'center',
               bgcolor: isRecording ? 'rgba(239, 68, 68, 0.02)' : 'white',
-              transition: 'all 0.3s ease',
             }}
           >
             {/* Timer */}
@@ -411,77 +507,32 @@ export default function RecordPage() {
               {formatTime(recordingTime)}
             </Typography>
 
-            {/* Audio Visualization */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 0.5,
-                height: 80,
-                mb: 3,
-              }}
-            >
+            {/* Visualization */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, height: 80, mb: 3 }}>
               {audioLevels.map((level, index) => (
                 <motion.div
                   key={index}
                   animate={{ height: level }}
                   transition={{ duration: 0.1 }}
-                  style={{
-                    width: 4,
-                    backgroundColor: isRecording && !isPaused ? '#EF4444' : '#E2E8F0',
-                    borderRadius: 2,
-                  }}
+                  style={{ width: 4, backgroundColor: isRecording && !isPaused ? '#EF4444' : '#E2E8F0', borderRadius: 2 }}
                 />
               ))}
             </Box>
 
-            {/* Current Speaker Indicator */}
+            {/* Status */}
             {isRecording && (
-              <MotionBox
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                sx={{ mb: 3 }}
-              >
-                <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1.5, display: 'block' }}>
-                  현재 듣고 있는 화자
-                </Typography>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSpeaker}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Chip
-                      icon={currentSpeaker === '의사' ? <LocalHospitalIcon /> : <PersonIcon />}
-                      label={currentSpeaker}
-                      sx={{
-                        py: 3,
-                        px: 2,
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        bgcolor: currentSpeaker === '의사' ? 'primary.main' : 'grey.600',
-                        color: 'white',
-                        '& .MuiChip-icon': {
-                          color: 'white',
-                          fontSize: '1.5rem',
-                        },
-                        boxShadow: currentSpeaker === '의사'
-                          ? '0 4px 20px rgba(75, 156, 211, 0.4)'
-                          : '0 4px 20px rgba(100, 100, 100, 0.3)',
-                      }}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-                <Typography variant="caption" sx={{ color: 'grey.400', mt: 1.5, display: 'block' }}>
-                  말이 끝나면 자동 전환
-                </Typography>
+              <MotionBox initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 3 }}>
+                <Chip
+                  icon={<AutoAwesomeIcon sx={{ fontSize: 16 }} />}
+                  label="녹음 중 - 종료 후 AI 화자 분석"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontWeight: 600 }}
+                />
               </MotionBox>
             )}
 
-            {/* Recording Controls */}
+            {/* Controls */}
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mb: 3 }}>
               {!isRecording ? (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -501,59 +552,28 @@ export default function RecordPage() {
                 </motion.div>
               ) : (
                 <>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <IconButton
                       onClick={handlePauseResume}
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        bgcolor: 'warning.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'warning.dark' },
-                      }}
+                      sx={{ width: 64, height: 64, bgcolor: 'warning.main', color: 'white', '&:hover': { bgcolor: 'warning.dark' } }}
                     >
                       {isPaused ? <PlayArrowIcon sx={{ fontSize: 32 }} /> : <PauseIcon sx={{ fontSize: 32 }} />}
                     </IconButton>
                   </motion.div>
 
-                  <motion.div
-                    animate={{ scale: isPaused ? 1 : [1, 1.05, 1] }}
-                    transition={{ duration: 1, repeat: isPaused ? 0 : Infinity }}
-                  >
+                  <motion.div animate={{ scale: isPaused ? 1 : [1, 1.05, 1] }} transition={{ duration: 1, repeat: isPaused ? 0 : Infinity }}>
                     <IconButton
-                      sx={{
-                        width: 100,
-                        height: 100,
-                        bgcolor: 'error.main',
-                        color: 'white',
-                        boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4)',
-                      }}
+                      sx={{ width: 100, height: 100, bgcolor: 'error.main', color: 'white', boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4)' }}
                       disabled
                     >
                       <MicIcon sx={{ fontSize: 48 }} />
                     </IconButton>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <IconButton
                       onClick={handleStopRecording}
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        bgcolor: 'secondary.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'secondary.dark' },
-                      }}
+                      sx={{ width: 64, height: 64, bgcolor: 'secondary.main', color: 'white', '&:hover': { bgcolor: 'secondary.dark' } }}
                     >
                       <StopIcon sx={{ fontSize: 32 }} />
                     </IconButton>
@@ -566,28 +586,9 @@ export default function RecordPage() {
               {!isRecording
                 ? '녹음 버튼을 눌러 진료를 시작하세요'
                 : isPaused
-                  ? '일시정지 중... 재생 버튼을 눌러 계속하세요'
-                  : '진료 중... 정지 버튼을 누르면 차트가 생성됩니다'}
+                  ? '일시정지 중...'
+                  : '진료 중... 정지하면 AI가 화자를 분석합니다'}
             </Typography>
-
-            {/* Auto-toggle switch */}
-            <Box sx={{ mt: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={autoToggle}
-                    onChange={(e) => setAutoToggle(e.target.checked)}
-                    color="primary"
-                    size="small"
-                  />
-                }
-                label={
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    자동 화자 전환
-                  </Typography>
-                }
-              />
-            </Box>
           </MotionPaper>
 
           {/* Tips */}
@@ -596,35 +597,27 @@ export default function RecordPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              border: '1px solid',
-              borderColor: 'grey.200',
-              mt: 3,
-            }}
+            sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'grey.200', mt: 3 }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'secondary.main', mb: 2 }}>
               💡 사용 팁
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {[
-                { icon: AutoAwesomeIcon, text: '말이 끝나면 자동으로 화자 전환' },
-                { icon: SwapHorizIcon, text: '잘못된 화자는 탭하여 수정 가능' },
+                { icon: AutoAwesomeIcon, text: 'AI가 음성 특성으로 화자를 자동 구분' },
                 { icon: VolumeUpIcon, text: '명확하게 말씀해 주세요' },
+                { icon: SettingsVoiceIcon, text: '동시에 말하지 않으면 더 정확합니다' },
               ].map((tip, index) => (
                 <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <tip.icon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {tip.text}
-                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{tip.text}</Typography>
                 </Box>
               ))}
             </Box>
           </MotionPaper>
         </Grid>
 
-        {/* Right: Real-time Transcription */}
+        {/* Right: Live Preview */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <MotionPaper
             initial={{ opacity: 0, y: 20 }}
@@ -646,131 +639,45 @@ export default function RecordPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                    실시간 텍스트 변환
+                    실시간 미리보기
                   </Typography>
                   {isRecording && !isPaused && (
-                    <Chip
-                      label="LIVE"
-                      size="small"
-                      sx={{
-                        bgcolor: 'error.main',
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: '0.65rem',
-                        height: 20,
-                        animation: 'pulse 1.5s infinite',
-                      }}
-                    />
+                    <Chip label="LIVE" size="small" sx={{ bgcolor: 'error.main', color: 'white', fontWeight: 700, fontSize: '0.65rem', height: 20, animation: 'pulse 1.5s infinite' }} />
                   )}
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="caption" sx={{ color: 'grey.400' }}>
-                    화자 수정: 카드 탭
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {liveTranscript.length}개 발화
-                  </Typography>
-                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  화자 구분은 녹음 종료 후
+                </Typography>
               </Box>
             </Box>
 
-            {/* Transcription Content */}
-            <Box
-              ref={transcriptionRef}
-              sx={{
-                flex: 1,
-                overflowY: 'auto',
-                p: 3,
-                bgcolor: '#FAFBFC',
-              }}
-            >
+            {/* Content */}
+            <Box ref={transcriptionRef} sx={{ flex: 1, overflowY: 'auto', p: 3, bgcolor: '#FAFBFC' }}>
               <AnimatePresence>
-                {liveTranscript.length === 0 && !currentText ? (
+                {liveHistory.length === 0 && !liveText ? (
                   <Fade in>
-                    <Box
-                      sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                      }}
-                    >
+                    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                       <GraphicEqIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
-                      <Typography variant="subtitle1" sx={{ color: 'grey.400', mb: 1 }}>
-                        대기 중
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                        녹음을 시작하면 실시간으로 텍스트가 표시됩니다
-                      </Typography>
+                      <Typography variant="subtitle1" sx={{ color: 'grey.400', mb: 1 }}>대기 중</Typography>
+                      <Typography variant="body2" sx={{ color: 'grey.400' }}>녹음을 시작하면 실시간으로 텍스트가 표시됩니다</Typography>
                     </Box>
                   </Fade>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {liveTranscript.map((item, index) => (
+                    {liveHistory.map((item, index) => (
                       <Grow key={index} in timeout={300}>
-                        <Card
-                          elevation={0}
-                          onClick={() => handleSpeakerCorrection(index)}
-                          sx={{
-                            p: 0,
-                            bgcolor: item.speaker === '의사' ? 'primary.50' : 'white',
-                            border: '1px solid',
-                            borderColor: item.speaker === '의사' ? 'primary.100' : 'grey.200',
-                            borderRadius: 3,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              transform: 'scale(1.01)',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                            },
-                            '&:active': {
-                              transform: 'scale(0.99)',
-                            },
-                          }}
-                        >
+                        <Card elevation={0} sx={{ p: 0, bgcolor: 'white', border: '1px solid', borderColor: 'grey.200', borderRadius: 3 }}>
                           <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                              <Box
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius: 2,
-                                  bgcolor: item.speaker === '의사' ? 'primary.main' : 'grey.500',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {item.speaker === '의사' ? (
-                                  <LocalHospitalIcon sx={{ fontSize: 18, color: 'white' }} />
-                                ) : (
-                                  <PersonIcon sx={{ fontSize: 18, color: 'white' }} />
-                                )}
+                              <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: 'grey.200', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <SettingsVoiceIcon sx={{ fontSize: 18, color: 'grey.500' }} />
                               </Box>
                               <Box sx={{ flex: 1 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{
-                                      fontWeight: 700,
-                                      color: item.speaker === '의사' ? 'primary.main' : 'text.secondary',
-                                    }}
-                                  >
-                                    {item.speaker}
-                                  </Typography>
-                                  {item.timestamp && (
-                                    <Typography variant="caption" sx={{ color: 'grey.400' }}>
-                                      {item.timestamp}
-                                    </Typography>
-                                  )}
-                                  <SwapHorizIcon sx={{ fontSize: 14, color: 'grey.300', ml: 'auto' }} />
+                                  <Chip label="화자 분석 대기" size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'grey.100', color: 'grey.600' }} />
+                                  <Typography variant="caption" sx={{ color: 'grey.400' }}>{item.timestamp}</Typography>
                                 </Box>
-                                <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>
-                                  {item.text}
-                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>{item.text}</Typography>
                               </Box>
                             </Box>
                           </CardContent>
@@ -778,60 +685,17 @@ export default function RecordPage() {
                       </Grow>
                     ))}
 
-                    {/* Current text being spoken */}
-                    {currentText && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        <Card
-                          elevation={0}
-                          sx={{
-                            p: 0,
-                            bgcolor: currentSpeaker === '의사' ? 'primary.50' : 'grey.50',
-                            border: '1px dashed',
-                            borderColor: currentSpeaker === '의사' ? 'primary.200' : 'grey.300',
-                            borderRadius: 3,
-                          }}
-                        >
+                    {liveText && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        <Card elevation={0} sx={{ p: 0, bgcolor: 'primary.50', border: '1px dashed', borderColor: 'primary.200', borderRadius: 3 }}>
                           <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                              <Box
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius: 2,
-                                  bgcolor: currentSpeaker === '의사' ? 'primary.main' : 'grey.500',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {currentSpeaker === '의사' ? (
-                                  <LocalHospitalIcon sx={{ fontSize: 18, color: 'white' }} />
-                                ) : (
-                                  <PersonIcon sx={{ fontSize: 18, color: 'white' }} />
-                                )}
+                              <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <MicIcon sx={{ fontSize: 18, color: 'white' }} />
                               </Box>
                               <Box sx={{ flex: 1 }}>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    fontWeight: 700,
-                                    color: currentSpeaker === '의사' ? 'primary.main' : 'text.secondary',
-                                    mb: 0.5,
-                                    display: 'block',
-                                  }}
-                                >
-                                  {currentSpeaker} (말하는 중...)
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ color: 'text.primary', lineHeight: 1.6, fontStyle: 'italic' }}
-                                >
-                                  {currentText}
-                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5, display: 'block' }}>말하는 중...</Typography>
+                                <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6, fontStyle: 'italic' }}>{liveText}</Typography>
                               </Box>
                             </Box>
                           </CardContent>
@@ -842,32 +706,20 @@ export default function RecordPage() {
                 )}
               </AnimatePresence>
 
-              {/* Listening indicator */}
-              {isRecording && !isPaused && !currentText && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ marginTop: liveTranscript.length > 0 ? 16 : 0 }}
-                >
+              {isRecording && !isPaused && !liveText && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: liveHistory.length > 0 ? 16 : 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                       {[0, 1, 2].map((i) => (
                         <motion.div
                           key={i}
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: currentSpeaker === '의사' ? '#4B9CD3' : '#6B7280',
-                          }}
+                          style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#4B9CD3' }}
                           animate={{ y: [0, -6, 0] }}
                           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                         />
                       ))}
                     </Box>
-                    <Typography variant="caption" sx={{ color: 'grey.500' }}>
-                      {currentSpeaker} 듣는 중...
-                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'grey.500' }}>듣는 중...</Typography>
                   </Box>
                 </motion.div>
               )}
@@ -876,7 +728,6 @@ export default function RecordPage() {
         </Grid>
       </Grid>
 
-      {/* Pulse animation keyframes */}
       <style jsx global>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
