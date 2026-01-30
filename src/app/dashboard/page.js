@@ -257,8 +257,8 @@ export default function DashboardPage() {
             transition={{ duration: 0.4, delay: 0.4 }}
             sx={{ height: '100%' }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                     주간 진료 현황
@@ -277,7 +277,7 @@ export default function DashboardPage() {
               </Box>
 
               {/* Bar Chart */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: { xs: 1, md: 2 }, height: 160, mt: 3, px: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: { xs: 1.5, md: 3 }, height: 120, px: 2 }}>
                 {weeklyStats.map((day, index) => {
                   const isToday = index === new Date().getDay() - 1;
                   return (
@@ -303,10 +303,11 @@ export default function DashboardPage() {
                       </Typography>
                       <motion.div
                         initial={{ height: 0 }}
-                        animate={{ height: `${(day.count / maxCount) * 110}px` }}
+                        animate={{ height: `${(day.count / maxCount) * 80}px` }}
                         transition={{ duration: 0.6, delay: index * 0.08, ease: 'easeOut' }}
                         style={{
                           width: '100%',
+                          maxWidth: 60,
                           background: isToday ? '#4B9CD3' : '#D6E8F5',
                           borderRadius: 6,
                           minHeight: 4,
@@ -326,6 +327,67 @@ export default function DashboardPage() {
                   );
                 })}
               </Box>
+
+              {/* Weekly Summary */}
+              <Box sx={{ display: 'flex', gap: 2, mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                    일 평균
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                    10.4건
+                  </Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+                <Box sx={{ flex: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                    최다 요일
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#4B9CD3' }}>
+                    목요일
+                  </Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+                <Box sx={{ flex: 1, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                    지난주 대비
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#10B981' }}>
+                    +12%
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Quick Actions */}
+              <Box sx={{ display: 'flex', gap: 1.5, mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<MicIcon />}
+                  onClick={() => router.push('/dashboard/record')}
+                  sx={{
+                    flex: 1,
+                    py: 1.2,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                  }}
+                >
+                  새 진료 시작
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<HistoryIcon />}
+                  onClick={() => router.push('/dashboard/history')}
+                  sx={{
+                    flex: 1,
+                    py: 1.2,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                  }}
+                >
+                  기록 보기
+                </Button>
+              </Box>
             </CardContent>
           </CleanCard>
         </Grid>
@@ -338,7 +400,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.4, delay: 0.5 }}
             sx={{ height: '100%' }}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 3, height: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Box
                   sx={{
@@ -358,11 +420,11 @@ export default function DashboardPage() {
                 </Typography>
               </Box>
 
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: 'secondary.main' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: 'secondary.main' }}>
                 이번 주 성과 분석
               </Typography>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {[
                   { label: '차트 작성 시간', value: '4.2시간', sub: '절감', color: '#10B981', bgColor: '#ECFDF5' },
                   { label: '정확도', value: '98.5%', progress: 98.5, color: '#4B9CD3', bgColor: '#EBF5FF' },
@@ -371,20 +433,20 @@ export default function DashboardPage() {
                   <Box
                     key={i}
                     sx={{
-                      p: 2,
+                      p: 1.5,
                       bgcolor: item.bgColor,
                       borderRadius: 2,
                     }}
                   >
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem' }}>
                       {item.label}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: item.color }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 800, color: item.color }}>
                         {item.value}
                       </Typography>
                       {item.sub && (
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {item.sub}
                         </Typography>
                       )}
@@ -394,7 +456,7 @@ export default function DashboardPage() {
                           value={item.progress}
                           sx={{
                             flex: 1,
-                            height: 6,
+                            height: 5,
                             borderRadius: 3,
                             bgcolor: 'white',
                             '& .MuiLinearProgress-bar': {
