@@ -9,6 +9,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from '@/lib/theme';
 import { I18nProvider } from '@/lib/i18n';
 import { AuthProvider } from '@/lib/AuthContext';
+import { PWAProvider } from '@/lib/PWAContext';
 
 export default function ThemeRegistry({ children }) {
   const [cache] = useState(() => {
@@ -43,8 +44,10 @@ export default function ThemeRegistry({ children }) {
         <CssBaseline />
         <I18nProvider>
           <AuthProvider>
-            {children}
-          </AuthProvider>
+              <PWAProvider>
+                {children}
+              </PWAProvider>
+            </AuthProvider>
         </I18nProvider>
       </ThemeProvider>
     </CacheProvider>

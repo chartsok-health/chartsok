@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   AppBar,
   Toolbar,
@@ -47,23 +47,21 @@ export default function Header() {
   const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = mounted ? isMobileQuery : false;
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
 
-  // Handle auth query param to open modal
-  useEffect(() => {
-    const authParam = searchParams.get('auth');
+    // Handle auth query param to open modal (client-side only)
+    const url = new URL(window.location.href);
+    const authParam = url.searchParams.get('auth');
     if (authParam === 'signup' || authParam === 'login') {
-      openAuthModal(authParam);
+      setAuthModalView(authParam);
+      setAuthModalOpen(true);
       // Clean up the URL
-      const url = new URL(window.location.href);
       url.searchParams.delete('auth');
       window.history.replaceState({}, '', url.pathname + url.hash);
     }
-  }, [searchParams]);
+  }, []);
 
   const openAuthModal = (view) => {
     setAuthModalView(view);
@@ -290,7 +288,7 @@ export default function Header() {
             />
           </ListItemButton>
         </ListItem>
-      </List>
+        </List>
 
       {/* Powered by jpumki */}
       <Box sx={{ mt: 'auto', p: 3, borderTop: '1px solid', borderColor: 'grey.100' }}>
@@ -424,7 +422,7 @@ export default function Header() {
                 <IconButton
                   onClick={toggleLocale}
                   sx={{
-                    mr: 2,
+                    mr: 1,
                     color: 'text.secondary',
                     '&:hover': {
                       color: 'primary.main',
@@ -573,6 +571,7 @@ export default function Header() {
         onClose={() => setAuthModalOpen(false)}
         initialView={authModalView}
       />
-    </>
+
+          </>
   );
 }

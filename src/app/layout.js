@@ -7,6 +7,12 @@ export const metadata = {
   keywords: ['의료 차트', 'AI', 'SOAP', '진료 기록', '음성 인식', '의료 기록', 'EMR 연동', '차트 자동화', '진료 기록 자동화'],
   authors: [{ name: 'chartsok Team' }],
   metadataBase: new URL('https://chartsok.com'),
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: '차트쏙',
+  },
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
