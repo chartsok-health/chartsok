@@ -98,12 +98,12 @@ const stats = {
 
 const team = {
   ko: [
-    { name: '박준호', role: 'CEO & 공동창업자', desc: '소프트웨어 엔지니어. 아버지의 40년 임상 경험을 AI 기술로 풀어내, 의사들의 진짜 문제를 해결합니다.' },
-    { name: '박선홍', role: '공동창업자 & 의료 자문', desc: '이비인후과 전문의 40년. 환자에게 정성을 다하고 싶었던 의사의 마음을 제품에 담습니다.' },
+    { name: '박준호', role: 'CEO & 공동창업자', desc: '소프트웨어 엔지니어. 미국에서 컴퓨터공학을 전공하고 미국 테크 기업에서 풀스택 개발자로 근무했습니다. AI/ML, 클라우드 인프라, 의료 데이터 보안에 전문성을 갖추고 있으며, 아버지의 40년 임상 경험을 AI 기술로 풀어내 의사들의 진짜 문제를 해결합니다.' },
+    { name: '박선홍', role: '공동창업자 & 의료 자문', desc: '이비인후과 전문의. 의과대학 졸업, 의학 석사·박사 학위 취득 후 대학병원 수련을 마치고, 외래교수, 이비인후과의원 원장, 종합병원 과장을 거쳐 현재 공공의료원 이비인후과장으로 40년간 환자를 진료하며 쌓은 경험을 제품에 담습니다.' },
   ],
   en: [
-    { name: 'Junho Park', role: 'CEO & Co-founder', desc: 'Software Engineer. Translating 40 years of clinical experience into AI technology to solve real problems for doctors.' },
-    { name: 'SeungHong Park', role: 'Co-founder & Medical Advisor', desc: 'ENT Specialist, 40 years. Bringing the heart of a doctor who wanted to give sincere care to every product decision.' },
+    { name: 'Junho Park', role: 'CEO & Co-founder', desc: 'Software Engineer. Studied Computer Science in the US and worked as a full-stack developer at US tech companies. Specialized in AI/ML, cloud infrastructure, and healthcare data security, translating 40 years of clinical experience into AI technology to solve real problems for doctors.' },
+    { name: 'SeungHong Park', role: 'Co-founder & Medical Advisor', desc: 'ENT Specialist with M.D., M.S., and Ph.D. After completing residency at a university hospital, served as adjunct professor, ENT clinic director, and hospital department head. Currently Chief of ENT at a public medical center, bringing 40 years of patient care experience to the product.' },
   ],
 };
 

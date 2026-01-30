@@ -2,11 +2,13 @@
 
 import { Box, Container, Typography, Grid, Link, Divider, IconButton, Stack } from '@mui/material';
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import EmailIcon from '@mui/icons-material/Email';
 import { useI18n } from '@/lib/i18n';
 
 export default function Footer() {
   const { t } = useI18n();
+  const router = useRouter();
 
   const scrollToSection = (id) => {
     if (!id || id === '#') return;
@@ -15,6 +17,14 @@ export default function Footer() {
       return;
     }
     const sectionId = id.replace('#', '');
+
+    // Check if we're on the home page
+    if (window.location.pathname !== '/') {
+      // Navigate to home page with hash
+      router.push(`/#${sectionId}`);
+      return;
+    }
+
     const element = document.getElementById(sectionId);
     if (element) {
       const isMobileView = window.innerWidth < 900;
@@ -44,7 +54,7 @@ export default function Footer() {
         { label: t('footer.about'), href: '/about', isSection: false },
         { label: t('footer.careers'), href: '/careers', isSection: false },
         { label: t('footer.blog'), href: '/blog', isSection: false },
-        { label: t('footer.contact'), href: '/contact', isSection: false },
+        { label: t('footer.contact'), href: '#contact', isSection: true },
       ],
     },
     {

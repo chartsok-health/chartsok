@@ -88,9 +88,11 @@ export default function Header() {
 
   const navItems = [
     { label: t('nav.features'), id: 'features' },
-    { label: t('nav.howItWorks'), id: 'how-it-works' },
+    { label: t('nav.howItWorks'), id: 'demo' },
     { label: t('nav.pricing'), id: 'pricing' },
-    { label: t('nav.contact'), id: 'contact' },
+    { label: t('nav.about'), href: '/about' },
+    { label: t('nav.blog'), href: '/blog' },
+    { label: t('footer.contact'), href: '/contact' },
   ];
 
   const scrollToSection = (id) => {
@@ -222,10 +224,18 @@ export default function Header() {
 
       {/* Navigation items */}
       <List sx={{ pt: 1 }}>
-        {navItems.map((item) => (
-          <ListItem key={item.id} disablePadding>
+        {navItems.map((item, index) => (
+          <ListItem key={item.id || item.href || index} disablePadding>
             <ListItemButton
-              onClick={() => handleNavClick(item.id)}
+              component={item.href ? Link : 'button'}
+              href={item.href || undefined}
+              onClick={() => {
+                if (item.id) {
+                  handleNavClick(item.id);
+                } else {
+                  handleDrawerToggle();
+                }
+              }}
               sx={{ py: 2, px: 3 }}
             >
               <ListItemText
@@ -351,10 +361,12 @@ export default function Header() {
             {!isMobile && (
               <>
                 <Box sx={{ display: 'flex', gap: 0.5, mr: 3 }}>
-                  {navItems.map((item) => (
+                  {navItems.map((item, index) => (
                     <Button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
+                      key={item.id || item.href || index}
+                      component={item.href ? Link : 'button'}
+                      href={item.href || undefined}
+                      onClick={item.id ? () => handleNavClick(item.id) : undefined}
                       sx={{
                         color: 'text.secondary',
                         fontWeight: 500,
