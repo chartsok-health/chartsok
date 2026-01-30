@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import CheckIcon from '@mui/icons-material/Check';
 import StarIcon from '@mui/icons-material/Star';
 import { useI18n } from '@/lib/i18n';
-import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
@@ -14,17 +13,32 @@ const MotionCard = motion.create(Card);
 
 export default function Pricing() {
   const { t, locale } = useI18n();
-  const { user } = useAuth();
   const router = useRouter();
   const [isYearly, setIsYearly] = useState(false);
   const plans = t('pricing.plans');
 
-  const handleCtaClick = () => {
-    if (user) {
-      router.push('/dashboard');
+  const isContactPrice = (price) => price === '문의' || price === 'Contact';
+
+  const handleCtaClick = (plan) => {
+    if (isContactPrice(plan.price)) {
+      router.push('/contact');
     } else {
       router.push('/?auth=signup');
     }
+  };
+
+  const getDisplayPrice = (plan) => {
+    if (isContactPrice(plan.price)) {
+      return plan.price;
+    }
+    return isYearly && plan.yearlyPrice ? plan.yearlyPrice : plan.price;
+  };
+
+  const getDisplayPeriod = (plan) => {
+    if (isContactPrice(plan.price)) {
+      return '';
+    }
+    return isYearly && plan.yearlyPeriod ? plan.yearlyPeriod : plan.period;
   };
 
   return (
@@ -198,7 +212,7 @@ export default function Pricing() {
                   </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 3 }}>
-                    {plan.price !== '문의' && plan.price !== 'Contact' && (
+                    {!isContactPrice(plan.price) && (
                       <Typography
                         variant="body1"
                         sx={{
@@ -206,7 +220,7 @@ export default function Pricing() {
                           mr: 0.5,
                         }}
                       >
-                        {locale === 'ko' ? '₩' : '$'}
+                        {locale === 'ko' ? '₩' : '₩'}
                       </Typography>
                     )}
                     <Typography
@@ -217,11 +231,9 @@ export default function Pricing() {
                         fontSize: { xs: '2rem', md: '2.5rem' },
                       }}
                     >
-                      {isYearly && plan.price !== '문의' && plan.price !== 'Contact'
-                        ? Math.round(parseInt(plan.price.replace(',', '')) * 10 / 12).toLocaleString()
-                        : plan.price}
+                      {getDisplayPrice(plan)}
                     </Typography>
-                    {plan.period && (
+                    {getDisplayPeriod(plan) && (
                       <Typography
                         variant="body1"
                         sx={{
@@ -229,7 +241,7 @@ export default function Pricing() {
                           ml: 0.5,
                         }}
                       >
-                        {plan.period}
+                        {getDisplayPeriod(plan)}
                       </Typography>
                     )}
                   </Box>
@@ -239,7 +251,7 @@ export default function Pricing() {
                       variant="outlined"
                       fullWidth
                       size="large"
-                      onClick={handleCtaClick}
+                      onClick={() => handleCtaClick(plan)}
                       sx={{
                         mb: 3,
                         py: 1.5,
@@ -256,14 +268,14 @@ export default function Pricing() {
                         },
                       }}
                     >
-                      {user ? t('nav.dashboard') : plan.cta}
+                      {plan.cta}
                     </Button>
                   ) : (
                     <Button
                       variant="outlined"
                       fullWidth
                       size="large"
-                      onClick={handleCtaClick}
+                      onClick={() => handleCtaClick(plan)}
                       sx={{
                         mb: 3,
                         py: 1.5,
@@ -279,7 +291,7 @@ export default function Pricing() {
                         },
                       }}
                     >
-                      {user ? t('nav.dashboard') : plan.cta}
+                      {plan.cta}
                     </Button>
                   )}
 

@@ -323,8 +323,10 @@ const translations = {
         {
           name: 'Starter',
           description: '개인 의원에 적합',
-          price: '99,000',
+          price: '1,000',
+          yearlyPrice: '10,000',
           period: '/월',
+          yearlyPeriod: '/년',
           features: ['의사 1명', '월 100건 진료 기록', '기본 AI 어시스턴트 1개', '기본 EMR 연동', '이메일 지원'],
           cta: '시작하기',
           popular: false,
@@ -332,10 +334,10 @@ const translations = {
         {
           name: 'Professional',
           description: '성장하는 의원에 추천',
-          price: '249,000',
-          period: '/월',
+          price: '문의',
+          period: '',
           features: ['의사 3명까지', '무제한 진료 기록', '전문과 AI 3개 선택', '고급 EMR 연동', '우선 지원', '분석 대시보드'],
-          cta: '14일 무료 체험',
+          cta: '문의하기',
           popular: true,
         },
         {
@@ -737,8 +739,10 @@ const translations = {
         {
           name: 'Starter',
           description: 'Perfect for solo practices',
-          price: '99',
+          price: '1,000',
+          yearlyPrice: '10,000',
           period: '/mo',
+          yearlyPeriod: '/yr',
           features: ['1 Doctor', '100 visits/month', '1 Basic AI Assistant', 'Basic EMR integration', 'Email support'],
           cta: 'Get Started',
           popular: false,
@@ -746,10 +750,10 @@ const translations = {
         {
           name: 'Professional',
           description: 'Recommended for growing practices',
-          price: '249',
-          period: '/mo',
+          price: 'Contact',
+          period: '',
           features: ['Up to 3 doctors', 'Unlimited visits', '3 Specialty AIs of choice', 'Advanced EMR integration', 'Priority support', 'Analytics dashboard'],
-          cta: '14-Day Free Trial',
+          cta: 'Contact Us',
           popular: true,
         },
         {
@@ -838,9 +842,17 @@ const I18nContext = createContext();
 export function I18nProvider({ children }) {
   const [locale, setLocale] = useState('ko');
   const [isLocaleDetected, setIsLocaleDetected] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Detect user's country based on IP and set locale
+  // Track when component is mounted to avoid hydration mismatch
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Detect user's country based on IP and set locale (only after mount)
+  useEffect(() => {
+    if (!isMounted) return;
+
     const detectCountry = async () => {
       // Skip if locale was already manually set by user
       if (isLocaleDetected) return;
@@ -866,7 +878,7 @@ export function I18nProvider({ children }) {
     };
 
     detectCountry();
-  }, [isLocaleDetected]);
+  }, [isMounted, isLocaleDetected]);
 
   const t = useCallback(
     (key) => {
