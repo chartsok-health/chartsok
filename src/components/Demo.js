@@ -547,7 +547,7 @@ export default function Demo() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          sx={{ maxWidth: 600, mx: 'auto' }}
+          sx={{ maxWidth: 'md', mx: 'auto' }}
         >
           <MotionPaper
             elevation={0}
@@ -559,16 +559,49 @@ export default function Demo() {
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
             }}
           >
-            {/* Tab Navigation */}
+            {/* Tab Navigation - Stepper Style */}
             <Box
               sx={{
-                p: 2,
+                px: { xs: 2, md: 4 },
+                py: { xs: 2, md: 2.5 },
                 bgcolor: 'grey.50',
                 borderBottom: '1px solid',
                 borderColor: 'grey.200',
               }}
             >
-              <Stack direction="row" spacing={1} justifyContent="center">
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  position: 'relative',
+                }}
+              >
+                {/* Progress Line */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: { xs: 18, md: 22 },
+                    left: '10%',
+                    right: '10%',
+                    height: 2,
+                    bgcolor: 'grey.200',
+                    zIndex: 0,
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: { xs: 18, md: 22 },
+                    left: '10%',
+                    height: 2,
+                    bgcolor: 'primary.main',
+                    zIndex: 1,
+                    width: `${(tabs.findIndex(t => t.id === activeTab) / (tabs.length - 1)) * 80}%`,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+
                 {tabs.map((tab, index) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
@@ -580,33 +613,47 @@ export default function Demo() {
                       onClick={() => setActiveTab(tab.id)}
                       sx={{
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        gap: 0.5,
-                        px: { xs: 1.5, sm: 2 },
-                        py: 1,
-                        borderRadius: 2,
                         cursor: 'pointer',
-                        bgcolor: isActive ? tab.color + '15' : 'transparent',
-                        border: '2px solid',
-                        borderColor: isActive ? tab.color : isPast ? tab.color + '50' : 'transparent',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: tab.color + '10',
-                        },
+                        zIndex: 2,
+                        flex: 1,
                       }}
                     >
-                      <Icon
+                      <Box
                         sx={{
-                          fontSize: 18,
-                          color: isActive || isPast ? tab.color : 'grey.400',
+                          width: { xs: 36, md: 44 },
+                          height: { xs: 36, md: 44 },
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: isActive ? tab.color : isPast ? tab.color : 'white',
+                          border: '3px solid',
+                          borderColor: isActive || isPast ? tab.color : 'grey.300',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isActive ? `0 0 0 4px ${tab.color}20` : 'none',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                          },
                         }}
-                      />
+                      >
+                        <Icon
+                          sx={{
+                            fontSize: { xs: 18, md: 22 },
+                            color: isActive || isPast ? 'white' : 'grey.400',
+                          }}
+                        />
+                      </Box>
                       <Typography
                         variant="caption"
                         sx={{
-                          display: { xs: 'none', sm: 'block' },
+                          mt: 1,
                           fontWeight: isActive ? 700 : 500,
+                          fontSize: { xs: '0.65rem', md: '0.75rem' },
                           color: isActive ? tab.color : isPast ? tab.color : 'text.secondary',
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {demo.tabs?.[tab.id]}
@@ -614,7 +661,7 @@ export default function Demo() {
                     </Box>
                   );
                 })}
-              </Stack>
+              </Box>
             </Box>
 
             {/* Content Area */}

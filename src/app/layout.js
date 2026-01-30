@@ -7,17 +7,32 @@ export const metadata = {
   keywords: ['의료 차트', 'AI', 'SOAP', '진료 기록', '음성 인식', '의료 기록', 'EMR 연동', '차트 자동화', '진료 기록 자동화'],
   authors: [{ name: 'ChartSok Team' }],
   metadataBase: new URL('https://chartsok.com'),
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: 'ChartSok (차트쏙) - AI 의료 차트 자동화 솔루션',
     description: '진료에 집중하세요, 기록은 AI가 합니다. 진료 시간 73% 절감.',
     type: 'website',
     locale: 'ko_KR',
     siteName: 'ChartSok',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'ChartSok - AI 의료 차트 자동화',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ChartSok (차트쏙) - AI 의료 차트 자동화',
     description: '진료에 집중하세요, 기록은 AI가 합니다',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,

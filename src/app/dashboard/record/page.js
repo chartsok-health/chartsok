@@ -1128,8 +1128,31 @@ export default function RecordPage() {
       </MotionBox>
 
       {/* Stepper */}
-      <Paper elevation={0} sx={{ p: 2, mb: 4, borderRadius: 3, border: '1px solid', borderColor: 'grey.200' }}>
-        <Stepper activeStep={activeStep} alternativeLabel>
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 1.5, md: 2 },
+          mb: 4,
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'grey.200',
+          overflowX: 'auto',
+        }}
+      >
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          sx={{
+            minWidth: { xs: 500, md: 'auto' },
+            '& .MuiStepLabel-label': {
+              fontSize: { xs: '0.7rem', md: '0.875rem' },
+              mt: 0.5,
+            },
+            '& .MuiStep-root': {
+              px: { xs: 0.5, md: 1 },
+            },
+          }}
+        >
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
