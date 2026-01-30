@@ -16,8 +16,8 @@
 
     <!-- Glow filters -->
     <filter id="blueGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="15" result="blur"/>
-      <feFlood flood-color="#4B9CD3" flood-opacity="0.5"/>
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feFlood flood-color="#4B9CD3" flood-opacity="0.4"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge>
         <feMergeNode/>
@@ -26,8 +26,8 @@
     </filter>
 
     <filter id="greenGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="15" result="blur"/>
-      <feFlood flood-color="#10B981" flood-opacity="0.5"/>
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feFlood flood-color="#10B981" flood-opacity="0.4"/>
       <feComposite in2="blur" operator="in"/>
       <feMerge>
         <feMergeNode/>
@@ -37,12 +37,12 @@
 
     <!-- Radial gradients for background circles -->
     <radialGradient id="blueCircle" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#4B9CD3;stop-opacity:0.2"/>
+      <stop offset="0%" style="stop-color:#4B9CD3;stop-opacity:0.15"/>
       <stop offset="100%" style="stop-color:#4B9CD3;stop-opacity:0"/>
     </radialGradient>
 
     <radialGradient id="greenCircle" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.15"/>
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.12"/>
       <stop offset="100%" style="stop-color:#10B981;stop-opacity:0"/>
     </radialGradient>
   </defs>
@@ -50,71 +50,81 @@
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bgGrad)"/>
 
-  <!-- Decorative background circles -->
-  <circle cx="1100" cy="100" r="300" fill="url(#blueCircle)"/>
-  <circle cx="100" cy="530" r="350" fill="url(#greenCircle)"/>
+  <!-- Decorative background circles - centered -->
+  <circle cx="600" cy="200" r="350" fill="url(#blueCircle)"/>
+  <circle cx="600" cy="450" r="300" fill="url(#greenCircle)"/>
 
-  <!-- Decorative rings -->
-  <circle cx="600" cy="315" r="400" fill="none" stroke="#4B9CD3" stroke-opacity="0.08" stroke-width="1"/>
-  <circle cx="600" cy="315" r="300" fill="none" stroke="#10B981" stroke-opacity="0.06" stroke-width="1"/>
+  <!-- Decorative rings - centered -->
+  <circle cx="600" cy="315" r="280" fill="none" stroke="#4B9CD3" stroke-opacity="0.08" stroke-width="1"/>
+  <circle cx="600" cy="315" r="220" fill="none" stroke="#10B981" stroke-opacity="0.06" stroke-width="1"/>
 
-  <!-- Logo boxes - 차트쏙 -->
-  <g transform="translate(600, 180)">
+  <!-- All content centered at x=600 -->
+
+  <!-- Logo boxes - 차트쏙 (centered) -->
+  <g transform="translate(600, 120)">
     <!-- 차 -->
-    <g transform="translate(-180, 0)" filter="url(#blueGlow)">
-      <rect x="0" y="0" width="100" height="120" rx="16" fill="#4B9CD3"/>
-      <text x="50" y="82" font-family="'Noto Sans KR', Arial, sans-serif" font-size="56" font-weight="900" fill="white" text-anchor="middle">차</text>
+    <g transform="translate(-165, 0)" filter="url(#blueGlow)">
+      <rect x="0" y="0" width="100" height="115" rx="14" fill="#4B9CD3"/>
+      <text x="50" y="78" font-family="'Noto Sans KR', Arial, sans-serif" font-size="52" font-weight="900" fill="white" text-anchor="middle">차</text>
     </g>
 
     <!-- 트 -->
-    <g transform="translate(-60, 0)" filter="url(#blueGlow)">
-      <rect x="0" y="0" width="100" height="120" rx="16" fill="#4B9CD3"/>
-      <text x="50" y="82" font-family="'Noto Sans KR', Arial, sans-serif" font-size="56" font-weight="900" fill="white" text-anchor="middle">트</text>
+    <g transform="translate(-50, 0)" filter="url(#blueGlow)">
+      <rect x="0" y="0" width="100" height="115" rx="14" fill="#4B9CD3"/>
+      <text x="50" y="78" font-family="'Noto Sans KR', Arial, sans-serif" font-size="52" font-weight="900" fill="white" text-anchor="middle">트</text>
     </g>
 
     <!-- 쏙 (tilted) -->
-    <g transform="translate(60, 0) rotate(-4, 50, 60)" filter="url(#greenGlow)">
-      <rect x="0" y="0" width="100" height="120" rx="16" fill="#10B981"/>
-      <text x="50" y="82" font-family="'Noto Sans KR', Arial, sans-serif" font-size="56" font-weight="900" fill="white" text-anchor="middle">쏙</text>
+    <g transform="translate(65, 0) rotate(-4, 50, 57)" filter="url(#greenGlow)">
+      <rect x="0" y="0" width="100" height="115" rx="14" fill="#10B981"/>
+      <text x="50" y="78" font-family="'Noto Sans KR', Arial, sans-serif" font-size="52" font-weight="900" fill="white" text-anchor="middle">쏙</text>
     </g>
   </g>
 
-  <!-- English name -->
-  <text x="600" y="345" font-family="Arial, sans-serif" font-size="40" font-weight="800" fill="#4B9CD3" text-anchor="middle" letter-spacing="4">chartsok</text>
+  <!-- English name (centered) -->
+  <text x="600" y="280" font-family="Arial, sans-serif" font-size="36" font-weight="800" fill="#4B9CD3" text-anchor="middle" letter-spacing="3">chartsok</text>
 
-  <!-- ECG Line -->
-  <path d="M300,390 L440,390 L480,360 L520,420 L560,370 L600,410 L640,390 L900,390"
-        fill="none" stroke="url(#ecgGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- ECG Line (centered) -->
+  <path d="M350,330 L480,330 L515,305 L550,355 L585,315 L620,345 L655,330 L850,330"
+        fill="none" stroke="url(#ecgGrad)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Tagline -->
-  <text x="600" y="460" font-family="'Noto Sans KR', Arial, sans-serif" font-size="28" font-weight="600" fill="white" text-anchor="middle">AI 의료 차트 자동화 솔루션</text>
+  <!-- Tagline (centered) -->
+  <text x="600" y="395" font-family="'Noto Sans KR', Arial, sans-serif" font-size="26" font-weight="600" fill="white" text-anchor="middle">AI 의료 차트 자동화 솔루션</text>
 
-  <!-- Subtitle pill -->
-  <rect x="340" y="485" width="520" height="50" rx="25" fill="#4B9CD3" fill-opacity="0.15" stroke="#4B9CD3" stroke-opacity="0.4" stroke-width="1"/>
-  <text x="600" y="518" font-family="'Noto Sans KR', Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.9)" text-anchor="middle">진료에 집중하세요, 기록은 AI가 합니다</text>
+  <!-- Subtitle pill (centered) -->
+  <rect x="360" y="420" width="480" height="44" rx="22" fill="#4B9CD3" fill-opacity="0.12" stroke="#4B9CD3" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="600" y="450" font-family="'Noto Sans KR', Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)" text-anchor="middle">진료에 집중하세요, 기록은 AI가 합니다</text>
 
-  <!-- Stats -->
-  <g transform="translate(600, 580)">
+  <!-- Stats (centered) -->
+  <g transform="translate(600, 520)">
     <!-- 73% -->
-    <text x="-200" y="0" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#10B981" text-anchor="middle">73%</text>
-    <text x="-200" y="20" font-family="'Noto Sans KR', Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.5)" text-anchor="middle">진료 시간 절감</text>
+    <g transform="translate(-180, 0)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="#10B981" text-anchor="middle">73%</text>
+      <text x="0" y="18" font-family="'Noto Sans KR', Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" text-anchor="middle">진료 시간 절감</text>
+    </g>
 
     <!-- Divider -->
-    <line x1="-100" y1="-15" x2="-100" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+    <line x1="-90" y1="-12" x2="-90" y2="18" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 
     <!-- SOAP -->
-    <text x="0" y="0" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#4B9CD3" text-anchor="middle">SOAP</text>
-    <text x="0" y="20" font-family="'Noto Sans KR', Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.5)" text-anchor="middle">차트 자동 생성</text>
+    <g transform="translate(0, 0)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="#4B9CD3" text-anchor="middle">SOAP</text>
+      <text x="0" y="18" font-family="'Noto Sans KR', Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" text-anchor="middle">차트 자동 생성</text>
+    </g>
 
     <!-- Divider -->
-    <line x1="100" y1="-15" x2="100" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+    <line x1="90" y1="-12" x2="90" y2="18" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 
     <!-- EMR -->
-    <text x="200" y="0" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#10B981" text-anchor="middle">EMR</text>
-    <text x="200" y="20" font-family="'Noto Sans KR', Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.5)" text-anchor="middle">연동 지원</text>
+    <g transform="translate(180, 0)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="#10B981" text-anchor="middle">EMR</text>
+      <text x="0" y="18" font-family="'Noto Sans KR', Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" text-anchor="middle">연동 지원</text>
+    </g>
   </g>
 
-  <!-- URL with dot -->
-  <circle cx="1095" cy="600" r="4" fill="#10B981"/>
-  <text x="1160" y="605" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">chartsok.com</text>
+  <!-- URL with dot (bottom center) -->
+  <g transform="translate(600, 590)">
+    <circle cx="-55" cy="-4" r="3" fill="#10B981"/>
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.45)" text-anchor="middle">chartsok.com</text>
+  </g>
 </svg>
