@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -92,7 +92,12 @@ const steps = [
 
 export default function RecordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
+
+  // Get patient params from URL (for pre-selection from history page)
+  const patientIdParam = searchParams.get('patientId');
+  const patientNameParam = searchParams.get('patientName');
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
@@ -171,6 +176,28 @@ export default function RecordPage() {
       transcriptionRef.current.scrollTop = transcriptionRef.current.scrollHeight;
     }
   }, [liveHistory, liveText]);
+
+  // Pre-select patient from URL params (when coming from history page)
+  useEffect(() => {
+    if (patientIdParam && patientNameParam) {
+      // Find patient in samplePatients by ID
+      const foundPatient = samplePatients.find(p => p.id === parseInt(patientIdParam));
+      if (foundPatient) {
+        setSelectedPatient(foundPatient);
+      } else {
+        // Create a patient entry from URL params if not found in sample data
+        setSelectedPatient({
+          id: parseInt(patientIdParam),
+          name: decodeURIComponent(patientNameParam),
+          age: '-',
+          gender: '-',
+          lastVisit: new Date().toISOString().split('T')[0],
+          chartNo: `P-${patientIdParam}`,
+          recentDiagnosis: '기록 보기',
+        });
+      }
+    }
+  }, [patientIdParam, patientNameParam]);
 
   // Fetch user templates
   useEffect(() => {

@@ -16,7 +16,9 @@
       "Bash(find:*)",
       "Bash(tasklist:*)",
       "Bash(npx eslint:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(ls -la \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\"\" 2>/dev/null || dir \"c:Developmentchartsoksrcappdashboardhistory\"\")",
+      "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\")"
     ]
   }
 }

@@ -29,6 +29,14 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ThermostatIcon from '@mui/icons-material/Thermostat';
+import AirIcon from '@mui/icons-material/Air';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
+import Avatar from '@mui/material/Avatar';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionPaper = motion.create(Paper);
@@ -42,8 +50,18 @@ const mockDetailData = {
   duration: '5:23',
   diagnosis: '급성 편도염',
   icdCode: 'J03.9',
-  patientAge: '32세',
+  patientName: '김영희',
+  patientAge: '45세',
   patientGender: '여',
+  chartNo: 'P-2024-001',
+  vitals: {
+    systolic: '125',
+    diastolic: '82',
+    heartRate: '78',
+    temperature: '37.8',
+    spO2: '98',
+  },
+  chiefComplaint: '3일 전부터 목이 아프고 열이 나요. 음식을 삼킬 때 통증이 심해요.',
   transcription: [
     { speaker: '의사', text: '안녕하세요, 어디가 불편하셔서 오셨나요?', timestamp: '00:03' },
     { speaker: '환자', text: '며칠 전부터 목이 아프고 기침이 나요.', timestamp: '00:08' },
@@ -171,6 +189,96 @@ export default function HistoryDetailPage() {
           </Box>
         </Box>
       </MotionBox>
+
+      {/* Patient Info & Vitals Section */}
+      <MotionPaper
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        elevation={0}
+        sx={{ p: 3, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'grey.200' }}
+      >
+        <Grid container spacing={3}>
+          {/* Patient Info */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Avatar
+                sx={{
+                  width: 56,
+                  height: 56,
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  background: mockDetailData.patientGender === '여'
+                    ? 'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)'
+                    : 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                }}
+              >
+                {mockDetailData.patientName?.charAt(0) || '환'}
+              </Avatar>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>{mockDetailData.patientName || '환자'}</Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {mockDetailData.patientAge} · {mockDetailData.patientGender} · {mockDetailData.chartNo}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.secondary', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <MedicalServicesIcon sx={{ fontSize: 18, color: 'warning.main' }} />
+                주호소
+              </Typography>
+              <Paper elevation={0} sx={{ p: 2, bgcolor: 'warning.50', borderRadius: 2, border: '1px solid', borderColor: 'warning.100' }}>
+                <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>
+                  {mockDetailData.chiefComplaint || '기록된 주호소가 없습니다.'}
+                </Typography>
+              </Paper>
+            </Box>
+          </Grid>
+
+          {/* Vitals */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MonitorHeartIcon sx={{ color: 'error.main' }} />
+              활력 징후 (Vital Signs)
+            </Typography>
+            <Grid container spacing={2}>
+              {[
+                { label: '혈압', value: `${mockDetailData.vitals?.systolic || '-'}/${mockDetailData.vitals?.diastolic || '-'}`, unit: 'mmHg', icon: MonitorHeartIcon, color: '#EF4444', normal: parseInt(mockDetailData.vitals?.systolic) <= 130 && parseInt(mockDetailData.vitals?.diastolic) <= 85 },
+                { label: '맥박', value: mockDetailData.vitals?.heartRate || '-', unit: 'bpm', icon: FavoriteIcon, color: '#EC4899', normal: parseInt(mockDetailData.vitals?.heartRate) >= 60 && parseInt(mockDetailData.vitals?.heartRate) <= 100 },
+                { label: '체온', value: mockDetailData.vitals?.temperature || '-', unit: '°C', icon: ThermostatIcon, color: '#F59E0B', normal: parseFloat(mockDetailData.vitals?.temperature) <= 37.5 },
+                { label: 'SpO2', value: mockDetailData.vitals?.spO2 || '-', unit: '%', icon: AirIcon, color: '#3B82F6', normal: parseInt(mockDetailData.vitals?.spO2) >= 95 },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Grid size={{ xs: 6, sm: 3 }} key={item.label}>
+                    <Card elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: `${item.color}08`, borderRadius: 2, border: '1px solid', borderColor: `${item.color}20` }}>
+                      <Icon sx={{ fontSize: 28, color: item.color, mb: 0.5 }} />
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>{item.label}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 0.5, mt: 0.5 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, color: item.color }}>{item.value}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>{item.unit}</Typography>
+                      </Box>
+                      <Chip
+                        icon={item.normal ? <CheckCircleIcon sx={{ fontSize: 12 }} /> : <WarningIcon sx={{ fontSize: 12 }} />}
+                        label={item.normal ? '정상' : '주의'}
+                        size="small"
+                        sx={{
+                          mt: 1,
+                          height: 20,
+                          fontSize: '0.6rem',
+                          bgcolor: item.normal ? 'success.50' : 'warning.50',
+                          color: item.normal ? 'success.main' : 'warning.main',
+                          '& .MuiChip-icon': { color: item.normal ? 'success.main' : 'warning.main' },
+                        }}
+                      />
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Grid>
+        </Grid>
+      </MotionPaper>
 
       <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
         {/* Left: Transcription */}
