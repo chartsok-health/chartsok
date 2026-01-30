@@ -1282,7 +1282,7 @@ export default function RecordPage() {
                     선택된 템플릿 미리보기
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-                    {selectedTemplate.template.slice(0, 200)}...
+                    {selectedTemplate.template ? `${selectedTemplate.template.slice(0, 200)}...` : '템플릿 내용 없음'}
                   </Typography>
                 </MotionBox>
               )}
@@ -1352,7 +1352,7 @@ export default function RecordPage() {
           {/* Patient Info Badge */}
           <Chip
             avatar={<Avatar sx={{ bgcolor: 'primary.main' }}><PersonIcon sx={{ fontSize: 16 }} /></Avatar>}
-            label={`${selectedPatient?.name} · ${vitals.chiefComplaint.slice(0, 20)}${vitals.chiefComplaint.length > 20 ? '...' : ''}`}
+            label={`${selectedPatient?.name} · ${(vitals.chiefComplaint || '').slice(0, 20)}${(vitals.chiefComplaint || '').length > 20 ? '...' : ''}`}
             sx={{ mb: 3 }}
           />
 
