@@ -31,27 +31,27 @@ const MotionBox = motion.create(Box);
 
 const content = {
   ko: {
-    badge: 'EMR 연동',
-    title: 'EMR 연동 지원',
-    subtitle: 'chartsok은 다양한 EMR 시스템과의 연동을 지원합니다. 표준 API를 통해 기존 워크플로우에 자연스럽게 통합됩니다.',
+    badge: 'EMR 연동 (개발 중)',
+    title: 'EMR 연동 준비 중',
+    subtitle: 'chartsok은 다양한 EMR 시스템과의 연동을 준비하고 있습니다. 현재는 클립보드 복사 방식으로 모든 EMR과 함께 사용할 수 있으며, API 기반 직접 연동은 개발 중입니다.',
     emrSystems: [
       {
         name: '비트컴퓨터',
         desc: '국내 대표 EMR 시스템',
-        status: '연동 준비 중',
-        features: ['표준 API 연동 지원 예정', 'SOAP 포맷 호환', '협의 진행 중'],
+        status: '개발 중',
+        features: ['API 연동 개발 예정', 'SOAP 포맷 호환', '협의 진행 중'],
       },
       {
         name: '유비케어',
         desc: '클라우드 EMR 솔루션',
-        status: '연동 준비 중',
-        features: ['API 기반 연동 예정', '데이터 매핑 준비', '협의 진행 중'],
+        status: '개발 중',
+        features: ['API 연동 개발 예정', '데이터 매핑 준비 중', '협의 진행 중'],
       },
       {
         name: '이지케어텍',
         desc: '중소병원 EMR',
-        status: '연동 준비 중',
-        features: ['표준 포맷 지원', '연동 협의 가능', '맞춤 개발 지원'],
+        status: '개발 중',
+        features: ['표준 포맷 지원 예정', '연동 협의 가능', '맞춤 개발 검토'],
       },
       {
         name: '기타 EMR',
@@ -60,17 +60,17 @@ const content = {
         features: ['요청 시 연동 검토', '파트너십 문의 환영'],
       },
       {
-        name: '커스텀 EMR',
-        desc: '자체 개발 시스템',
-        status: 'API 제공',
-        features: ['REST API 제공', 'Webhook 지원', '기술 지원'],
+        name: '클립보드 연동',
+        desc: '모든 EMR 지원',
+        status: '현재 사용 가능',
+        features: ['원클릭 복사', '모든 EMR 호환', '추가 설정 불필요'],
       },
     ],
     benefits: [
-      { icon: SpeedIcon, title: '시간 절약', desc: '복사/붙여넣기 없이 원클릭으로 차트 전송' },
+      { icon: SpeedIcon, title: '시간 절약 (예정)', desc: 'API 연동 시 원클릭으로 차트 전송' },
       { icon: SecurityIcon, title: '안전한 전송', desc: '암호화된 연결로 데이터 보호' },
       { icon: CloudSyncIcon, title: '표준 포맷', desc: 'SOAP 등 의료 표준 포맷 지원' },
-      { icon: SettingsIcon, title: '유연한 연동', desc: 'REST API를 통한 맞춤형 연동' },
+      { icon: SettingsIcon, title: '유연한 연동 (예정)', desc: 'REST API를 통한 맞춤형 연동' },
     ],
     howItWorks: '연동 프로세스',
     steps: [
@@ -83,32 +83,32 @@ const content = {
     contactDesc: 'EMR 시스템 연동에 관심이 있으시면 연락해 주세요. 함께 더 나은 의료 환경을 만들어 갈 파트너를 찾고 있습니다.',
     contactButton: '파트너십 문의',
     email: 'chartsok.health@gmail.com',
-    customTitle: 'API 기반 연동',
-    customDesc: '자체 EMR 시스템을 운영하시나요? chartsok의 REST API를 통해 직접 연동할 수 있습니다.',
-    customButton: 'API 문서 보기',
+    customTitle: 'API 기반 연동 (개발 중)',
+    customDesc: '자체 EMR 시스템을 운영하시나요? REST API 기반 직접 연동을 준비하고 있습니다. 베타 테스트에 관심 있으시면 문의해주세요.',
+    customButton: '문의하기',
   },
   en: {
-    badge: 'EMR Integration',
-    title: 'EMR Integration Support',
-    subtitle: 'chartsok supports integration with various EMR systems. Seamlessly integrate into your existing workflow through standard APIs.',
+    badge: 'EMR Integration (In Development)',
+    title: 'EMR Integration Coming Soon',
+    subtitle: 'chartsok is preparing integration with various EMR systems. Currently, clipboard copy works with all EMRs, and API-based direct integration is under development.',
     emrSystems: [
       {
         name: 'BitComputer',
         desc: 'Leading EMR system in Korea',
-        status: 'In Preparation',
-        features: ['Standard API integration planned', 'SOAP format compatible', 'In discussion'],
+        status: 'In Development',
+        features: ['API integration planned', 'SOAP format compatible', 'In discussion'],
       },
       {
         name: 'Ubicare',
         desc: 'Cloud EMR solution',
-        status: 'In Preparation',
-        features: ['API-based integration planned', 'Data mapping ready', 'In discussion'],
+        status: 'In Development',
+        features: ['API integration planned', 'Data mapping in progress', 'In discussion'],
       },
       {
         name: 'EzcareTech',
         desc: 'Hospital EMR',
-        status: 'In Preparation',
-        features: ['Standard format support', 'Integration available', 'Custom development'],
+        status: 'In Development',
+        features: ['Standard format support planned', 'Integration available', 'Custom development review'],
       },
       {
         name: 'Other EMR',
@@ -117,17 +117,17 @@ const content = {
         features: ['Integration review on request', 'Partnership inquiries welcome'],
       },
       {
-        name: 'Custom EMR',
-        desc: 'In-house systems',
-        status: 'API Available',
-        features: ['REST API provided', 'Webhook support', 'Tech support'],
+        name: 'Clipboard Integration',
+        desc: 'Works with all EMRs',
+        status: 'Available Now',
+        features: ['One-click copy', 'All EMR compatible', 'No setup required'],
       },
     ],
     benefits: [
-      { icon: SpeedIcon, title: 'Save Time', desc: 'One-click chart transfer, no copy/paste' },
+      { icon: SpeedIcon, title: 'Save Time (Planned)', desc: 'One-click chart transfer via API' },
       { icon: SecurityIcon, title: 'Secure Transfer', desc: 'Data protection via encrypted connection' },
       { icon: CloudSyncIcon, title: 'Standard Format', desc: 'Support for SOAP and medical standard formats' },
-      { icon: SettingsIcon, title: 'Flexible Integration', desc: 'Custom integration via REST API' },
+      { icon: SettingsIcon, title: 'Flexible Integration (Planned)', desc: 'Custom integration via REST API' },
     ],
     howItWorks: 'Integration Process',
     steps: [
@@ -140,9 +140,9 @@ const content = {
     contactDesc: 'Interested in EMR integration? Contact us. We are looking for partners to build a better healthcare environment together.',
     contactButton: 'Partnership Inquiry',
     email: 'chartsok.health@gmail.com',
-    customTitle: 'API-Based Integration',
-    customDesc: 'Running your own EMR system? Integrate directly with chartsok\'s REST API.',
-    customButton: 'View API Docs',
+    customTitle: 'API-Based Integration (In Development)',
+    customDesc: 'Running your own EMR system? We are preparing REST API-based direct integration. Contact us if interested in beta testing.',
+    customButton: 'Contact Us',
   },
 };
 
@@ -323,7 +323,7 @@ export default function IntegrationsPage() {
                 <SyncIcon sx={{ fontSize: 40, mb: 2, color: 'primary.main' }} />
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 2 }}>{t.customTitle}</Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>{t.customDesc}</Typography>
-                <Button variant="outlined" href="/docs" sx={{ borderRadius: 2 }}>
+                <Button variant="outlined" href="/contact" sx={{ borderRadius: 2 }}>
                   {t.customButton}
                 </Button>
               </Card>

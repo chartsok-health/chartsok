@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Box,
   Container,
@@ -28,8 +29,9 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SettingsIcon from '@mui/icons-material/Settings';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import SecurityIcon from '@mui/icons-material/Security';
-import EmailIcon from '@mui/icons-material/Email';
+import ContactSupportIcon from '@mui/icons-material/ContactSupport';
 import { useI18n } from '@/lib/i18n';
+import { getArticlesByCategory } from '@/lib/helpArticles';
 
 const MotionBox = motion.create(Box);
 
@@ -40,18 +42,18 @@ const content = {
     subtitle: 'chartsok 사용에 필요한 모든 정보를 찾아보세요.',
     search: '질문이나 키워드를 검색하세요...',
     categories: [
-      { icon: RocketLaunchIcon, title: '시작하기', desc: '처음 사용자를 위한 가이드', count: 8, color: '#4B9CD3' },
-      { icon: PlayCircleOutlineIcon, title: '녹음 & 차트', desc: '진료 녹음 및 차트 생성', count: 12, color: '#10B981' },
-      { icon: IntegrationInstructionsIcon, title: 'EMR 연동', desc: 'EMR 시스템 연동 방법', count: 6, color: '#F59E0B' },
-      { icon: SettingsIcon, title: '설정', desc: '계정 및 환경 설정', count: 10, color: '#8B5CF6' },
-      { icon: SecurityIcon, title: '보안 & 개인정보', desc: '데이터 보호 정책', count: 5, color: '#EF4444' },
-      { icon: SupportAgentIcon, title: '문제 해결', desc: '일반적인 문제 해결 방법', count: 15, color: '#64748B' },
+      { icon: RocketLaunchIcon, title: '시작하기', desc: '처음 사용자를 위한 가이드', slug: 'getting-started', color: '#4B9CD3' },
+      { icon: PlayCircleOutlineIcon, title: '녹음 & 차트', desc: '진료 녹음 및 차트 생성', slug: 'recording-charts', color: '#10B981' },
+      { icon: IntegrationInstructionsIcon, title: 'EMR 연동', desc: 'EMR 시스템 연동 (개발 중)', slug: 'emr-integration', color: '#F59E0B' },
+      { icon: SettingsIcon, title: '설정', desc: '계정 및 환경 설정', slug: 'settings', color: '#8B5CF6' },
+      { icon: SecurityIcon, title: '보안 & 개인정보', desc: '데이터 보호 정책', slug: 'security-privacy', color: '#EF4444' },
+      { icon: SupportAgentIcon, title: '문제 해결', desc: '일반적인 문제 해결 방법', slug: 'troubleshooting', color: '#64748B' },
     ],
     faqTitle: '자주 묻는 질문',
     faqs: [
       {
         q: 'chartsok은 어떤 EMR 시스템과 연동되나요?',
-        a: '국내 주요 EMR 시스템과의 연동을 준비하고 있습니다. REST API 직접 연동 또는 클립보드 복사 방식 모두 지원합니다. 사용하시는 EMR과의 연동 문의는 언제든 환영합니다.',
+        a: '국내 주요 EMR 시스템과의 API 연동을 준비하고 있습니다. 현재는 클립보드 복사 방식으로 모든 EMR과 함께 사용할 수 있습니다. 사용하시는 EMR과의 연동 문의는 언제든 환영합니다.',
       },
       {
         q: '환자 정보는 안전하게 보호되나요?',
@@ -79,7 +81,7 @@ const content = {
       },
       {
         q: '기존 환자 데이터를 가져올 수 있나요?',
-        a: '네, EMR 연동을 통해 기존 환자 목록을 자동으로 동기화할 수 있습니다. 과거 진료 기록도 참조하여 더 정확한 차트를 생성합니다.',
+        a: '현재는 환자 정보를 직접 입력하거나 녹음 시 등록할 수 있습니다. EMR 연동을 통한 자동 동기화 기능은 개발 중이며, 출시 시 알려드리겠습니다.',
       },
     ],
     contactTitle: '원하는 답을 찾지 못하셨나요?',
@@ -93,18 +95,18 @@ const content = {
     subtitle: 'Find all the information you need to use chartsok.',
     search: 'Search questions or keywords...',
     categories: [
-      { icon: RocketLaunchIcon, title: 'Getting Started', desc: 'Guide for new users', count: 8, color: '#4B9CD3' },
-      { icon: PlayCircleOutlineIcon, title: 'Recording & Charts', desc: 'Recording and chart generation', count: 12, color: '#10B981' },
-      { icon: IntegrationInstructionsIcon, title: 'EMR Integration', desc: 'EMR system integration', count: 6, color: '#F59E0B' },
-      { icon: SettingsIcon, title: 'Settings', desc: 'Account and preferences', count: 10, color: '#8B5CF6' },
-      { icon: SecurityIcon, title: 'Security & Privacy', desc: 'Data protection policies', count: 5, color: '#EF4444' },
-      { icon: SupportAgentIcon, title: 'Troubleshooting', desc: 'Common problem solutions', count: 15, color: '#64748B' },
+      { icon: RocketLaunchIcon, title: 'Getting Started', desc: 'Guide for new users', slug: 'getting-started', color: '#4B9CD3' },
+      { icon: PlayCircleOutlineIcon, title: 'Recording & Charts', desc: 'Recording and chart generation', slug: 'recording-charts', color: '#10B981' },
+      { icon: IntegrationInstructionsIcon, title: 'EMR Integration', desc: 'EMR integration (Coming Soon)', slug: 'emr-integration', color: '#F59E0B' },
+      { icon: SettingsIcon, title: 'Settings', desc: 'Account and preferences', slug: 'settings', color: '#8B5CF6' },
+      { icon: SecurityIcon, title: 'Security & Privacy', desc: 'Data protection policies', slug: 'security-privacy', color: '#EF4444' },
+      { icon: SupportAgentIcon, title: 'Troubleshooting', desc: 'Common problem solutions', slug: 'troubleshooting', color: '#64748B' },
     ],
     faqTitle: 'Frequently Asked Questions',
     faqs: [
       {
         q: 'Which EMR systems does chartsok integrate with?',
-        a: 'We are preparing integration with major Korean EMR systems. Both REST API direct integration and clipboard copy methods are supported. Contact us for EMR integration inquiries.',
+        a: 'We are preparing API integration with major Korean EMR systems. Currently, clipboard copy method works with all EMRs. Contact us for EMR integration inquiries.',
       },
       {
         q: 'Is patient data secure?',
@@ -132,7 +134,7 @@ const content = {
       },
       {
         q: 'Can I import existing patient data?',
-        a: 'Yes, through EMR integration you can automatically sync your existing patient list. Past records are also referenced to generate more accurate charts.',
+        a: 'Currently, you can manually enter patient information or register during recording. Automatic sync via EMR integration is under development and we will notify you when it launches.',
       },
     ],
     contactTitle: 'Didn\'t find your answer?',
@@ -194,57 +196,60 @@ export default function HelpPage() {
           <Grid container spacing={3}>
             {t.categories.map((cat, index) => {
               const Icon = cat.icon;
+              const articleCount = getArticlesByCategory(cat.slug).length;
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
-                  <MotionBox
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -4 }}
-                  >
-                    <Card
-                      elevation={0}
-                      sx={{
-                        p: 3,
-                        height: '100%',
-                        border: '1px solid',
-                        borderColor: 'grey.200',
-                        borderRadius: 3,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': { borderColor: cat.color },
-                      }}
+                  <Link href={`/help/${cat.slug}`} style={{ textDecoration: 'none' }}>
+                    <MotionBox
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ y: -4 }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 2,
-                            bgcolor: `${cat.color}15`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Icon sx={{ color: cat.color }} />
+                      <Card
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          borderRadius: 3,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': { borderColor: cat.color },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                          <Box
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 2,
+                              bgcolor: `${cat.color}15`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Icon sx={{ color: cat.color }} />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+                              {cat.title}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                              {cat.desc}
+                            </Typography>
+                            <Chip
+                              label={`${articleCount} ${locale === 'ko' ? '문서' : 'articles'}`}
+                              size="small"
+                              sx={{ bgcolor: 'grey.100', fontSize: '0.7rem' }}
+                            />
+                          </Box>
                         </Box>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                            {cat.title}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                            {cat.desc}
-                          </Typography>
-                          <Chip
-                            label={`${cat.count} ${locale === 'ko' ? '문서' : 'articles'}`}
-                            size="small"
-                            sx={{ bgcolor: 'grey.100', fontSize: '0.7rem' }}
-                          />
-                        </Box>
-                      </Box>
-                    </Card>
-                  </MotionBox>
+                      </Card>
+                    </MotionBox>
+                  </Link>
                 </Grid>
               );
             })}
@@ -305,10 +310,11 @@ export default function HelpPage() {
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>{t.contactTitle}</Typography>
             <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>{t.contactDesc}</Typography>
             <Button
+              component={Link}
               variant="outlined"
               size="large"
-              startIcon={<EmailIcon />}
-              href={`mailto:${t.email}`}
+              startIcon={<ContactSupportIcon />}
+              href="/contact"
               sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
               {t.contactButton}

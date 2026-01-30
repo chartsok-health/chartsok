@@ -15,7 +15,6 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: '48x48' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -23,7 +22,7 @@ export const metadata = {
     apple: [
       { url: '/icon-192.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon.svg',
   },
   openGraph: {
     title: 'chartsok (차트쏙) - AI 의료 차트 자동화 솔루션',

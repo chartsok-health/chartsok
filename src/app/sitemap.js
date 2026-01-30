@@ -139,6 +139,87 @@ export default function sitemap() {
     priority: 0.6,
   }));
 
+  // Help category pages
+  const helpCategories = [
+    'getting-started',
+    'recording-charts',
+    'emr-integration',
+    'settings',
+    'security-privacy',
+    'troubleshooting',
+  ].map((category) => ({
+    url: `${baseUrl}/help/${category}`,
+    lastModified: currentDate,
+    changeFrequency: 'weekly',
+    priority: 0.5,
+  }));
+
+  // Help articles
+  const helpArticles = [
+    // Getting Started
+    { category: 'getting-started', id: 'create-account' },
+    { category: 'getting-started', id: 'first-recording' },
+    { category: 'getting-started', id: 'dashboard-overview' },
+    { category: 'getting-started', id: 'patient-consent' },
+    { category: 'getting-started', id: 'specialty-selection' },
+    { category: 'getting-started', id: 'mobile-app' },
+    { category: 'getting-started', id: 'trial-overview' },
+    { category: 'getting-started', id: 'quick-start-guide' },
+    // Recording & Charts
+    { category: 'recording-charts', id: 'recording-tips' },
+    { category: 'recording-charts', id: 'chart-editing' },
+    { category: 'recording-charts', id: 'soap-format' },
+    { category: 'recording-charts', id: 'speaker-identification' },
+    { category: 'recording-charts', id: 'chart-templates' },
+    { category: 'recording-charts', id: 'batch-recording' },
+    { category: 'recording-charts', id: 'audio-playback' },
+    { category: 'recording-charts', id: 'chart-export' },
+    { category: 'recording-charts', id: 'voice-commands' },
+    { category: 'recording-charts', id: 'chart-history' },
+    { category: 'recording-charts', id: 'medical-terminology' },
+    { category: 'recording-charts', id: 'real-time-transcription' },
+    // EMR Integration
+    { category: 'emr-integration', id: 'supported-emr' },
+    { category: 'emr-integration', id: 'emr-setup' },
+    { category: 'emr-integration', id: 'clipboard-integration' },
+    { category: 'emr-integration', id: 'patient-sync' },
+    { category: 'emr-integration', id: 'chart-transfer' },
+    { category: 'emr-integration', id: 'api-documentation' },
+    // Settings
+    { category: 'settings', id: 'account-settings' },
+    { category: 'settings', id: 'notification-settings' },
+    { category: 'settings', id: 'language-settings' },
+    { category: 'settings', id: 'default-ai-settings' },
+    { category: 'settings', id: 'team-management' },
+    { category: 'settings', id: 'billing-settings' },
+    { category: 'settings', id: 'data-export' },
+    { category: 'settings', id: 'keyboard-shortcuts' },
+    { category: 'settings', id: 'microphone-settings' },
+    { category: 'settings', id: 'accessibility-settings' },
+    // Security & Privacy
+    { category: 'security-privacy', id: 'data-encryption' },
+    { category: 'security-privacy', id: 'access-control' },
+    { category: 'security-privacy', id: 'privacy-policy' },
+    { category: 'security-privacy', id: 'hipaa-compliance' },
+    { category: 'security-privacy', id: 'data-deletion' },
+    // Troubleshooting
+    { category: 'troubleshooting', id: 'recording-issues' },
+    { category: 'troubleshooting', id: 'chart-generation-issues' },
+    { category: 'troubleshooting', id: 'login-issues' },
+    { category: 'troubleshooting', id: 'emr-sync-issues' },
+    { category: 'troubleshooting', id: 'performance-issues' },
+    { category: 'troubleshooting', id: 'mobile-app-issues' },
+    { category: 'troubleshooting', id: 'browser-compatibility' },
+    { category: 'troubleshooting', id: 'audio-quality-issues' },
+    { category: 'troubleshooting', id: 'billing-issues' },
+    { category: 'troubleshooting', id: 'contact-support' },
+  ].map((article) => ({
+    url: `${baseUrl}/help/${article.category}/${article.id}`,
+    lastModified: currentDate,
+    changeFrequency: 'monthly',
+    priority: 0.4,
+  }));
+
   return [
     ...mainPages,
     ...contentPages,
@@ -146,5 +227,7 @@ export default function sitemap() {
     ...legalPages,
     ...authPages,
     ...blogPosts,
+    ...helpCategories,
+    ...helpArticles,
   ];
 }
