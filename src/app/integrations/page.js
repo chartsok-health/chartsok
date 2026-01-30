@@ -235,7 +235,7 @@ export default function IntegrationsPage() {
                 const Icon = benefit.icon;
                 return (
                   <Grid size={{ xs: 6, md: 3 }} key={index}>
-                    <Card elevation={0} sx={{ p: 3, textAlign: 'center', border: '1px solid', borderColor: 'grey.200', borderRadius: 3 }}>
+                    <Card elevation={0} sx={{ p: 3, height: '100%', textAlign: 'center', border: '1px solid', borderColor: 'grey.200', borderRadius: 3 }}>
                       <Icon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
                       <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{benefit.title}</Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>{benefit.desc}</Typography>
@@ -255,7 +255,7 @@ export default function IntegrationsPage() {
           <Grid container spacing={3}>
             {t.steps.map((step, index) => (
               <Grid size={{ xs: 6, md: 3 }} key={index}>
-                <Card elevation={0} sx={{ p: 3, textAlign: 'center', border: '1px solid', borderColor: 'grey.200', borderRadius: 3 }}>
+                <Card elevation={0} sx={{ p: 3, height: '100%', textAlign: 'center', border: '1px solid', borderColor: 'grey.200', borderRadius: 3 }}>
                   <Box
                     sx={{
                       width: 48,

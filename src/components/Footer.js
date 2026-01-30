@@ -206,15 +206,16 @@ export default function Footer() {
             gap: 2,
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'rgba(255, 255, 255, 0.5)',
-            }}
-          >
-            {t('footer.copyright')}
-          </Typography>
-          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+          <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.5)',
+                mb: 0.5,
+              }}
+            >
+              {t('footer.copyright')}
+            </Typography>
             <Typography
               variant="body2"
               sx={{
@@ -223,6 +224,43 @@ export default function Footer() {
               }}
             >
               {t('footer.ceo')} | {t('footer.address')}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontSize: '0.75rem',
+                display: 'block',
+                mb: 0.5,
+              }}
+            >
+              Powered by{' '}
+              <Link
+                href="https://jpumki.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                jpumki software
+              </Link>
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.35)',
+                fontSize: '0.7rem',
+              }}
+            >
+              jpumki software 사업자등록번호: 220-60-00933
             </Typography>
           </Box>
         </Box>

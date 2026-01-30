@@ -958,6 +958,36 @@ export default function AuthModal({ open, onClose, initialView = 'login' }) {
           {view === 'signup' && <div key="signup">{renderSignup()}</div>}
           {view === 'forgot' && <div key="forgot">{renderForgotPassword()}</div>}
         </AnimatePresence>
+
+        {/* Powered by jpumki */}
+        <Box sx={{ mt: 4, pt: 2, borderTop: '1px solid', borderColor: 'grey.100', textAlign: 'center' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.disabled',
+              fontSize: '0.7rem',
+            }}
+          >
+            Powered by{' '}
+            <Typography
+              component="a"
+              href="https://jpumki.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: 'inherit',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              jpumki software
+            </Typography>
+          </Typography>
+        </Box>
       </DialogContent>
     </Dialog>
   );

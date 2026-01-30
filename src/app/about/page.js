@@ -83,13 +83,13 @@ const values = {
 
 const stats = {
   ko: [
-    { value: '30년', label: '임상 경험 기반' },
+    { value: '40년', label: '임상 경험 기반' },
     { value: '98%', label: 'AI 정확도 목표' },
     { value: '73%', label: '시간 절감 목표' },
     { value: '이비인후과', label: '첫 전문 분야' },
   ],
   en: [
-    { value: '30 yrs', label: 'Clinical Experience' },
+    { value: '40 yrs', label: 'Clinical Experience' },
     { value: '98%', label: 'AI Accuracy Goal' },
     { value: '73%', label: 'Time Saved Goal' },
     { value: 'ENT', label: 'First Specialty' },
@@ -98,25 +98,25 @@ const stats = {
 
 const team = {
   ko: [
-    { name: '박준호', role: 'CEO & 공동창업자', desc: '소프트웨어 엔지니어. 아버지의 30년 임상 경험을 AI 기술로 풀어내, 의사들의 진짜 문제를 해결합니다.' },
-    { name: '박선홍', role: '공동창업자 & 의료 자문', desc: '이비인후과 전문의 30년. 환자에게 정성을 다하고 싶었던 의사의 마음을 제품에 담습니다.' },
+    { name: '박준호', role: 'CEO & 공동창업자', desc: '소프트웨어 엔지니어. 아버지의 40년 임상 경험을 AI 기술로 풀어내, 의사들의 진짜 문제를 해결합니다.' },
+    { name: '박선홍', role: '공동창업자 & 의료 자문', desc: '이비인후과 전문의 40년. 환자에게 정성을 다하고 싶었던 의사의 마음을 제품에 담습니다.' },
   ],
   en: [
-    { name: 'Junho Park', role: 'CEO & Co-founder', desc: 'Software Engineer. Translating 30 years of clinical experience into AI technology to solve real problems for doctors.' },
-    { name: 'SeungHong Park', role: 'Co-founder & Medical Advisor', desc: 'ENT Specialist, 30 years. Bringing the heart of a doctor who wanted to give sincere care to every product decision.' },
+    { name: 'Junho Park', role: 'CEO & Co-founder', desc: 'Software Engineer. Translating 40 years of clinical experience into AI technology to solve real problems for doctors.' },
+    { name: 'SeungHong Park', role: 'Co-founder & Medical Advisor', desc: 'ENT Specialist, 40 years. Bringing the heart of a doctor who wanted to give sincere care to every product decision.' },
   ],
 };
 
 const content = {
   ko: {
     badge: '회사 소개',
-    title: '아버지의 30년, 아들의 기술',
+    title: '아버지의 40년, 아들의 기술',
     subtitle: '환자에게 정성을 다하고 싶었던 의사 아버지와, 그 꿈을 기술로 실현하려는 아들이 함께 만든 chartsok입니다.',
     missionTitle: '우리의 미션',
-    missionText: '모든 의사가 차트가 아닌 환자의 눈을 바라볼 수 있는 세상. 30년간 진료실에서 느꼈던 아쉬움을 기술로 해결하고, 의사와 환자 모두가 행복한 진료 환경을 만듭니다.',
+    missionText: '모든 의사가 차트가 아닌 환자의 눈을 바라볼 수 있는 세상. 40년간 진료실에서 느꼈던 아쉬움을 기술로 해결하고, 의사와 환자 모두가 행복한 진료 환경을 만듭니다.',
     storyTitle: '아버지와 아들의 이야기',
-    storyText1: '"아들아, 나는 30년간 환자들에게 정성을 다하고 싶었어. 그런데 차트 쓰는 시간이 너무 많았어. 환자 눈 보면서 이야기하고 싶은데, 컴퓨터 화면만 봐야 했거든." 이비인후과 전문의로 30년을 보낸 아버지의 말씀이었습니다.',
-    storyText2: '그 말을 들은 아들은 결심했습니다. 아버지처럼 환자에게 정성을 다하고 싶은 모든 의사들을 위해, 기술로 이 문제를 해결하겠다고. 그렇게 아버지와 아들이 함께 chartsok을 시작했습니다. 아버지의 30년 임상 경험과 아들의 기술이 만나, 진짜 의사들에게 필요한 솔루션을 만들어갑니다.',
+    storyText1: '"아들아, 나는 40년간 환자들에게 정성을 다하고 싶었어. 그런데 차트 쓰는 시간이 너무 많았어. 환자 눈 보면서 이야기하고 싶은데, 컴퓨터 화면만 봐야 했거든." 이비인후과 전문의로 40년을 보낸 아버지의 말씀이었습니다.',
+    storyText2: '그 말을 들은 아들은 결심했습니다. 아버지처럼 환자에게 정성을 다하고 싶은 모든 의사들을 위해, 기술로 이 문제를 해결하겠다고. 그렇게 아버지와 아들이 함께 chartsok을 시작했습니다. 아버지의 40년 임상 경험과 아들의 기술이 만나, 진짜 의사들에게 필요한 솔루션을 만들어갑니다.',
     valuesTitle: '핵심 가치',
     statsTitle: 'chartsok의 시작',
     teamTitle: '창업 팀',
@@ -127,13 +127,13 @@ const content = {
   },
   en: {
     badge: 'About Us',
-    title: "A Father's 30 Years, A Son's Technology",
+    title: "A Father's 40 Years, A Son's Technology",
     subtitle: 'chartsok was born from a doctor father who wanted to give heartfelt care to patients, and a son who turned that dream into reality through technology.',
     missionTitle: 'Our Mission',
-    missionText: "A world where every doctor can look into their patient's eyes instead of staring at charts. We solve the frustrations felt in clinics for 30 years through technology, creating a happier healthcare experience for both doctors and patients.",
+    missionText: "A world where every doctor can look into their patient's eyes instead of staring at charts. We solve the frustrations felt in clinics for 40 years through technology, creating a happier healthcare experience for both doctors and patients.",
     storyTitle: 'A Father and Son Story',
-    storyText1: '"Son, for 30 years I wanted to give my patients heartfelt care. But I spent so much time writing charts. I wanted to talk to my patients while looking at them, but I had to stare at the computer screen." These were the words of my father, an ENT specialist for 30 years.',
-    storyText2: "Hearing those words, I made a decision. For all doctors who, like my father, want to give heartfelt care to their patients, I would solve this problem with technology. That's how my father and I started chartsok together. With my father's 30 years of clinical experience and my technical skills, we're building a solution that doctors truly need.",
+    storyText1: '"Son, for 40 years I wanted to give my patients heartfelt care. But I spent so much time writing charts. I wanted to talk to my patients while looking at them, but I had to stare at the computer screen." These were the words of my father, an ENT specialist for 40 years.',
+    storyText2: "Hearing those words, I made a decision. For all doctors who, like my father, want to give heartfelt care to their patients, I would solve this problem with technology. That's how my father and I started chartsok together. With my father's 40 years of clinical experience and my technical skills, we're building a solution that doctors truly need.",
     valuesTitle: 'Core Values',
     statsTitle: 'The Beginning of chartsok',
     teamTitle: 'Founding Team',

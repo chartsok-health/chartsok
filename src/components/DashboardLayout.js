@@ -399,6 +399,40 @@ export default function DashboardLayout({ children }) {
             </IconButton>
           </Box>
         )}
+
+        {/* Powered by jpumki */}
+        {!collapsed && (
+          <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'grey.100' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.disabled',
+                fontSize: '0.65rem',
+                display: 'block',
+                textAlign: 'center',
+              }}
+            >
+              Powered by{' '}
+              <Typography
+                component="a"
+                href="https://jpumki.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: 'inherit',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                jpumki software
+              </Typography>
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );

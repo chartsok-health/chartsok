@@ -251,6 +251,36 @@ export default function Header() {
           </ListItemButton>
         </ListItem>
       </List>
+
+      {/* Powered by jpumki */}
+      <Box sx={{ mt: 'auto', p: 3, borderTop: '1px solid', borderColor: 'grey.100' }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.secondary',
+            fontSize: '0.7rem',
+          }}
+        >
+          Powered by{' '}
+          <Typography
+            component="a"
+            href="https://jpumki.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              color: 'primary.main',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: 'inherit',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            jpumki software
+          </Typography>
+        </Typography>
+      </Box>
     </Box>
   );
 

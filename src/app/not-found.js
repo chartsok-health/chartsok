@@ -216,16 +216,48 @@ export default function NotFound() {
           >
             문제가 계속되면{' '}
             <Typography
-              component="span"
+              component="a"
+              href="/#contact"
               sx={{
                 color: 'primary.main',
                 cursor: 'pointer',
+                textDecoration: 'none',
                 '&:hover': { textDecoration: 'underline' },
               }}
             >
               고객 지원
             </Typography>
             에 문의해 주세요.
+          </Typography>
+
+          {/* Powered by jpumki */}
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.disabled',
+              mt: 6,
+              display: 'block',
+              fontSize: '0.7rem',
+            }}
+          >
+            Powered by{' '}
+            <Typography
+              component="a"
+              href="https://jpumki.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: 'inherit',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              jpumki software
+            </Typography>
           </Typography>
         </MotionBox>
       </Container>

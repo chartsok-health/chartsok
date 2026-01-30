@@ -149,6 +149,36 @@ export default function DashboardNotFound() {
             ))}
           </Box>
         </Box>
+
+        {/* Powered by jpumki */}
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.disabled',
+            mt: 3,
+            display: 'block',
+            fontSize: '0.7rem',
+          }}
+        >
+          Powered by{' '}
+          <Typography
+            component="a"
+            href="https://jpumki.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              color: 'primary.main',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: 'inherit',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            jpumki software
+          </Typography>
+        </Typography>
       </MotionPaper>
     </Box>
   );
