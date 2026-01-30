@@ -275,7 +275,7 @@ export default function CareersPage() {
                       <Grid size={{ xs: 12, md: 2 }} sx={{ textAlign: { md: 'right' } }}>
                         <Button
                           variant="outlined"
-                          href={`mailto:${t.email}?subject=${encodeURIComponent(job.title + ' 지원')}`}
+                          href="/contact"
                           sx={{ borderRadius: 2 }}
                         >
                           {t.apply}
@@ -308,7 +308,7 @@ export default function CareersPage() {
               variant="outlined"
               size="large"
               startIcon={<EmailIcon />}
-              href={`mailto:${t.email}`}
+              href="/contact"
               sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
               {t.sendResume}
