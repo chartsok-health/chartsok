@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -39,22 +38,24 @@ export default function AuthGuard({ children }) {
         }}
       >
         <MotionBox
-          animate={{ scale: [1, 1.1, 1] }}
+          animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           <Box
             sx={{
-              width: 64,
-              height: 64,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+              px: 2.5,
+              py: 1.5,
+              borderRadius: 2,
+              bgcolor: '#56A3D9',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(75, 156, 211, 0.3)',
+              boxShadow: '0 8px 24px rgba(86, 163, 217, 0.3)',
             }}
           >
-            <AutoAwesomeIcon sx={{ fontSize: 32, color: 'white' }} />
+            <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '1.5rem' }}>
+              차트쏙
+            </Typography>
           </Box>
         </MotionBox>
         <Box sx={{ textAlign: 'center' }}>

@@ -506,16 +506,18 @@ export default function OnboardingPage() {
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+            px: 1.25,
+            py: 0.5,
+            borderRadius: 1.5,
+            bgcolor: '#56A3D9',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <AutoAwesomeIcon sx={{ color: 'white', fontSize: 20 }} />
+          <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>
+            차트쏙
+          </Typography>
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800, color: 'secondary.main' }}>
           chartsok

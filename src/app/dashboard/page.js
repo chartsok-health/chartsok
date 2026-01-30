@@ -150,7 +150,7 @@ export default function DashboardPage() {
                   WELCOME BACK
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-                  안녕하세요, {displayName} 👋
+                  안녕하세요, {displayName} 선생님 👋
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
                   오늘 하루도 chartsok과 함께 효율적인 진료를 시작하세요.

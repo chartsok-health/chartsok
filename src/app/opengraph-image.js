@@ -100,9 +100,20 @@ export default async function Image() {
             }}
           >
             {/* Logo */}
-            <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '20px' }}>
+              <div
+                style={{
+                  background: '#56A3D9',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ fontSize: '48px', fontWeight: '800', color: 'white' }}>차트쏙</span>
+              </div>
               <span style={{ fontSize: '72px', fontWeight: 'bold', color: 'white' }}>chartsok</span>
-              <span style={{ fontSize: '48px', fontWeight: '500', color: '#4B9CD3', marginLeft: '16px' }}>차트쏙</span>
             </div>
 
             {/* Subtitle */}

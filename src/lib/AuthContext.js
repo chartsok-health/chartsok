@@ -127,6 +127,12 @@ export function AuthProvider({ children }) {
       displayName: displayName || '',
       photoURL: '',
     });
+    // Send signup notification emails (don't await - let it run in background)
+    fetch('/api/signup-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, displayName }),
+    }).catch(console.error);
     return result;
   };
 
@@ -135,23 +141,39 @@ export function AuthProvider({ children }) {
   };
 
   const resetPassword = async (email) => {
-    return sendPasswordResetEmail(auth, email);
+    await sendPasswordResetEmail(auth, email);
+    // Send custom password reset email notification (don't await)
+    fetch('/api/password-reset-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).catch(console.error);
   };
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    // Check if user profile exists, if not create one
+    // Check if user profile exists, if not create one (new user)
     let profile = await fetchUserProfile(result.user.uid);
+    const isNewUser = !profile;
     if (!profile) {
       profile = await createUserProfile(result.user.uid, {
         email: result.user.email,
         displayName: result.user.displayName || '',
         photoURL: result.user.photoURL || '',
       });
+      // Send signup notification for new Google users (don't await)
+      fetch('/api/signup-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: result.user.email,
+          displayName: result.user.displayName,
+        }),
+      }).catch(console.error);
     }
     setUserProfile(profile);
-    return result;
+    return { ...result, isNewUser };
   };
 
   const value = {

@@ -58,7 +58,10 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import HomeIcon from '@mui/icons-material/Home';
+import StarIcon from '@mui/icons-material/Star';
 import { useAuth } from '@/lib/AuthContext';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -89,7 +92,7 @@ const steps = [
 
 export default function RecordPage() {
   const router = useRouter();
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
@@ -109,6 +112,11 @@ export default function RecordPage() {
     spO2: '',
     chiefComplaint: '',
   });
+
+  // Template selection
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   // Step 3: Recording
   const [isRecording, setIsRecording] = useState(false);
@@ -163,6 +171,35 @@ export default function RecordPage() {
       transcriptionRef.current.scrollTop = transcriptionRef.current.scrollHeight;
     }
   }, [liveHistory, liveText]);
+
+  // Fetch user templates
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      if (!user) return;
+      setLoadingTemplates(true);
+      try {
+        const templatesRef = collection(db, 'users', user.uid, 'templates');
+        const q = query(templatesRef, orderBy('updatedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const userTemplates = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setTemplates(userTemplates);
+
+        // Auto-select default template if exists
+        const defaultTemplate = userTemplates.find(t => t.isDefault);
+        if (defaultTemplate) {
+          setSelectedTemplate(defaultTemplate);
+        }
+      } catch (error) {
+        console.error('Error fetching templates:', error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    fetchTemplates();
+  }, [user]);
 
   // Audio visualization
   useEffect(() => {
@@ -448,6 +485,7 @@ export default function RecordPage() {
     sessionStorage.setItem('recordingDuration', formatTime(finalRecordingTime));
     sessionStorage.setItem('patientInfo', JSON.stringify(selectedPatient));
     sessionStorage.setItem('vitalsInfo', JSON.stringify(vitals));
+    sessionStorage.setItem('selectedTemplate', JSON.stringify(selectedTemplate));
 
     setIsProcessing(false);
     setActiveStep(4);
@@ -1039,6 +1077,189 @@ export default function RecordPage() {
                 }}
               />
             </Box>
+
+            {/* Template Selection */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DescriptionIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                차트 템플릿 선택
+              </Typography>
+
+              <Grid container spacing={1.5}>
+                {/* SOAP Default Option */}
+                <Grid size={{ xs: 6, sm: 4 }}>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Paper
+                      elevation={0}
+                      onClick={() => setSelectedTemplate(null)}
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        border: '2px solid',
+                        borderColor: selectedTemplate === null ? 'primary.main' : 'grey.200',
+                        bgcolor: selectedTemplate === null ? 'primary.50' : 'white',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: selectedTemplate === null ? 'primary.main' : 'grey.300',
+                          bgcolor: selectedTemplate === null ? 'primary.50' : 'grey.50',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            bgcolor: selectedTemplate === null ? 'primary.main' : 'grey.100',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <AssignmentIcon sx={{ fontSize: 18, color: selectedTemplate === null ? 'white' : 'grey.500' }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem' }} noWrap>
+                            SOAP 노트
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                            표준 형식
+                          </Typography>
+                        </Box>
+                        {selectedTemplate === null && (
+                          <CheckCircleIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                        )}
+                      </Box>
+                    </Paper>
+                  </motion.div>
+                </Grid>
+
+                {/* User Templates */}
+                {templates.map((template) => (
+                  <Grid size={{ xs: 6, sm: 4 }} key={template.id}>
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Paper
+                        elevation={0}
+                        onClick={() => setSelectedTemplate(template)}
+                        sx={{
+                          p: 2,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          border: '2px solid',
+                          borderColor: selectedTemplate?.id === template.id ? 'primary.main' : 'grey.200',
+                          bgcolor: selectedTemplate?.id === template.id ? 'primary.50' : 'white',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: selectedTemplate?.id === template.id ? 'primary.main' : 'grey.300',
+                            bgcolor: selectedTemplate?.id === template.id ? 'primary.50' : 'grey.50',
+                          },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 1.5,
+                              bgcolor: selectedTemplate?.id === template.id ? 'primary.main' : 'grey.100',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <DescriptionIcon sx={{ fontSize: 18, color: selectedTemplate?.id === template.id ? 'white' : 'grey.500' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem' }} noWrap>
+                                {template.name}
+                              </Typography>
+                              {template.isDefault && (
+                                <StarIcon sx={{ fontSize: 12, color: 'warning.main' }} />
+                              )}
+                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                              {template.category === 'narrative' ? '서술형' :
+                               template.category === 'problem' ? '문제 중심' :
+                               template.category === 'custom' ? '사용자 정의' : template.category}
+                            </Typography>
+                          </Box>
+                          {selectedTemplate?.id === template.id && (
+                            <CheckCircleIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                          )}
+                        </Box>
+                      </Paper>
+                    </motion.div>
+                  </Grid>
+                ))}
+
+                {/* Add Template Link */}
+                {templates.length < 6 && (
+                  <Grid size={{ xs: 6, sm: 4 }}>
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Paper
+                        elevation={0}
+                        onClick={() => router.push('/dashboard/templates')}
+                        sx={{
+                          p: 2,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          border: '2px dashed',
+                          borderColor: 'grey.300',
+                          bgcolor: 'white',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: 'primary.50',
+                          },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 1.5,
+                              bgcolor: 'grey.100',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <PersonAddIcon sx={{ fontSize: 18, color: 'grey.500' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.secondary' }}>
+                              템플릿 추가
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                              나만의 템플릿
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    </motion.div>
+                  </Grid>
+                )}
+              </Grid>
+
+              {selectedTemplate && (
+                <MotionBox
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}
+                >
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 1 }}>
+                    선택된 템플릿 미리보기
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+                    {selectedTemplate.template.slice(0, 200)}...
+                  </Typography>
+                </MotionBox>
+              )}
+            </Box>
           </Paper>
         </Grid>
 
@@ -1072,7 +1293,8 @@ export default function RecordPage() {
               <li>바이탈 사인은 선택 사항입니다</li>
               <li>주호소는 필수 입력입니다</li>
               <li>위 증상 칩을 클릭하면 빠르게 추가됩니다</li>
-              <li>AI가 차트 생성 시 참고합니다</li>
+              <li>SOAP 또는 나만의 템플릿을 선택하세요</li>
+              <li>AI가 선택한 템플릿에 맞게 차트를 생성합니다</li>
             </Box>
           </Paper>
         </Grid>
@@ -1483,6 +1705,25 @@ export default function RecordPage() {
           <Grid size={{ xs: 12 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>주호소</Typography>
             <Typography variant="body2">{vitals.chiefComplaint}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Divider sx={{ my: 1 }} />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>차트 형식</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              {selectedTemplate ? (
+                <>
+                  <DescriptionIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedTemplate.name}</Typography>
+                </>
+              ) : (
+                <>
+                  <AssignmentIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>SOAP 노트 (표준)</Typography>
+                </>
+              )}
+            </Box>
           </Grid>
         </Grid>
       </MotionPaper>

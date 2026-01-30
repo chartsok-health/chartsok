@@ -34,9 +34,9 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardCommandKeyIcon from '@mui/icons-material/KeyboardCommandKey';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -52,6 +52,7 @@ const navItems = [
   { label: '진료 기록', icon: HistoryIcon, path: '/dashboard/history', description: '기록 조회' },
   { label: '환자 관리', icon: PeopleIcon, path: '/dashboard/patients', description: '환자 목록' },
   { label: '의료진 관리', icon: LocalHospitalIcon, path: '/dashboard/doctors', description: '의료진 관리' },
+  { label: '템플릿', icon: DescriptionIcon, path: '/dashboard/templates', description: '나만의 템플릿' },
   { label: '설정', icon: SettingsIcon, path: '/dashboard/settings', description: '환경 설정' },
 ];
 
@@ -61,6 +62,7 @@ const pageInfo = {
   '/dashboard/history': { title: '진료 기록', subtitle: '과거 진료 내역을 조회하고 관리합니다' },
   '/dashboard/patients': { title: '환자 관리', subtitle: '환자 목록을 조회하고 관리합니다' },
   '/dashboard/doctors': { title: '의료진 관리', subtitle: '병원 의료진을 관리합니다' },
+  '/dashboard/templates': { title: '템플릿', subtitle: '나만의 차트 템플릿을 만들고 관리하세요' },
   '/dashboard/settings': { title: '설정', subtitle: '환경을 맞춤 설정하세요' },
 };
 
@@ -128,16 +130,18 @@ export default function DashboardLayout({ children }) {
             >
               <Box
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1.5,
+                  bgcolor: '#56A3D9',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <AutoAwesomeIcon sx={{ color: 'white', fontSize: 18 }} />
+                <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.75rem' }}>
+                  차트쏙
+                </Typography>
               </Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'secondary.main' }}>
                 chartsok
@@ -163,10 +167,10 @@ export default function DashboardLayout({ children }) {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                px: 1,
+                py: 0.75,
+                borderRadius: 1.5,
+                bgcolor: '#56A3D9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -174,7 +178,9 @@ export default function DashboardLayout({ children }) {
               }}
               onClick={() => router.push('/')}
             >
-              <AutoAwesomeIcon sx={{ color: 'white', fontSize: 20 }} />
+              <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.8rem' }}>
+                쏙
+              </Typography>
             </MotionBox>
           )}
         </AnimatePresence>

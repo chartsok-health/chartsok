@@ -131,9 +131,26 @@ export default function Header() {
   const drawer = (
     <Box sx={{ width: 300, height: '100%', bgcolor: 'white' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          chartsok
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              px: 1.25,
+              py: 0.5,
+              borderRadius: 1.5,
+              bgcolor: '#56A3D9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.85rem' }}>
+              차트쏙
+            </Typography>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+            chartsok
+          </Typography>
+        </Box>
         <IconButton onClick={handleDrawerToggle}>
           <CloseIcon />
         </IconButton>
@@ -317,8 +334,7 @@ export default function Header() {
               transition={{ type: 'spring', stiffness: 300 }}
               style={{ display: 'flex' }}
             >
-              <Typography
-                variant="h6"
+              <Box
                 component="a"
                 href="/"
                 onClick={(e) => {
@@ -330,29 +346,39 @@ export default function Header() {
                   }
                 }}
                 sx={{
-                  fontWeight: 800,
-                  color: 'primary.main',
-                  textDecoration: 'none',
-                  fontSize: { xs: '1.25rem', md: '1.5rem' },
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
                   cursor: 'pointer',
+                  textDecoration: 'none',
                 }}
               >
-                chartsok
-                <Chip
-                  label="차트쏙"
-                  size="small"
+                <Box
                   sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    height: 22,
+                    px: { xs: 1.25, md: 1.5 },
+                    py: { xs: 0.5, md: 0.75 },
+                    borderRadius: 2,
+                    bgcolor: '#56A3D9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                />
-              </Typography>
+                >
+                  <Typography sx={{ color: 'white', fontWeight: 800, fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                    차트쏙
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: 'secondary.main',
+                    fontSize: { xs: '1.1rem', md: '1.25rem' },
+                  }}
+                >
+                  chartsok
+                </Typography>
+              </Box>
             </motion.div>
 
             <Box sx={{ flexGrow: 1 }} />

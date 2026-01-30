@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import HomeIcon from '@mui/icons-material/Home';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
 
 const MotionBox = motion.create(Box);
@@ -77,7 +76,7 @@ export default function NotFound() {
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 1,
+              gap: 1.5,
               mb: 4,
               cursor: 'pointer',
             }}
@@ -85,16 +84,18 @@ export default function NotFound() {
           >
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                px: 2,
+                py: 1,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                bgcolor: '#56A3D9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AutoAwesomeIcon sx={{ color: 'white', fontSize: 24 }} />
+              <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '1.1rem' }}>
+                차트쏙
+              </Typography>
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 800, color: '#1E3A5F' }}>
               chartsok
