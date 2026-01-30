@@ -15,11 +15,6 @@ const ACCENT_GREEN = '#10B981';
 const DARK_NAVY = '#0F172A';
 
 export default async function Image() {
-  // Load Noto Sans KR Bold font from Google Fonts CDN
-  const fontData = await fetch(
-    'https://cdn.jsdelivr.net/gh/niceplugin/NanumSquareRound@1.0/NanumSquareRoundB.ttf'
-  ).then((res) => res.arrayBuffer());
-
   return new ImageResponse(
     (
       <div
@@ -60,7 +55,7 @@ export default async function Image() {
                 boxShadow: `0 8px 30px ${UNC_BLUE}50`,
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'NanumSquareRound' }}>차</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white' }}>차</span>
             </div>
             {/* 트 */}
             <div
@@ -72,7 +67,7 @@ export default async function Image() {
                 boxShadow: `0 8px 30px ${UNC_BLUE}50`,
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'NanumSquareRound' }}>트</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white' }}>트</span>
             </div>
             {/* 쏙 */}
             <div
@@ -84,7 +79,7 @@ export default async function Image() {
                 boxShadow: `0 8px 30px ${ACCENT_GREEN}50`,
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'NanumSquareRound' }}>쏙</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white' }}>쏙</span>
             </div>
           </div>
 
@@ -215,14 +210,6 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: 'NanumSquareRound',
-          data: fontData,
-          style: 'normal',
-          weight: 700,
-        },
-      ],
     }
   );
 }
