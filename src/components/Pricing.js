@@ -7,6 +7,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import StarIcon from '@mui/icons-material/Star';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
@@ -14,8 +15,17 @@ const MotionCard = motion.create(Card);
 export default function Pricing() {
   const { t, locale } = useI18n();
   const { user } = useAuth();
+  const router = useRouter();
   const [isYearly, setIsYearly] = useState(false);
   const plans = t('pricing.plans');
+
+  const handleCtaClick = () => {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      router.push('/?auth=signup');
+    }
+  };
 
   return (
     <Box
@@ -229,7 +239,7 @@ export default function Pricing() {
                       variant="outlined"
                       fullWidth
                       size="large"
-                      href={user ? '/dashboard' : '/auth/signup'}
+                      onClick={handleCtaClick}
                       sx={{
                         mb: 3,
                         py: 1.5,
@@ -253,7 +263,7 @@ export default function Pricing() {
                       variant="outlined"
                       fullWidth
                       size="large"
-                      href={user ? '/dashboard' : '/auth/signup'}
+                      onClick={handleCtaClick}
                       sx={{
                         mb: 3,
                         py: 1.5,

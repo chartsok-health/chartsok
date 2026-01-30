@@ -9,12 +9,22 @@ import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 
 export default function Hero() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const router = useRouter();
+
+  const handleCtaClick = () => {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      router.push('/?auth=signup');
+    }
+  };
 
   return (
     <Box
@@ -152,7 +162,7 @@ export default function Hero() {
                 <Button
                   variant="contained"
                   size="large"
-                  href={user ? '/dashboard' : '/auth/signup'}
+                  onClick={handleCtaClick}
                   sx={{
                     px: { xs: 3, sm: 4 },
                     py: 1.5,

@@ -6,12 +6,22 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 
 export default function CTA() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const router = useRouter();
+
+  const handleCtaClick = () => {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      router.push('/?auth=signup');
+    }
+  };
 
   return (
     <Box
@@ -105,7 +115,7 @@ export default function CTA() {
               <Button
                 variant="contained"
                 size="large"
-                href={user ? '/dashboard' : '/auth/signup'}
+                onClick={handleCtaClick}
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   bgcolor: 'white',

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#56A3D9"/>
+
+  <!-- Inner rounded rectangle for logo -->
+  <rect x="60" y="100" width="280" height="140" rx="20" ry="20" fill="white"/>
+
+  <!-- Korean text -->
+  <text x="200" y="195" font-family="Arial, sans-serif" font-size="72" font-weight="800" fill="#56A3D9" text-anchor="middle">차트쏙</text>
+
+  <!-- English text below -->
+  <text x="200" y="290" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="white" text-anchor="middle">chartsok</text>
+
+  <!-- Tagline -->
+  <text x="200" y="330" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.9)" text-anchor="middle">진료에 집중하세요, 기록은 AI가</text>
+</svg>

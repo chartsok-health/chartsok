@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" rx="40" ry="40" fill="#56A3D9"/>
+
+  <!-- Korean character - large and centered for profile visibility -->
+  <text x="200" y="260" font-family="Arial, sans-serif" font-size="180" font-weight="800" fill="white" text-anchor="middle">쏙</text>
+</svg>

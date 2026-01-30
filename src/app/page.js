@@ -3,6 +3,7 @@ import Hero from '@/components/Hero';
 import Stats from '@/components/Stats';
 import HowItWorks from '@/components/HowItWorks';
 import Features from '@/components/Features';
+import CustomTemplates from '@/components/CustomTemplates';
 import Demo from '@/components/Demo';
 import Specialties from '@/components/Specialties';
 import Testimonials from '@/components/Testimonials';
@@ -20,6 +21,7 @@ export default function Home() {
         <Stats />
         <HowItWorks />
         <Features />
+        <CustomTemplates />
         <Demo />
         <Specialties />
         <Testimonials />

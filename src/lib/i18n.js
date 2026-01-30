@@ -42,7 +42,7 @@ const translations = {
         { value: '73', suffix: '%', label: '차트 작성 시간 절감' },
         { value: '98', suffix: '%', label: 'AI 분석 정확도' },
         { value: '5', suffix: '분', label: '평균 차트 완성' },
-        { value: '500', suffix: '+', label: '도입 병의원' },
+        { value: '6', suffix: '개', label: '전문과 AI 지원' },
       ],
     },
     // Features Section
@@ -88,6 +88,41 @@ const translations = {
           features: ['원클릭 전송', '주요 EMR 호환', 'API 직접 연동', '전송 이력 관리'],
         },
       ],
+    },
+    // Custom Templates Section
+    customTemplates: {
+      badge: '맞춤형 AI',
+      title: '나만의 AI 템플릿',
+      subtitle: '진료 스타일에 맞는 맞춤형 템플릿으로 일관된 차트를 생성하세요',
+      description: 'SOAP 형식 외에도 원하는 섹션을 자유롭게 구성하고, AI가 해당 형식에 맞춰 정확한 차트를 자동 생성합니다.',
+      cta: '템플릿 만들기',
+      features: [
+        {
+          icon: 'layout',
+          title: '맞춤형 섹션 구성',
+          description: '주호소, 현병력, 과거력, 신체검진 등 원하는 섹션을 자유롭게 추가하고 순서를 조정하세요.',
+        },
+        {
+          icon: 'ai',
+          title: 'AI 출력 형식 지정',
+          description: '각 섹션별로 AI가 어떤 형식으로 내용을 작성할지 상세하게 지정할 수 있습니다.',
+        },
+        {
+          icon: 'star',
+          title: '기본 템플릿 설정',
+          description: '자주 사용하는 템플릿을 기본값으로 설정하면 진료 시작 시 자동으로 선택됩니다.',
+        },
+        {
+          icon: 'copy',
+          title: '템플릿 복제 및 공유',
+          description: '기존 템플릿을 복제하여 변형하거나, 동료 의사와 템플릿을 공유할 수 있습니다.',
+        },
+      ],
+      example: {
+        title: '템플릿 예시',
+        before: 'SOAP 기본 형식',
+        after: '나만의 맞춤 템플릿',
+      },
     },
     // How It Works Section
     howItWorks: {
@@ -342,6 +377,10 @@ const translations = {
           question: '기존 환자 데이터를 가져올 수 있나요?',
           answer: '네, EMR 연동을 통해 기존 환자 목록을 자동으로 동기화할 수 있습니다. 과거 진료 기록도 참조하여 더 정확한 차트를 생성합니다.',
         },
+        {
+          question: '나만의 차트 템플릿을 만들 수 있나요?',
+          answer: '네, 대시보드의 템플릿 관리에서 나만의 맞춤형 템플릿을 생성할 수 있습니다. SOAP 형식 외에도 원하는 섹션을 자유롭게 구성하고, AI가 해당 형식에 맞춰 차트를 생성합니다. 자주 사용하는 템플릿은 기본값으로 설정할 수 있습니다.',
+        },
       ],
     },
     // CTA Section
@@ -417,7 +456,7 @@ const translations = {
         { value: '73', suffix: '%', label: 'Charting Time Saved' },
         { value: '98', suffix: '%', label: 'AI Accuracy Rate' },
         { value: '5', suffix: 'min', label: 'Avg Chart Completion' },
-        { value: '500', suffix: '+', label: 'Clinics Onboarded' },
+        { value: '6', suffix: '', label: 'Specialty AIs Supported' },
       ],
     },
     // Features Section
@@ -463,6 +502,41 @@ const translations = {
           features: ['One-click send', 'Major EMR compatible', 'Direct API integration', 'Transfer history tracking'],
         },
       ],
+    },
+    // Custom Templates Section
+    customTemplates: {
+      badge: 'Personalized AI',
+      title: 'Custom AI Templates',
+      subtitle: 'Create personalized templates that match your documentation style for consistent charts',
+      description: 'Beyond SOAP format, freely configure any sections you want. AI will generate accurate charts following your custom format.',
+      cta: 'Create Template',
+      features: [
+        {
+          icon: 'layout',
+          title: 'Custom Section Layouts',
+          description: 'Freely add and reorder sections like chief complaint, history, physical exam, and more.',
+        },
+        {
+          icon: 'ai',
+          title: 'AI Output Formatting',
+          description: 'Specify exactly how AI should write content for each section in your preferred format.',
+        },
+        {
+          icon: 'star',
+          title: 'Default Template Setting',
+          description: 'Set your frequently used template as default - it auto-selects when you start a visit.',
+        },
+        {
+          icon: 'copy',
+          title: 'Duplicate & Share',
+          description: 'Clone existing templates to create variations, or share templates with colleagues.',
+        },
+      ],
+      example: {
+        title: 'Template Example',
+        before: 'Standard SOAP Format',
+        after: 'Your Custom Template',
+      },
     },
     // How It Works Section
     howItWorks: {
@@ -716,6 +790,10 @@ const translations = {
         {
           question: 'Can I import existing patient data?',
           answer: 'Yes, through EMR integration you can automatically sync your existing patient list. Past records are also referenced to generate more accurate charts.',
+        },
+        {
+          question: 'Can I create my own chart templates?',
+          answer: 'Yes, you can create custom templates in the dashboard\'s template management. Beyond SOAP format, you can freely configure any sections you want, and the AI will generate charts following your format. Frequently used templates can be set as default.',
         },
       ],
     },

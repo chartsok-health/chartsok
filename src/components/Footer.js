@@ -4,6 +4,7 @@ import { Box, Container, Typography, Grid, Link, Divider, IconButton, Stack } fr
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import EmailIcon from '@mui/icons-material/Email';
+import InstagramIcon from '@mui/icons-material/Instagram';
 import { useI18n } from '@/lib/i18n';
 
 export default function Footer() {
@@ -120,12 +121,11 @@ export default function Footer() {
               {t('footer.description')}
             </Typography>
 
-            {/* Email link */}
+            {/* Social links */}
             <Stack direction="row" spacing={1}>
               <IconButton
                 size="small"
-                component="a"
-                href="mailto:chartsok.health@gmail.com"
+                onClick={() => window.open('mailto:chartsok.health@gmail.com', '_self')}
                 sx={{
                   color: 'rgba(255, 255, 255, 0.5)',
                   '&:hover': {
@@ -135,6 +135,19 @@ export default function Footer() {
                 }}
               >
                 <EmailIcon />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => window.open('https://instagram.com/chartsok.health', '_blank')}
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  '&:hover': {
+                    color: '#E4405F',
+                    bgcolor: 'rgba(228, 64, 95, 0.1)',
+                  },
+                }}
+              >
+                <InstagramIcon />
               </IconButton>
             </Stack>
           </Grid>
