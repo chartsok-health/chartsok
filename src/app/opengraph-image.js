@@ -15,6 +15,11 @@ const ACCENT_GREEN = '#10B981';
 const DARK_NAVY = '#0F172A';
 
 export default async function Image() {
+  // Load Korean font
+  const notoSansKR = await fetch(
+    new URL('https://fonts.gstatic.com/s/notosanskr/v36/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuozeLTq8H4hfeE.woff', import.meta.url)
+  ).then((res) => res.arrayBuffer());
+
   return new ImageResponse(
     (
       <div
@@ -109,7 +114,7 @@ export default async function Image() {
                 boxShadow: `0 8px 30px ${UNC_BLUE}50`,
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 900, color: 'white' }}>차</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'Noto Sans KR' }}>차</span>
             </div>
             {/* 트 */}
             <div
@@ -120,7 +125,7 @@ export default async function Image() {
                 boxShadow: `0 8px 30px ${UNC_BLUE}50`,
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 900, color: 'white' }}>트</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'Noto Sans KR' }}>트</span>
             </div>
             {/* 쏙 (tilted) */}
             <div
@@ -132,7 +137,7 @@ export default async function Image() {
                 transform: 'rotate(-4deg)',
               }}
             >
-              <span style={{ fontSize: '52px', fontWeight: 900, color: 'white' }}>쏙</span>
+              <span style={{ fontSize: '52px', fontWeight: 700, color: 'white', fontFamily: 'Noto Sans KR' }}>쏙</span>
             </div>
           </div>
 
@@ -177,10 +182,11 @@ export default async function Image() {
           <div
             style={{
               fontSize: '26px',
-              fontWeight: 600,
+              fontWeight: 700,
               color: 'white',
               marginBottom: '14px',
               textAlign: 'center',
+              fontFamily: 'Noto Sans KR',
             }}
           >
             AI 의료 차트 자동화 솔루션
@@ -198,7 +204,7 @@ export default async function Image() {
               marginBottom: '32px',
             }}
           >
-            <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.85)' }}>
+            <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.85)', fontFamily: 'Noto Sans KR' }}>
               진료에 집중하세요, 기록은 AI가 합니다
             </span>
           </div>
@@ -214,7 +220,7 @@ export default async function Image() {
             {/* 73% */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: '24px', fontWeight: 800, color: ACCENT_GREEN }}>73%</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>진료 시간 절감</span>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Noto Sans KR' }}>진료 시간 절감</span>
             </div>
 
             {/* Divider */}
@@ -223,7 +229,7 @@ export default async function Image() {
             {/* SOAP */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: '24px', fontWeight: 800, color: UNC_BLUE }}>SOAP</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>차트 자동 생성</span>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Noto Sans KR' }}>차트 자동 생성</span>
             </div>
 
             {/* Divider */}
@@ -232,7 +238,7 @@ export default async function Image() {
             {/* EMR */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: '24px', fontWeight: 800, color: ACCENT_GREEN }}>EMR</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>연동 지원</span>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Noto Sans KR' }}>연동 지원</span>
             </div>
           </div>
         </div>
@@ -261,6 +267,14 @@ export default async function Image() {
     ),
     {
       ...size,
+      fonts: [
+        {
+          name: 'Noto Sans KR',
+          data: notoSansKR,
+          style: 'normal',
+          weight: 700,
+        },
+      ],
     }
   );
 }
