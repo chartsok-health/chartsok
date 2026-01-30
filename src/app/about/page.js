@@ -9,10 +9,12 @@ import {
   CardContent,
   Avatar,
   Chip,
+  Button,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import EmailIcon from '@mui/icons-material/Email';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -81,66 +83,64 @@ const values = {
 
 const stats = {
   ko: [
-    { value: '500+', label: '도입 병의원' },
-    { value: '98%', label: 'AI 정확도' },
-    { value: '73%', label: '시간 절감' },
-    { value: '50,000+', label: '생성된 차트' },
+    { value: '30년', label: '임상 경험 기반' },
+    { value: '98%', label: 'AI 정확도 목표' },
+    { value: '73%', label: '시간 절감 목표' },
+    { value: '이비인후과', label: '첫 전문 분야' },
   ],
   en: [
-    { value: '500+', label: 'Clinics Onboarded' },
-    { value: '98%', label: 'AI Accuracy' },
-    { value: '73%', label: 'Time Saved' },
-    { value: '50,000+', label: 'Charts Generated' },
+    { value: '30 yrs', label: 'Clinical Experience' },
+    { value: '98%', label: 'AI Accuracy Goal' },
+    { value: '73%', label: 'Time Saved Goal' },
+    { value: 'ENT', label: 'First Specialty' },
   ],
 };
 
 const team = {
   ko: [
-    { name: '김의료', role: 'CEO & 공동창업자', desc: '전 삼성서울병원 내과 전문의, 서울대 의대 졸업' },
-    { name: '이기술', role: 'CTO & 공동창업자', desc: '전 구글 AI 연구원, KAIST 컴퓨터공학 박사' },
-    { name: '박제품', role: 'CPO', desc: '전 네이버 헬스케어 PM, 의료 서비스 기획 10년' },
-    { name: '최디자인', role: 'Head of Design', desc: '전 토스 디자이너, 사용자 경험 전문가' },
+    { name: '박준호', role: 'CEO & 공동창업자', desc: '소프트웨어 엔지니어. 아버지의 30년 임상 경험을 AI 기술로 풀어내, 의사들의 진짜 문제를 해결합니다.' },
+    { name: '박선홍', role: '공동창업자 & 의료 자문', desc: '이비인후과 전문의 30년. 환자에게 정성을 다하고 싶었던 의사의 마음을 제품에 담습니다.' },
   ],
   en: [
-    { name: 'Dr. Kim', role: 'CEO & Co-founder', desc: 'Former Samsung Medical Center Internist' },
-    { name: 'Lee Tech', role: 'CTO & Co-founder', desc: 'Former Google AI Researcher, KAIST PhD' },
-    { name: 'Park Product', role: 'CPO', desc: 'Former Naver Healthcare PM, 10 years in medical services' },
-    { name: 'Choi Design', role: 'Head of Design', desc: 'Former Toss Designer, UX Expert' },
+    { name: 'Junho Park', role: 'CEO & Co-founder', desc: 'Software Engineer. Translating 30 years of clinical experience into AI technology to solve real problems for doctors.' },
+    { name: 'SeungHong Park', role: 'Co-founder & Medical Advisor', desc: 'ENT Specialist, 30 years. Bringing the heart of a doctor who wanted to give sincere care to every product decision.' },
   ],
 };
 
 const content = {
   ko: {
     badge: '회사 소개',
-    title: '의료의 미래를 만들어갑니다',
-    subtitle: 'ChartSok은 AI 기술로 의사들의 차트 작성 부담을 줄이고, 환자 진료에 더 집중할 수 있는 환경을 만듭니다.',
+    title: '아버지의 30년, 아들의 기술',
+    subtitle: '환자에게 정성을 다하고 싶었던 의사 아버지와, 그 꿈을 기술로 실현하려는 아들이 함께 만든 ChartSok입니다.',
     missionTitle: '우리의 미션',
-    missionText: '모든 의사가 행정 업무가 아닌 환자 치료에 집중할 수 있는 세상을 만듭니다. AI 기술을 통해 의료 현장의 비효율을 제거하고, 의료 서비스의 질을 높입니다.',
-    storyTitle: '우리의 이야기',
-    storyText1: '2023년, 내과 전문의 출신 CEO와 AI 전문가 CTO가 만나 ChartSok을 시작했습니다. 매일 2-3시간을 차트 작성에 쏟아야 했던 의사의 경험과, AI로 문제를 해결하고자 하는 엔지니어의 열정이 만났습니다.',
-    storyText2: '우리는 의사들이 환자를 진료하는 것을 사랑하면서도, 차트 작성에 지쳐가는 것을 보았습니다. 이 문제를 해결하기 위해, 음성 인식과 자연어 처리 기술을 결합한 AI 차트 솔루션을 개발했습니다.',
+    missionText: '모든 의사가 차트가 아닌 환자의 눈을 바라볼 수 있는 세상. 30년간 진료실에서 느꼈던 아쉬움을 기술로 해결하고, 의사와 환자 모두가 행복한 진료 환경을 만듭니다.',
+    storyTitle: '아버지와 아들의 이야기',
+    storyText1: '"아들아, 나는 30년간 환자들에게 정성을 다하고 싶었어. 그런데 차트 쓰는 시간이 너무 많았어. 환자 눈 보면서 이야기하고 싶은데, 컴퓨터 화면만 봐야 했거든." 이비인후과 전문의로 30년을 보낸 아버지의 말씀이었습니다.',
+    storyText2: '그 말을 들은 아들은 결심했습니다. 아버지처럼 환자에게 정성을 다하고 싶은 모든 의사들을 위해, 기술로 이 문제를 해결하겠다고. 그렇게 아버지와 아들이 함께 ChartSok을 시작했습니다. 아버지의 30년 임상 경험과 아들의 기술이 만나, 진짜 의사들에게 필요한 솔루션을 만들어갑니다.',
     valuesTitle: '핵심 가치',
-    statsTitle: '숫자로 보는 ChartSok',
-    teamTitle: '리더십 팀',
-    joinTitle: '함께 성장할 인재를 찾습니다',
-    joinText: 'ChartSok과 함께 의료의 미래를 만들어갈 열정 있는 분들을 기다립니다.',
+    statsTitle: 'ChartSok의 시작',
+    teamTitle: '창업 팀',
+    joinTitle: '함께 만들어가요',
+    joinText: '아버지와 아들의 작은 시작이지만, 함께할 동료를 찾습니다. 의료의 미래를 함께 만들어갈 열정 있는 분들을 기다립니다.',
     joinButton: '채용 공고 보기',
+    contactButton: '연락하기',
   },
   en: {
     badge: 'About Us',
-    title: 'Building the Future of Healthcare',
-    subtitle: 'ChartSok uses AI technology to reduce charting burden for doctors, allowing them to focus more on patient care.',
+    title: "A Father's 30 Years, A Son's Technology",
+    subtitle: 'ChartSok was born from a doctor father who wanted to give heartfelt care to patients, and a son who turned that dream into reality through technology.',
     missionTitle: 'Our Mission',
-    missionText: 'To create a world where every doctor can focus on patient care, not paperwork. We eliminate inefficiencies in healthcare through AI technology and improve the quality of medical services.',
-    storyTitle: 'Our Story',
-    storyText1: 'In 2023, our CEO, a former internist, met our CTO, an AI expert, and ChartSok was born. The experience of a doctor who had to spend 2-3 hours daily on charting met the passion of an engineer who wanted to solve problems with AI.',
-    storyText2: 'We saw doctors who loved treating patients but were exhausted by documentation. To solve this problem, we developed an AI chart solution combining speech recognition and natural language processing.',
+    missionText: "A world where every doctor can look into their patient's eyes instead of staring at charts. We solve the frustrations felt in clinics for 30 years through technology, creating a happier healthcare experience for both doctors and patients.",
+    storyTitle: 'A Father and Son Story',
+    storyText1: '"Son, for 30 years I wanted to give my patients heartfelt care. But I spent so much time writing charts. I wanted to talk to my patients while looking at them, but I had to stare at the computer screen." These were the words of my father, an ENT specialist for 30 years.',
+    storyText2: "Hearing those words, I made a decision. For all doctors who, like my father, want to give heartfelt care to their patients, I would solve this problem with technology. That's how my father and I started ChartSok together. With my father's 30 years of clinical experience and my technical skills, we're building a solution that doctors truly need.",
     valuesTitle: 'Core Values',
-    statsTitle: 'ChartSok by Numbers',
-    teamTitle: 'Leadership Team',
-    joinTitle: 'Join Our Team',
-    joinText: 'We are looking for passionate people to build the future of healthcare with ChartSok.',
+    statsTitle: 'The Beginning of ChartSok',
+    teamTitle: 'Founding Team',
+    joinTitle: "Let's Build Together",
+    joinText: "It started small with a father and son, but we're looking for teammates. We're waiting for passionate people to build the future of healthcare with us.",
     joinButton: 'View Open Positions',
+    contactButton: 'Contact Us',
   },
 };
 
@@ -386,47 +386,72 @@ export default function AboutPage() {
           >
             {t.teamTitle}
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={4} justifyContent="center">
             {currentTeam.map((member, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 5 }} key={index}>
                 <MotionBox
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ duration: 0.4, delay: index * 0.15 }}
+                  whileHover={{ y: -4 }}
                 >
                   <Card
                     elevation={0}
                     sx={{
-                      p: 3,
+                      p: 4,
                       textAlign: 'center',
                       border: '1px solid',
-                      borderColor: 'grey.200',
-                      borderRadius: 3,
+                      borderColor: index === 0 ? 'primary.main' : 'secondary.main',
+                      borderRadius: 4,
+                      background: index === 0
+                        ? 'linear-gradient(135deg, rgba(75, 156, 211, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%)'
+                        : 'linear-gradient(135deg, rgba(15, 42, 68, 0.02) 0%, rgba(30, 74, 111, 0.02) 100%)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: index === 0 ? 'primary.main' : 'secondary.main',
+                        boxShadow: index === 0
+                          ? '0 8px 30px rgba(75, 156, 211, 0.15)'
+                          : '0 8px 30px rgba(15, 42, 68, 0.15)',
+                      },
                     }}
                   >
                     <Avatar
                       sx={{
-                        width: 80,
-                        height: 80,
+                        width: 100,
+                        height: 100,
                         mx: 'auto',
-                        mb: 2,
-                        bgcolor: 'primary.main',
-                        fontSize: '1.5rem',
+                        mb: 3,
+                        bgcolor: index === 0 ? 'primary.main' : 'secondary.main',
+                        fontSize: '2rem',
                         fontWeight: 700,
+                        boxShadow: index === 0
+                          ? '0 4px 20px rgba(75, 156, 211, 0.3)'
+                          : '0 4px 20px rgba(15, 42, 68, 0.2)',
                       }}
                     >
                       {member.name.charAt(0)}
                     </Avatar>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                       {member.name}
                     </Typography>
+                    <Chip
+                      label={member.role}
+                      sx={{
+                        mb: 2,
+                        bgcolor: index === 0 ? 'primary.main' : 'secondary.main',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                      }}
+                    />
                     <Typography
                       variant="body2"
-                      sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                      sx={{
+                        color: 'text.secondary',
+                        lineHeight: 1.8,
+                        fontSize: '0.95rem',
+                      }}
                     >
-                      {member.role}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                       {member.desc}
                     </Typography>
                   </Card>
@@ -456,6 +481,25 @@ export default function AboutPage() {
               <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
                 {t.joinText}
               </Typography>
+              <Button
+                variant="outlined"
+                size="large"
+                href="/contact"
+                startIcon={<EmailIcon />}
+                sx={{
+                  color: 'white',
+                  borderColor: 'white',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  '&:hover': {
+                    borderColor: 'white',
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                {t.contactButton}
+              </Button>
             </Card>
           </Container>
         </Box>
