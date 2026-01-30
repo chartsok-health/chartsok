@@ -484,45 +484,60 @@ export default function TemplatesPage() {
                         />
                       )}
                     </CardContent>
-                    <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
-                      <Box>
-                        <Tooltip title={template.isDefault ? '기본 템플릿' : '기본으로 설정'}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleSetDefault(template)}
-                            sx={{ color: template.isDefault ? 'primary.main' : 'grey.400' }}
-                          >
-                            {template.isDefault ? <StarIcon /> : <StarBorderIcon />}
-                          </IconButton>
-                        </Tooltip>
-                        {!template.isSystem && (
-                          <Tooltip title="수정">
-                            <IconButton size="small" onClick={() => handleOpenDialog(template)}>
-                              <EditIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        <Tooltip title="복제">
-                          <IconButton size="small" onClick={() => handleDuplicateTemplate(template)}>
-                            <ContentCopyIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                      <Box>
-                        {!template.isSystem && (
-                          <Tooltip title="삭제">
+                    <CardActions sx={{ p: 2, pt: 0, flexDirection: 'column', gap: 1.5 }}>
+                      {/* Edit Button - prominent for user templates */}
+                      {!template.isSystem && (
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          startIcon={<EditIcon />}
+                          onClick={() => handleOpenDialog(template)}
+                          sx={{
+                            borderRadius: 2,
+                            borderColor: 'primary.200',
+                            color: 'primary.main',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              bgcolor: 'primary.50',
+                            },
+                          }}
+                        >
+                          템플릿 수정
+                        </Button>
+                      )}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                        <Box>
+                          <Tooltip title={template.isDefault ? '기본 템플릿' : '기본으로 설정'}>
                             <IconButton
                               size="small"
-                              onClick={() => {
-                                setTemplateToDelete(template);
-                                setDeleteDialogOpen(true);
-                              }}
-                              sx={{ color: 'error.main' }}
+                              onClick={() => handleSetDefault(template)}
+                              sx={{ color: template.isDefault ? 'primary.main' : 'grey.400' }}
                             >
-                              <DeleteIcon sx={{ fontSize: 18 }} />
+                              {template.isDefault ? <StarIcon /> : <StarBorderIcon />}
                             </IconButton>
                           </Tooltip>
-                        )}
+                          <Tooltip title="복제">
+                            <IconButton size="small" onClick={() => handleDuplicateTemplate(template)}>
+                              <ContentCopyIcon sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        <Box>
+                          {!template.isSystem && (
+                            <Tooltip title="삭제">
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setTemplateToDelete(template);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <DeleteIcon sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
                       </Box>
                     </CardActions>
                   </MotionCard>

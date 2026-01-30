@@ -14,7 +14,9 @@
       "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\Jpumk\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Development-chartsok\\\\tasks\\\\b8d90fa.output'' -Tail 30\")",
       "Bash(powershell:*)",
       "Bash(find:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(npx eslint:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

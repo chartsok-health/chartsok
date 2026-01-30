@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -42,6 +42,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import MicIcon from '@mui/icons-material/Mic';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionPaper = motion.create(Paper);
@@ -50,24 +52,35 @@ const MotionBox = motion.create(Box);
 
 // Mock history data
 const mockHistoryData = [
-  { id: '1', date: '2024-01-29', time: '14:30', duration: '5:23', diagnosis: '급성 편도염', icdCode: 'J03.9', patientAge: '32세', patientGender: '여' },
-  { id: '2', date: '2024-01-29', time: '11:15', duration: '8:45', diagnosis: '급성 기관지염', icdCode: 'J20.9', patientAge: '45세', patientGender: '남' },
-  { id: '3', date: '2024-01-28', time: '16:00', duration: '6:12', diagnosis: '본태성 고혈압', icdCode: 'I10', patientAge: '58세', patientGender: '남' },
-  { id: '4', date: '2024-01-28', time: '10:30', duration: '4:56', diagnosis: '알레르기성 비염', icdCode: 'J30.4', patientAge: '28세', patientGender: '여' },
-  { id: '5', date: '2024-01-27', time: '15:45', duration: '7:30', diagnosis: '급성 위장염', icdCode: 'K52.9', patientAge: '41세', patientGender: '남' },
-  { id: '6', date: '2024-01-27', time: '09:00', duration: '5:10', diagnosis: '편두통', icdCode: 'G43.9', patientAge: '35세', patientGender: '여' },
-  { id: '7', date: '2024-01-26', time: '14:00', duration: '6:45', diagnosis: '제2형 당뇨병', icdCode: 'E11', patientAge: '52세', patientGender: '남' },
-  { id: '8', date: '2024-01-26', time: '11:30', duration: '4:20', diagnosis: '급성 결막염', icdCode: 'H10.3', patientAge: '25세', patientGender: '여' },
+  { id: '1', patientId: 1, patientName: '김영희', date: '2024-01-29', time: '14:30', duration: '5:23', diagnosis: '급성 편도염', icdCode: 'J03.9', patientAge: '45세', patientGender: '여' },
+  { id: '2', patientId: 2, patientName: '박철수', date: '2024-01-29', time: '11:15', duration: '8:45', diagnosis: '급성 기관지염', icdCode: 'J20.9', patientAge: '62세', patientGender: '남' },
+  { id: '3', patientId: 4, patientName: '정대현', date: '2024-01-28', time: '16:00', duration: '6:12', diagnosis: '본태성 고혈압', icdCode: 'I10', patientAge: '58세', patientGender: '남' },
+  { id: '4', patientId: 3, patientName: '이민정', date: '2024-01-28', time: '10:30', duration: '4:56', diagnosis: '알레르기성 비염', icdCode: 'J30.4', patientAge: '33세', patientGender: '여' },
+  { id: '5', patientId: 6, patientName: '강민호', date: '2024-01-27', time: '15:45', duration: '7:30', diagnosis: '급성 위장염', icdCode: 'K52.9', patientAge: '51세', patientGender: '남' },
+  { id: '6', patientId: 7, patientName: '윤서연', date: '2024-01-27', time: '09:00', duration: '5:10', diagnosis: '편두통', icdCode: 'G43.9', patientAge: '39세', patientGender: '여' },
+  { id: '7', patientId: 2, patientName: '박철수', date: '2024-01-26', time: '14:00', duration: '6:45', diagnosis: '제2형 당뇨병', icdCode: 'E11', patientAge: '62세', patientGender: '남' },
+  { id: '8', patientId: 1, patientName: '김영희', date: '2024-01-26', time: '11:30', duration: '4:20', diagnosis: '급성 결막염', icdCode: 'H10.3', patientAge: '45세', patientGender: '여' },
+  { id: '9', patientId: 1, patientName: '김영희', date: '2024-01-25', time: '10:00', duration: '5:15', diagnosis: '고혈압', icdCode: 'I10', patientAge: '45세', patientGender: '여' },
+  { id: '10', patientId: 4, patientName: '정대현', date: '2024-01-24', time: '15:30', duration: '7:00', diagnosis: '관절염', icdCode: 'M13.9', patientAge: '58세', patientGender: '남' },
 ];
 
 export default function HistoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const patientIdParam = searchParams.get('patientId');
+  const patientNameParam = searchParams.get('patientName');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+
+  // Clear patient filter
+  const handleClearPatientFilter = () => {
+    router.push('/dashboard/history');
+  };
 
   const handleMenuOpen = (event, id) => {
     event.stopPropagation();
@@ -80,11 +93,18 @@ export default function HistoryPage() {
     setSelectedId(null);
   };
 
-  const filteredData = mockHistoryData.filter(
-    (item) =>
+  const filteredData = mockHistoryData.filter((item) => {
+    // Filter by patient if patientId is provided
+    if (patientIdParam && item.patientId !== parseInt(patientIdParam)) {
+      return false;
+    }
+    // Filter by search query
+    return (
       item.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.icdCode.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      item.icdCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.patientName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -112,13 +132,71 @@ export default function HistoryPage() {
         transition={{ duration: 0.5 }}
         sx={{ mb: 4 }}
       >
+        {/* Patient Filter Banner */}
+        {patientIdParam && patientNameParam && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 3,
+              borderRadius: 3,
+              bgcolor: 'primary.50',
+              border: '1px solid',
+              borderColor: 'primary.200',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  bgcolor: 'primary.100',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PersonIcon sx={{ color: 'primary.main' }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  {decodeURIComponent(patientNameParam)} 환자의 진료 기록
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  총 {filteredData.length}건의 진료 기록이 있습니다
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={handleClearPatientFilter}
+              sx={{
+                borderRadius: 2,
+                borderColor: 'primary.200',
+                color: 'primary.main',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: 'primary.100',
+                },
+              }}
+            >
+              전체 기록 보기
+            </Button>
+          </Paper>
+        )}
+
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 0.5 }}>
               진료 기록
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              과거 진료 내역을 조회하고 관리할 수 있습니다
+              {patientIdParam ? `${decodeURIComponent(patientNameParam || '')} 환자의 진료 내역` : '과거 진료 내역을 조회하고 관리할 수 있습니다'}
             </Typography>
           </Box>
           <Button
@@ -246,9 +324,9 @@ export default function HistoryPage() {
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>날짜</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>시간</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>환자</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>진단명</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>ICD 코드</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>환자</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>녹음 시간</TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
@@ -283,6 +361,26 @@ export default function HistoryPage() {
                       </Box>
                     </TableCell>
                     <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            background: row.patientGender === '여'
+                              ? 'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)'
+                              : 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                          }}
+                        >
+                          {row.patientName.charAt(0)}
+                        </Avatar>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {row.patientName}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {row.diagnosis}
                       </Typography>
@@ -294,22 +392,6 @@ export default function HistoryPage() {
                         variant="outlined"
                         sx={{ fontFamily: 'monospace', fontWeight: 600 }}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          sx={{
-                            width: 28,
-                            height: 28,
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            bgcolor: row.patientGender === '여' ? '#F472B6' : '#60A5FA',
-                          }}
-                        >
-                          {row.patientGender}
-                        </Avatar>
-                        <Typography variant="body2">{row.patientAge}</Typography>
-                      </Box>
                     </TableCell>
                     <TableCell>
                       <Chip

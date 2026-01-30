@@ -38,6 +38,8 @@ import FemaleIcon from '@mui/icons-material/Female';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import HistoryIcon from '@mui/icons-material/History';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
@@ -73,6 +75,7 @@ const CleanCard = ({ children, sx, ...props }) => (
 );
 
 export default function PatientsPage() {
+  const router = useRouter();
   const [patients, setPatients] = useState(initialPatients);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -422,40 +425,66 @@ export default function PatientsPage() {
                   </Box>
                 </CardContent>
 
-                <Box sx={{ px: 2.5, pb: 2, display: 'flex', gap: 1 }}>
+                <Box sx={{ px: 2.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {/* Prominent History Button */}
                   <Button
-                    size="small"
-                    startIcon={<VisibilityIcon />}
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<HistoryIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenDialog('view', patient);
+                      router.push(`/dashboard/history?patientId=${patient.id}&patientName=${encodeURIComponent(patient.name)}`);
                     }}
-                    sx={{ flex: 1, borderRadius: 1.5, fontSize: '0.75rem' }}
+                    sx={{
+                      borderRadius: 1.5,
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      borderColor: 'primary.200',
+                      color: 'primary.main',
+                      py: 0.75,
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'primary.50',
+                      },
+                    }}
                   >
-                    상세
+                    진료 기록 보기
                   </Button>
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenDialog('edit', patient);
-                    }}
-                    sx={{ flex: 1, borderRadius: 1.5, fontSize: '0.75rem' }}
-                  >
-                    수정
-                  </Button>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeletePatient(patient.id);
-                    }}
-                    sx={{ bgcolor: 'error.50' }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      size="small"
+                      startIcon={<VisibilityIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDialog('view', patient);
+                      }}
+                      sx={{ flex: 1, borderRadius: 1.5, fontSize: '0.75rem' }}
+                    >
+                      상세
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDialog('edit', patient);
+                      }}
+                      sx={{ flex: 1, borderRadius: 1.5, fontSize: '0.75rem' }}
+                    >
+                      수정
+                    </Button>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePatient(patient.id);
+                      }}
+                      sx={{ bgcolor: 'error.50' }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
               </MotionCard>
             </Grid>

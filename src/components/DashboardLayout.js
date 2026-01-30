@@ -13,13 +13,11 @@ import {
   Typography,
   Avatar,
   IconButton,
-  Divider,
   Chip,
   Tooltip,
   useMediaQuery,
   useTheme,
   Badge,
-  InputBase,
   Paper,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +36,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { useAuth } from '@/lib/AuthContext';
+import SearchModal from './SearchModal';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -48,7 +47,7 @@ const TOPBAR_HEIGHT = 64;
 
 const navItems = [
   { label: '대시보드', icon: DashboardIcon, path: '/dashboard', description: '홈' },
-  { label: '새 진료', icon: MicIcon, path: '/dashboard/record', badge: 'NEW', description: '녹음 시작' },
+  { label: '새 진료', icon: MicIcon, path: '/dashboard/record', description: '녹음 시작' },
   { label: '진료 기록', icon: HistoryIcon, path: '/dashboard/history', description: '기록 조회' },
   { label: '환자 관리', icon: PeopleIcon, path: '/dashboard/patients', description: '환자 목록' },
   { label: '의료진 관리', icon: LocalHospitalIcon, path: '/dashboard/doctors', description: '의료진 관리' },
@@ -75,9 +74,25 @@ export default function DashboardLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Keyboard shortcut for search (Cmd/Ctrl + K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handleLogout = async () => {
@@ -125,39 +140,28 @@ export default function DashboardLayout({ children }) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}
               onClick={() => router.push('/')}
             >
               <Box
                 sx={{
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1.5,
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 2,
                   bgcolor: '#56A3D9',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(86, 163, 217, 0.3)',
                 }}
               >
-                <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.75rem' }}>
+                <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>
                   차트쏙
                 </Typography>
               </Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+              <Typography sx={{ fontWeight: 700, color: 'secondary.main', fontSize: '1.1rem' }}>
                 chartsok
               </Typography>
-              <Chip
-                label="Beta"
-                size="small"
-                sx={{
-                  bgcolor: 'warning.main',
-                  color: 'white',
-                  fontWeight: 700,
-                  fontSize: '0.6rem',
-                  height: 16,
-                  '& .MuiChip-label': { px: 0.75 },
-                }}
-              />
             </MotionBox>
           ) : (
             <MotionBox
@@ -167,18 +171,22 @@ export default function DashboardLayout({ children }) {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               sx={{
-                px: 1,
-                py: 0.75,
-                borderRadius: 1.5,
+                width: 42,
+                height: 42,
+                minWidth: 42,
+                minHeight: 42,
+                borderRadius: '50%',
                 bgcolor: '#56A3D9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(86, 163, 217, 0.3)',
+                overflow: 'hidden',
               }}
               onClick={() => router.push('/')}
             >
-              <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.8rem' }}>
+              <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
                 쏙
               </Typography>
             </MotionBox>
@@ -187,7 +195,7 @@ export default function DashboardLayout({ children }) {
         {!isMobile && !collapsed && (
           <IconButton
             size="small"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => setCollapsed(true)}
             sx={{
               bgcolor: 'grey.100',
               '&:hover': { bgcolor: 'grey.200' },
@@ -343,6 +351,10 @@ export default function DashboardLayout({ children }) {
               <ListItemButton
                 component={motion.div}
                 whileHover={{ x: 4 }}
+                onClick={() => {
+                  router.push('/help');
+                  if (isMobile) setMobileOpen(false);
+                }}
                 sx={{
                   borderRadius: 2,
                   py: 1,
@@ -390,9 +402,10 @@ export default function DashboardLayout({ children }) {
           </ListItem>
         </List>
 
+
         {/* Expand button when collapsed */}
         {!isMobile && collapsed && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
             <IconButton
               size="small"
               onClick={() => setCollapsed(false)}
@@ -536,10 +549,13 @@ export default function DashboardLayout({ children }) {
             </Typography>
           </Box>
 
-          {/* Search Bar */}
+          {/* Search Bar - Click to open modal */}
           <MotionPaper
+            component={motion.div}
             whileHover={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+            whileTap={{ scale: 0.98 }}
             elevation={0}
+            onClick={() => setSearchOpen(true)}
             sx={{
               flex: 1,
               maxWidth: 400,
@@ -552,13 +568,18 @@ export default function DashboardLayout({ children }) {
               border: '1px solid',
               borderColor: 'grey.200',
               ml: 'auto',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              '&:hover': {
+                borderColor: 'primary.main',
+                bgcolor: 'grey.100',
+              },
             }}
           >
             <SearchIcon sx={{ color: 'grey.400', fontSize: 20, mr: 1 }} />
-            <InputBase
-              placeholder="환자, 진단명 검색..."
-              sx={{ flex: 1, fontSize: '0.85rem' }}
-            />
+            <Typography sx={{ flex: 1, fontSize: '0.85rem', color: 'grey.500' }}>
+              환자, 진단명 검색...
+            </Typography>
             <Box
               sx={{
                 display: 'flex',
@@ -611,6 +632,7 @@ export default function DashboardLayout({ children }) {
                 component={motion.button}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/help')}
                 sx={{
                   bgcolor: 'grey.50',
                   border: '1px solid',
@@ -635,6 +657,9 @@ export default function DashboardLayout({ children }) {
           {children}
         </Box>
       </Box>
+
+      {/* Global Search Modal */}
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </Box>
   );
 }
