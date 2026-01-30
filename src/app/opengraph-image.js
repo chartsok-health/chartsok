@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'ChartSok - AI 의료 차트 자동화';
+export const alt = 'chartsok - AI 의료 차트 자동화';
 export const size = {
   width: 1200,
   height: 630,
@@ -101,7 +101,7 @@ export default async function Image() {
           >
             {/* Logo */}
             <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '20px' }}>
-              <span style={{ fontSize: '72px', fontWeight: 'bold', color: 'white' }}>ChartSok</span>
+              <span style={{ fontSize: '72px', fontWeight: 'bold', color: 'white' }}>chartsok</span>
               <span style={{ fontSize: '48px', fontWeight: '500', color: '#4B9CD3', marginLeft: '16px' }}>차트쏙</span>
             </div>
 

@@ -97,7 +97,7 @@ export default function NotFound() {
               <AutoAwesomeIcon sx={{ color: 'white', fontSize: 24 }} />
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 800, color: '#1E3A5F' }}>
-              ChartSok
+              chartsok
             </Typography>
           </MotionBox>
 

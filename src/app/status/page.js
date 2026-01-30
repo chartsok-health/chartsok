@@ -30,7 +30,7 @@ const content = {
   ko: {
     badge: '시스템 상태',
     title: '서비스 상태',
-    subtitle: 'ChartSok 서비스의 실시간 상태를 확인하세요.',
+    subtitle: 'chartsok 서비스의 실시간 상태를 확인하세요.',
     allOperational: '모든 시스템 정상 작동 중',
     lastUpdated: '마지막 업데이트',
     uptime: '가동률',
@@ -63,7 +63,7 @@ const content = {
   en: {
     badge: 'System Status',
     title: 'Service Status',
-    subtitle: 'Check the real-time status of ChartSok services.',
+    subtitle: 'Check the real-time status of chartsok services.',
     allOperational: 'All Systems Operational',
     lastUpdated: 'Last Updated',
     uptime: 'Uptime',

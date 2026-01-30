@@ -32,7 +32,7 @@ const content = {
   ko: {
     badge: '문의하기',
     title: '무엇이든 물어보세요',
-    subtitle: 'ChartSok 팀이 빠르게 답변해 드리겠습니다. 제품 문의, 데모 예약, 파트너십 등 무엇이든 환영합니다.',
+    subtitle: 'chartsok 팀이 빠르게 답변해 드리겠습니다. 제품 문의, 데모 예약, 파트너십 등 무엇이든 환영합니다.',
     contactInfo: [
       {
         icon: EmailIcon,
@@ -77,7 +77,7 @@ const content = {
   en: {
     badge: 'Contact Us',
     title: 'Get in Touch',
-    subtitle: 'The ChartSok team will respond quickly. Product inquiries, demo bookings, partnerships - all welcome.',
+    subtitle: 'The chartsok team will respond quickly. Product inquiries, demo bookings, partnerships - all welcome.',
     contactInfo: [
       {
         icon: EmailIcon,

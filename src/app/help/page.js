@@ -37,7 +37,7 @@ const content = {
   ko: {
     badge: '도움말 센터',
     title: '무엇을 도와드릴까요?',
-    subtitle: 'ChartSok 사용에 필요한 모든 정보를 찾아보세요.',
+    subtitle: 'chartsok 사용에 필요한 모든 정보를 찾아보세요.',
     search: '질문이나 키워드를 검색하세요...',
     categories: [
       { icon: RocketLaunchIcon, title: '시작하기', desc: '처음 사용자를 위한 가이드', count: 8, color: '#4B9CD3' },
@@ -50,12 +50,12 @@ const content = {
     faqTitle: '자주 묻는 질문',
     faqs: [
       {
-        q: 'ChartSok은 어떤 EMR 시스템과 연동되나요?',
+        q: 'chartsok은 어떤 EMR 시스템과 연동되나요?',
         a: '국내 주요 EMR 시스템과의 연동을 준비하고 있습니다. REST API 직접 연동 또는 클립보드 복사 방식 모두 지원합니다. 사용하시는 EMR과의 연동 문의는 언제든 환영합니다.',
       },
       {
         q: '환자 정보는 안전하게 보호되나요?',
-        a: '네, ChartSok은 개인정보보호법, 의료법 등 국내 규정을 준수합니다. 모든 데이터는 AES-256 암호화로 보호되며, 안전한 클라우드 인프라에서 운영됩니다.',
+        a: '네, chartsok은 개인정보보호법, 의료법 등 국내 규정을 준수합니다. 모든 데이터는 AES-256 암호화로 보호되며, 안전한 클라우드 인프라에서 운영됩니다.',
       },
       {
         q: '녹음 파일은 어떻게 처리되나요?',
@@ -90,7 +90,7 @@ const content = {
   en: {
     badge: 'Help Center',
     title: 'How can we help you?',
-    subtitle: 'Find all the information you need to use ChartSok.',
+    subtitle: 'Find all the information you need to use chartsok.',
     search: 'Search questions or keywords...',
     categories: [
       { icon: RocketLaunchIcon, title: 'Getting Started', desc: 'Guide for new users', count: 8, color: '#4B9CD3' },
@@ -103,12 +103,12 @@ const content = {
     faqTitle: 'Frequently Asked Questions',
     faqs: [
       {
-        q: 'Which EMR systems does ChartSok integrate with?',
+        q: 'Which EMR systems does chartsok integrate with?',
         a: 'We are preparing integration with major Korean EMR systems. Both REST API direct integration and clipboard copy methods are supported. Contact us for EMR integration inquiries.',
       },
       {
         q: 'Is patient data secure?',
-        a: 'Yes, ChartSok complies with Korean privacy regulations including PIPA and Medical Service Act. All data is protected with AES-256 encryption and operated from secure cloud infrastructure.',
+        a: 'Yes, chartsok complies with Korean privacy regulations including PIPA and Medical Service Act. All data is protected with AES-256 encryption and operated from secure cloud infrastructure.',
       },
       {
         q: 'How are recordings handled?',

@@ -33,7 +33,7 @@ const content = {
   ko: {
     badge: 'EMR 연동',
     title: 'EMR 연동 지원',
-    subtitle: 'ChartSok은 다양한 EMR 시스템과의 연동을 지원합니다. 표준 API를 통해 기존 워크플로우에 자연스럽게 통합됩니다.',
+    subtitle: 'chartsok은 다양한 EMR 시스템과의 연동을 지원합니다. 표준 API를 통해 기존 워크플로우에 자연스럽게 통합됩니다.',
     emrSystems: [
       {
         name: '비트컴퓨터',
@@ -84,13 +84,13 @@ const content = {
     contactButton: '파트너십 문의',
     email: 'chartsok.health@gmail.com',
     customTitle: 'API 기반 연동',
-    customDesc: '자체 EMR 시스템을 운영하시나요? ChartSok의 REST API를 통해 직접 연동할 수 있습니다.',
+    customDesc: '자체 EMR 시스템을 운영하시나요? chartsok의 REST API를 통해 직접 연동할 수 있습니다.',
     customButton: 'API 문서 보기',
   },
   en: {
     badge: 'EMR Integration',
     title: 'EMR Integration Support',
-    subtitle: 'ChartSok supports integration with various EMR systems. Seamlessly integrate into your existing workflow through standard APIs.',
+    subtitle: 'chartsok supports integration with various EMR systems. Seamlessly integrate into your existing workflow through standard APIs.',
     emrSystems: [
       {
         name: 'BitComputer',
@@ -141,7 +141,7 @@ const content = {
     contactButton: 'Partnership Inquiry',
     email: 'chartsok.health@gmail.com',
     customTitle: 'API-Based Integration',
-    customDesc: 'Running your own EMR system? Integrate directly with ChartSok\'s REST API.',
+    customDesc: 'Running your own EMR system? Integrate directly with chartsok\'s REST API.',
     customButton: 'View API Docs',
   },
 };

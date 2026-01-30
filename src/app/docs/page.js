@@ -32,8 +32,8 @@ const MotionBox = motion.create(Box);
 const content = {
   ko: {
     badge: '개발자 문서',
-    title: 'ChartSok API',
-    subtitle: 'ChartSok의 강력한 API로 자체 시스템과 연동하세요. RESTful API와 Webhook을 지원합니다.',
+    title: 'chartsok API',
+    subtitle: 'chartsok의 강력한 API로 자체 시스템과 연동하세요. RESTful API와 Webhook을 지원합니다.',
     sections: [
       {
         icon: ApiIcon,
@@ -65,7 +65,7 @@ const content = {
       },
     ],
     quickStart: 'Quick Start',
-    quickStartDesc: '몇 분 안에 ChartSok API를 시작하세요.',
+    quickStartDesc: '몇 분 안에 chartsok API를 시작하세요.',
     steps: [
       { step: '1', title: 'API 키 발급', desc: '개발자 콘솔에서 API 키를 발급받습니다.' },
       { step: '2', title: '인증 설정', desc: 'API 키를 헤더에 포함하여 인증합니다.' },
@@ -83,8 +83,8 @@ const content = {
   },
   en: {
     badge: 'Developer Docs',
-    title: 'ChartSok API',
-    subtitle: 'Integrate with your own systems using ChartSok\'s powerful API. RESTful API and Webhooks supported.',
+    title: 'chartsok API',
+    subtitle: 'Integrate with your own systems using chartsok\'s powerful API. RESTful API and Webhooks supported.',
     sections: [
       {
         icon: ApiIcon,
@@ -116,7 +116,7 @@ const content = {
       },
     ],
     quickStart: 'Quick Start',
-    quickStartDesc: 'Get started with ChartSok API in minutes.',
+    quickStartDesc: 'Get started with chartsok API in minutes.',
     steps: [
       { step: '1', title: 'Get API Key', desc: 'Generate an API key from the developer console.' },
       { step: '2', title: 'Set Up Auth', desc: 'Include the API key in request headers.' },
@@ -279,7 +279,7 @@ export default function DocsPage() {
             }}
           >
             <Box component="pre" sx={{ m: 0, color: '#E2E8F0', fontSize: '0.875rem', lineHeight: 1.8 }}>
-{`// ChartSok API Example
+{`// chartsok API Example
 const response = await fetch('https://api.chartsok.com/v1/charts', {
   method: 'POST',
   headers: {

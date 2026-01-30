@@ -140,7 +140,7 @@ export default function DashboardLayout({ children }) {
                 <AutoAwesomeIcon sx={{ color: 'white', fontSize: 18 }} />
               </Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                ChartSok
+                chartsok
               </Typography>
               <Chip
                 label="Beta"

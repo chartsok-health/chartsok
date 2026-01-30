@@ -128,7 +128,7 @@ export default function LoginPage() {
                 mb: 1,
               }}
             >
-              ChartSok
+              chartsok
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
               로그인

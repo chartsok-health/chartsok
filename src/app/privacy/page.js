@@ -27,7 +27,7 @@ const content = {
     badge: '개인정보처리방침',
     title: '개인정보처리방침',
     lastUpdated: '최종 업데이트: 2026년 1월 1일',
-    intro: 'ChartSok(이하 "회사")은 이용자의 개인정보를 중요시하며, 「개인정보 보호법」 및 관련 법령을 준수하고 있습니다. 본 개인정보처리방침은 회사가 제공하는 서비스 이용과 관련하여 개인정보를 어떻게 수집, 이용, 보관, 파기하는지에 대해 설명합니다.',
+    intro: 'chartsok(이하 "회사")은 이용자의 개인정보를 중요시하며, 「개인정보 보호법」 및 관련 법령을 준수하고 있습니다. 본 개인정보처리방침은 회사가 제공하는 서비스 이용과 관련하여 개인정보를 어떻게 수집, 이용, 보관, 파기하는지에 대해 설명합니다.',
     sections: [
       {
         title: '1. 수집하는 개인정보 항목',
@@ -112,7 +112,7 @@ const content = {
     badge: 'Privacy Policy',
     title: 'Privacy Policy',
     lastUpdated: 'Last Updated: January 1, 2026',
-    intro: 'ChartSok (hereinafter "Company") values your privacy and complies with the Personal Information Protection Act and related regulations. This Privacy Policy explains how we collect, use, store, and dispose of personal information in connection with our services.',
+    intro: 'chartsok (hereinafter "Company") values your privacy and complies with the Personal Information Protection Act and related regulations. This Privacy Policy explains how we collect, use, store, and dispose of personal information in connection with our services.',
     sections: [
       {
         title: '1. Personal Information Collected',

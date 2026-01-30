@@ -370,7 +370,7 @@ const translations = {
       privacy: '개인정보처리방침',
       terms: '이용약관',
       security: '보안',
-      copyright: '© 2025 ChartSok. All rights reserved.',
+      copyright: '© 2025 chartsok. All rights reserved.',
       ceo: '대표자 박준호',
       address: '인천광역시 중구',
     },
@@ -395,7 +395,7 @@ const translations = {
       title: 'Focus on Care,',
       titleHighlight: 'AI Completes',
       titleEnd: 'Your Charts',
-      subtitle: 'From patient selection to EMR sync. ChartSok automates your entire charting workflow with specialty-specific AI assistants that generate accurate SOAP notes.',
+      subtitle: 'From patient selection to EMR sync. chartsok automates your entire charting workflow with specialty-specific AI assistants that generate accurate SOAP notes.',
       cta: 'Start for Free',
       demo: 'Watch Demo',
       badges: [
@@ -406,7 +406,7 @@ const translations = {
     },
     // Stats Section
     stats: {
-      title: 'ChartSok by Numbers',
+      title: 'chartsok by Numbers',
       items: [
         { value: '73', suffix: '%', label: 'Charting Time Saved' },
         { value: '98', suffix: '%', label: 'AI Accuracy Rate' },
@@ -609,7 +609,7 @@ const translations = {
     // Testimonials Section
     testimonials: {
       title: 'What Doctors Say',
-      subtitle: 'Real experiences from doctors using ChartSok',
+      subtitle: 'Real experiences from doctors using chartsok',
       items: [
         {
           quote: 'The time I spent charting after clinic virtually disappeared. Now I can see more patients and leave work earlier. The internal medicine AI creates excellent chronic disease management records.',
@@ -689,7 +689,7 @@ const translations = {
       items: [
         {
           question: 'Is patient data secure?',
-          answer: 'ChartSok complies with Korean privacy regulations including PIPA and Medical Service Act. All data is protected with AES-256 encryption and operated from secure cloud infrastructure.',
+          answer: 'chartsok complies with Korean privacy regulations including PIPA and Medical Service Act. All data is protected with AES-256 encryption and operated from secure cloud infrastructure.',
         },
         {
           question: 'Can it integrate with our EMR?',
@@ -716,7 +716,7 @@ const translations = {
     // CTA Section
     cta: {
       title: 'Get Started Today',
-      subtitle: 'Experience ChartSok\'s efficiency with a 14-day free trial.',
+      subtitle: 'Experience chartsok\'s efficiency with a 14-day free trial.',
       button: 'Start Free Trial',
       demo: 'Schedule Demo',
       note: 'No credit card required',
@@ -742,7 +742,7 @@ const translations = {
       privacy: 'Privacy Policy',
       terms: 'Terms of Service',
       security: 'Security',
-      copyright: '© 2025 ChartSok. All rights reserved.',
+      copyright: '© 2025 chartsok. All rights reserved.',
       ceo: 'CEO Junho Park',
       address: 'Incheon, South Korea',
     },

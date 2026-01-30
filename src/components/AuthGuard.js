@@ -59,7 +59,7 @@ export default function AuthGuard({ children }) {
         </MotionBox>
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main', mb: 0.5 }}>
-            ChartSok
+            chartsok
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             로딩 중...

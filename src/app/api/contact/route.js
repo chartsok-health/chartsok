@@ -15,16 +15,16 @@ export async function POST(request) {
       );
     }
 
-    // Send email to ChartSok
+    // Send email to chartsok
     const { data, error } = await resend.emails.send({
-      from: 'ChartSok Contact <onboarding@resend.dev>',
+      from: 'chartsok Contact <onboarding@resend.dev>',
       to: ['chartsok.health@gmail.com'],
       replyTo: email,
-      subject: `[ChartSok 문의] ${subject} - ${name}`,
+      subject: `[chartsok 문의] ${subject} - ${name}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%); padding: 30px; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">ChartSok 문의</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">chartsok 문의</h1>
           </div>
           <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
             <table style="width: 100%; border-collapse: collapse;">
@@ -57,7 +57,7 @@ ${message}
             </div>
           </div>
           <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
-            © 2025 ChartSok. 이 이메일은 웹사이트 문의 폼을 통해 발송되었습니다.
+            © 2025 chartsok. 이 이메일은 웹사이트 문의 폼을 통해 발송되었습니다.
           </div>
         </div>
       `,

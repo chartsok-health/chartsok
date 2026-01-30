@@ -201,7 +201,7 @@ export default function OnboardingPage() {
               </Box>
             </motion.div>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 2 }}>
-              ChartSok에 오신 것을 환영합니다!
+              chartsok에 오신 것을 환영합니다!
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: 500, mx: 'auto' }}>
               몇 가지 간단한 질문에 답해주시면, 선생님의 진료 환경에 맞게 최적화된 서비스를 제공해 드릴게요.
@@ -298,7 +298,7 @@ export default function OnboardingPage() {
               의료진 규모는 어떻게 되나요?
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              ChartSok을 사용할 의료진 수를 선택해 주세요
+              chartsok을 사용할 의료진 수를 선택해 주세요
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
               {practiceSizes.map((size, index) => {
@@ -463,7 +463,7 @@ export default function OnboardingPage() {
               설정이 완료되었습니다!
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-              이제 ChartSok의 모든 기능을 사용하실 수 있습니다.<br />
+              이제 chartsok의 모든 기능을 사용하실 수 있습니다.<br />
               대시보드로 이동합니다...
             </Typography>
             <CircularProgress size={24} />
@@ -518,7 +518,7 @@ export default function OnboardingPage() {
           <AutoAwesomeIcon sx={{ color: 'white', fontSize: 20 }} />
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-          ChartSok
+          chartsok
         </Typography>
       </Box>
 

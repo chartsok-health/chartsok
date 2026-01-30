@@ -31,8 +31,8 @@ const content = {
   ko: {
     badge: '채용',
     title: '함께 의료의 미래를 만들어요',
-    subtitle: 'ChartSok은 AI로 의료 현장을 혁신하고 있습니다. 열정 있는 분들과 함께 성장하고 싶습니다.',
-    whyJoin: '왜 ChartSok인가요?',
+    subtitle: 'chartsok은 AI로 의료 현장을 혁신하고 있습니다. 열정 있는 분들과 함께 성장하고 싶습니다.',
+    whyJoin: '왜 chartsok인가요?',
     benefits: [
       { icon: RocketLaunchIcon, title: '빠른 성장', desc: '스타트업의 역동적인 환경에서 빠르게 성장할 수 있습니다.' },
       { icon: FavoriteIcon, title: '의미 있는 일', desc: '의사들의 삶을 개선하고 환자 치료에 기여합니다.' },
@@ -101,8 +101,8 @@ const content = {
   en: {
     badge: 'Careers',
     title: 'Build the Future of Healthcare with Us',
-    subtitle: 'ChartSok is innovating healthcare with AI. We want to grow with passionate people.',
-    whyJoin: 'Why ChartSok?',
+    subtitle: 'chartsok is innovating healthcare with AI. We want to grow with passionate people.',
+    whyJoin: 'Why chartsok?',
     benefits: [
       { icon: RocketLaunchIcon, title: 'Fast Growth', desc: 'Grow rapidly in a dynamic startup environment.' },
       { icon: FavoriteIcon, title: 'Meaningful Work', desc: 'Improve doctors\' lives and contribute to patient care.' },

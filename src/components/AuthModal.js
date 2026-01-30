@@ -279,7 +279,7 @@ export default function AuthModal({ open, onClose, initialView = 'login' }) {
             다시 만나서 반가워요!
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            ChartSok 계정으로 로그인하세요
+            chartsok 계정으로 로그인하세요
           </Typography>
         </Box>
       </motion.div>
@@ -947,7 +947,7 @@ export default function AuthModal({ open, onClose, initialView = 'login' }) {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            ChartSok
+            chartsok
           </Typography>
         </Box>
       </motion.div>

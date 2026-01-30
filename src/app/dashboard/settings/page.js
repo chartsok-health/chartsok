@@ -148,7 +148,7 @@ export default function SettingsPage() {
               설정
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              ChartSok 환경을 개인화하세요
+              chartsok 환경을 개인화하세요
             </Typography>
           </Box>
           <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} sx={{ px: 3 }}>

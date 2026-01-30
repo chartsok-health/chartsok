@@ -153,7 +153,7 @@ export default function DashboardPage() {
                   안녕하세요, {displayName} 👋
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                  오늘 하루도 ChartSok과 함께 효율적인 진료를 시작하세요.
+                  오늘 하루도 chartsok과 함께 효율적인 진료를 시작하세요.
                   AI가 차트 작성을 도와드립니다.
                 </Typography>
               </Grid>

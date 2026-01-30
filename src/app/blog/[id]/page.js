@@ -29,7 +29,7 @@ const blogContent = {
     ko: {
       title: 'AI 의료 차트의 미래: 2025년 트렌드',
       category: 'AI 기술',
-      author: 'ChartSok 팀',
+      author: 'chartsok 팀',
       authorRole: '콘텐츠 팀',
       date: '2025년 1월 28일',
       readTime: '5분',
@@ -69,7 +69,7 @@ AI 의료 차트 기술은 의사들이 환자 진료에 더 집중할 수 있�
     en: {
       title: 'The Future of AI Medical Charting: 2025 Trends',
       category: 'AI Technology',
-      author: 'ChartSok Team',
+      author: 'chartsok Team',
       authorRole: 'Content Team',
       date: 'January 28, 2025',
       readTime: '5 min',
@@ -117,7 +117,7 @@ const defaultContent = {
 
 이 글의 상세 내용은 현재 준비 중입니다. 곧 업데이트될 예정이니 잠시만 기다려주세요.
 
-ChartSok 블로그에서는 AI 의료 기술, 효율적인 진료 방법, 그리고 의료 현장의 다양한 이야기를 전해드리고 있습니다.
+chartsok 블로그에서는 AI 의료 기술, 효율적인 진료 방법, 그리고 의료 현장의 다양한 이야기를 전해드리고 있습니다.
 
 ### 관련 주제
 - AI를 활용한 의료 기록 자동화
@@ -134,7 +134,7 @@ ChartSok 블로그에서는 AI 의료 기술, 효율적인 진료 방법, 그리
 
 The detailed content for this article is currently being prepared. Please check back soon.
 
-The ChartSok blog shares insights on AI medical technology, efficient clinical practices, and stories from the healthcare field.
+The chartsok blog shares insights on AI medical technology, efficient clinical practices, and stories from the healthcare field.
 
 ### Related Topics
 - Medical documentation automation with AI
@@ -153,8 +153,8 @@ const postMeta = {
     en: { title: 'Complete SOAP Chart Guide', category: 'Medical Guide', author: 'Dr. Kim', date: 'January 25, 2025', readTime: '8 min' },
   },
   'emr-integration-benefits': {
-    ko: { title: 'EMR 연동의 장점: 업무 효율 극대화하기', category: '제품 활용', author: 'ChartSok 팀', date: '2025년 1월 22일', readTime: '6분' },
-    en: { title: 'Benefits of EMR Integration', category: 'Product Tips', author: 'ChartSok Team', date: 'January 22, 2025', readTime: '6 min' },
+    ko: { title: 'EMR 연동의 장점: 업무 효율 극대화하기', category: '제품 활용', author: 'chartsok 팀', date: '2025년 1월 22일', readTime: '6분' },
+    en: { title: 'Benefits of EMR Integration', category: 'Product Tips', author: 'chartsok Team', date: 'January 22, 2025', readTime: '6 min' },
   },
   'voice-recognition-medical': {
     ko: { title: '의료 음성 인식 기술의 현재와 미래', category: 'AI 기술', author: '이기술 CTO', date: '2025년 1월 18일', readTime: '7분' },
@@ -165,8 +165,8 @@ const postMeta = {
     en: { title: 'Doctor Burnout Solution', category: 'Healthcare', author: 'Park, CPO', date: 'January 15, 2025', readTime: '5 min' },
   },
   'specialty-ai-comparison': {
-    ko: { title: '전문과별 AI 어시스턴트 비교', category: '제품 활용', author: 'ChartSok 팀', date: '2025년 1월 10일', readTime: '6분' },
-    en: { title: 'Specialty AI Assistants Compared', category: 'Product Tips', author: 'ChartSok Team', date: 'January 10, 2025', readTime: '6 min' },
+    ko: { title: '전문과별 AI 어시스턴트 비교', category: '제품 활용', author: 'chartsok 팀', date: '2025년 1월 10일', readTime: '6분' },
+    en: { title: 'Specialty AI Assistants Compared', category: 'Product Tips', author: 'chartsok Team', date: 'January 10, 2025', readTime: '6 min' },
   },
 };
 
@@ -193,8 +193,8 @@ export default function BlogPostPage() {
   const post = postData || {
     title: meta?.title || 'Blog Post',
     category: meta?.category || 'General',
-    author: meta?.author || 'ChartSok Team',
-    authorRole: 'ChartSok',
+    author: meta?.author || 'chartsok Team',
+    authorRole: 'chartsok',
     date: meta?.date || '2025',
     readTime: meta?.readTime || '5분',
     content: defaultData.content,

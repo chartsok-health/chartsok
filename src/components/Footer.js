@@ -86,7 +86,7 @@ export default function Footer() {
                 mb: 2,
               }}
             >
-              ChartSok
+              chartsok
               <Typography
                 component="span"
                 sx={{

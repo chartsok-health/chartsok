@@ -27,7 +27,7 @@ const content = {
     badge: '이용약관',
     title: '서비스 이용약관',
     lastUpdated: '최종 업데이트: 2026년 1월 1일',
-    intro: '본 약관은 ChartSok(이하 "회사")이 제공하는 AI 기반 의료 차트 작성 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임 사항을 규정함을 목적으로 합니다.',
+    intro: '본 약관은 chartsok(이하 "회사")이 제공하는 AI 기반 의료 차트 작성 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임 사항을 규정함을 목적으로 합니다.',
     sections: [
       {
         title: '제1조 (목적)',
@@ -128,7 +128,7 @@ const content = {
     badge: 'Terms of Service',
     title: 'Terms of Service',
     lastUpdated: 'Last Updated: January 1, 2026',
-    intro: 'These Terms of Service govern your use of ChartSok\'s AI-based medical charting service and establish the rights, obligations, and responsibilities between ChartSok ("Company") and users.',
+    intro: 'These Terms of Service govern your use of chartsok\'s AI-based medical charting service and establish the rights, obligations, and responsibilities between chartsok ("Company") and users.',
     sections: [
       {
         title: 'Article 1 (Purpose)',

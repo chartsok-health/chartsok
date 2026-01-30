@@ -130,7 +130,7 @@ export default function Header() {
     <Box sx={{ width: 300, height: '100%', bgcolor: 'white' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
         <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          ChartSok
+          chartsok
         </Typography>
         <IconButton onClick={handleDrawerToggle}>
           <CloseIcon />
@@ -300,7 +300,7 @@ export default function Header() {
                   cursor: 'pointer',
                 }}
               >
-                ChartSok
+                chartsok
                 <Chip
                   label="차트쏙"
                   size="small"

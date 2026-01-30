@@ -34,7 +34,7 @@ const content = {
   ko: {
     badge: '보안',
     title: '데이터 보안 원칙',
-    subtitle: '환자의 의료 정보를 안전하게 보호합니다. ChartSok은 의료 데이터 보안을 최우선으로 생각합니다.',
+    subtitle: '환자의 의료 정보를 안전하게 보호합니다. chartsok은 의료 데이터 보안을 최우선으로 생각합니다.',
     certifications: [
       { name: '개인정보보호법', desc: '대한민국 개인정보 보호법 준수' },
       { name: '의료법', desc: '의료 데이터 보호 규정 준수' },
@@ -133,7 +133,7 @@ const content = {
   en: {
     badge: 'Security',
     title: 'Data Security Principles',
-    subtitle: 'We protect patient medical information safely. ChartSok prioritizes medical data security.',
+    subtitle: 'We protect patient medical information safely. chartsok prioritizes medical data security.',
     certifications: [
       { name: 'PIPA', desc: 'Korea Personal Information Protection Act' },
       { name: 'Medical Act', desc: 'Medical data protection compliance' },
