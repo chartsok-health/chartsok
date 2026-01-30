@@ -35,6 +35,8 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardCommandKeyIcon from '@mui/icons-material/KeyboardCommandKey';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PeopleIcon from '@mui/icons-material/People';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -48,6 +50,8 @@ const navItems = [
   { label: '대시보드', icon: DashboardIcon, path: '/dashboard', description: '홈' },
   { label: '새 진료', icon: MicIcon, path: '/dashboard/record', badge: 'NEW', description: '녹음 시작' },
   { label: '진료 기록', icon: HistoryIcon, path: '/dashboard/history', description: '기록 조회' },
+  { label: '환자 관리', icon: PeopleIcon, path: '/dashboard/patients', description: '환자 목록' },
+  { label: '의료진 관리', icon: LocalHospitalIcon, path: '/dashboard/doctors', description: '의료진 관리' },
   { label: '설정', icon: SettingsIcon, path: '/dashboard/settings', description: '환경 설정' },
 ];
 
@@ -55,6 +59,8 @@ const pageInfo = {
   '/dashboard': { title: '대시보드', subtitle: '오늘의 진료 현황을 확인하세요' },
   '/dashboard/record': { title: '새 진료', subtitle: 'AI가 진료 내용을 실시간으로 기록합니다' },
   '/dashboard/history': { title: '진료 기록', subtitle: '과거 진료 내역을 조회하고 관리합니다' },
+  '/dashboard/patients': { title: '환자 관리', subtitle: '환자 목록을 조회하고 관리합니다' },
+  '/dashboard/doctors': { title: '의료진 관리', subtitle: '병원 의료진을 관리합니다' },
   '/dashboard/settings': { title: '설정', subtitle: '환경을 맞춤 설정하세요' },
 };
 
@@ -245,34 +251,43 @@ export default function DashboardLayout({ children }) {
                 <Tooltip title={collapsed ? item.label : ''} placement="right" arrow>
                   <ListItemButton
                     component={motion.div}
-                    whileHover={{ x: 4 }}
+                    whileHover={{ x: active ? 0 : 4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       router.push(item.path);
                       if (isMobile) setMobileOpen(false);
                     }}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: 2.5,
                       py: 1.25,
                       px: collapsed ? 1.5 : 2,
                       justifyContent: collapsed ? 'center' : 'flex-start',
-                      bgcolor: active ? 'primary.main' : 'transparent',
+                      background: active
+                        ? 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)'
+                        : 'transparent',
                       color: active ? 'white' : 'text.primary',
                       position: 'relative',
                       overflow: 'hidden',
+                      boxShadow: active
+                        ? '0 4px 15px rgba(75, 156, 211, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : 'none',
+                      backdropFilter: active ? 'blur(10px)' : 'none',
+                      border: active ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
                       '&:hover': {
-                        bgcolor: active ? 'primary.dark' : 'grey.100',
+                        background: active
+                          ? 'linear-gradient(135deg, #3A7BA8 0%, #2C5F7C 100%)'
+                          : 'rgba(0,0,0,0.04)',
                       },
                       '&::before': active ? {
                         content: '""',
                         position: 'absolute',
+                        top: 0,
                         left: 0,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: 4,
-                        height: '60%',
-                        bgcolor: 'white',
-                        borderRadius: '0 4px 4px 0',
+                        right: 0,
+                        height: '50%',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)',
+                        borderRadius: 'inherit',
+                        pointerEvents: 'none',
                       } : {},
                     }}
                   >

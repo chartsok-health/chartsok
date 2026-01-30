@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const translations = {
   ko: {
@@ -15,6 +15,7 @@ const translations = {
       login: '로그인',
       getStarted: '무료로 시작',
       startTrial: '14일 무료 체험',
+      dashboard: '대시보드 가기',
     },
     // Hero Section
     hero: {
@@ -26,7 +27,7 @@ const translations = {
       cta: '무료로 시작하기',
       demo: '데모 영상 보기',
       badges: [
-        { icon: 'security', text: 'HIPAA 준수' },
+        { icon: 'security', text: '데이터 보호' },
         { icon: 'speed', text: '실시간 처리' },
         { icon: 'ai', text: 'AI 정확도 98%' },
       ],
@@ -61,15 +62,15 @@ const translations = {
         },
         {
           title: '실시간 음성 녹음',
-          description: '진료 대화를 실시간으로 녹음하고 의학 용어를 정확하게 인식합니다.',
+          description: '진료 대화를 실시간으로 녹음하고 텍스트를 즉시 미리봅니다.',
           icon: 'mic',
-          features: ['의학 용어 특화 인식', '다중 화자 구분', '노이즈 필터링', '오프라인 녹음'],
+          features: ['실시간 텍스트 미리보기', 'AI 자동 화자 구분', '의학 용어 인식', '노이즈 필터링'],
         },
         {
-          title: 'AI SOAP 자동 생성',
-          description: '전문과별 맞춤 AI가 대화를 분석하여 정확한 SOAP 기록을 생성합니다.',
+          title: 'AI 화자 분석 & SOAP',
+          description: 'AI가 음성 특성으로 화자를 구분하고 SOAP 차트를 자동 생성합니다.',
           icon: 'ai',
-          features: ['전문과별 AI 모델', 'SOAP 자동 구조화', '진단 코드 추천', '이전 기록 참조'],
+          features: ['음성 특성 분석', '의사/환자 자동 구분', 'SOAP 자동 구조화', '전문과별 맞춤 AI'],
         },
         {
           title: '검토 및 편집',
@@ -108,14 +109,14 @@ const translations = {
           step: '03',
           title: '진료 녹음',
           description: '녹음 버튼을 누르고 환자와 대화합니다.',
-          detail: 'AI가 대화를 실시간으로 기록하고 의학 용어를 정확하게 인식합니다.',
+          detail: '실시간 미리보기로 대화 내용을 확인하세요. 녹음 종료 시 AI가 화자를 자동 구분합니다.',
           icon: 'mic',
         },
         {
           step: '04',
-          title: 'AI 차트 생성',
-          description: '진료 종료 후 AI가 SOAP 차트를 생성합니다.',
-          detail: '전문과별 맞춤 AI가 정확하고 체계적인 기록을 작성합니다.',
+          title: 'AI 화자 분석',
+          description: 'AI가 음성 특성으로 의사와 환자를 자동 구분합니다.',
+          detail: '목소리 특성을 분석하여 누가 말했는지 정확하게 식별하고 SOAP 차트를 생성합니다.',
           icon: 'ai',
         },
         {
@@ -316,11 +317,11 @@ const translations = {
       items: [
         {
           question: '환자 정보는 안전하게 보호되나요?',
-          answer: '차트쏙은 의료정보 보호법과 HIPAA를 준수합니다. 모든 데이터는 AES-256 암호화로 보호되며, 국내 인증 데이터센터에서 운영됩니다. 정기적인 보안 감사를 실시합니다.',
+          answer: '차트쏙은 개인정보보호법, 의료법 등 국내 규정을 준수합니다. 모든 데이터는 AES-256 암호화로 보호되며, 안전한 클라우드 인프라에서 운영됩니다.',
         },
         {
           question: '우리 병원 EMR과 연동할 수 있나요?',
-          answer: '네, 국내 주요 EMR 시스템(비트컴퓨터, 유비케어, 이지케어텍 등)과 호환됩니다. API 직접 연동 또는 클립보드 복사 방식 모두 지원합니다.',
+          answer: '국내 주요 EMR 시스템과의 연동을 준비하고 있습니다. REST API 직접 연동 또는 클립보드 복사 방식 모두 지원합니다. 연동 문의는 언제든 환영합니다.',
         },
         {
           question: '녹음 파일은 어떻게 처리되나요?',
@@ -370,7 +371,8 @@ const translations = {
       terms: '이용약관',
       security: '보안',
       copyright: '© 2025 ChartSok. All rights reserved.',
-      address: '서울특별시 강남구',
+      ceo: '대표자 박준호',
+      address: '인천광역시 중구',
     },
   },
   en: {
@@ -385,6 +387,7 @@ const translations = {
       login: 'Log In',
       getStarted: 'Get Started Free',
       startTrial: '14-Day Free Trial',
+      dashboard: 'Go to Dashboard',
     },
     // Hero Section
     hero: {
@@ -396,7 +399,7 @@ const translations = {
       cta: 'Start for Free',
       demo: 'Watch Demo',
       badges: [
-        { icon: 'security', text: 'HIPAA Compliant' },
+        { icon: 'security', text: 'Data Protection' },
         { icon: 'speed', text: 'Real-time Processing' },
         { icon: 'ai', text: '98% AI Accuracy' },
       ],
@@ -431,15 +434,15 @@ const translations = {
         },
         {
           title: 'Real-time Voice Recording',
-          description: 'Record consultations in real-time with accurate medical terminology recognition.',
+          description: 'Record consultations with instant live text preview as you speak.',
           icon: 'mic',
-          features: ['Medical terminology specialized', 'Multi-speaker detection', 'Noise filtering', 'Offline recording'],
+          features: ['Live text preview', 'AI auto speaker detection', 'Medical terminology recognition', 'Noise filtering'],
         },
         {
-          title: 'AI SOAP Generation',
-          description: 'Specialty-specific AI analyzes conversations to generate accurate SOAP notes.',
+          title: 'AI Speaker Analysis & SOAP',
+          description: 'AI identifies speakers by voice characteristics and auto-generates SOAP charts.',
           icon: 'ai',
-          features: ['Specialty-specific AI models', 'Auto SOAP structuring', 'Diagnosis code suggestions', 'Previous record reference'],
+          features: ['Voice characteristic analysis', 'Doctor/patient auto-detection', 'Auto SOAP structuring', 'Specialty-specific AI'],
         },
         {
           title: 'Review & Edit',
@@ -478,14 +481,14 @@ const translations = {
           step: '03',
           title: 'Record Consultation',
           description: 'Press record and have your conversation.',
-          detail: 'AI records in real-time and accurately recognizes medical terms.',
+          detail: 'See live preview as you speak. AI automatically identifies speakers when you stop.',
           icon: 'mic',
         },
         {
           step: '04',
-          title: 'AI Chart Generation',
-          description: 'AI generates SOAP chart after the visit.',
-          detail: 'Specialty-specific AI creates accurate, structured documentation.',
+          title: 'AI Speaker Analysis',
+          description: 'AI distinguishes doctor and patient by voice characteristics.',
+          detail: 'Voice analysis accurately identifies who said what, then generates SOAP chart.',
           icon: 'ai',
         },
         {
@@ -686,11 +689,11 @@ const translations = {
       items: [
         {
           question: 'Is patient data secure?',
-          answer: 'ChartSok complies with healthcare privacy regulations and HIPAA. All data is protected with AES-256 encryption and operated from certified data centers with regular security audits.',
+          answer: 'ChartSok complies with Korean privacy regulations including PIPA and Medical Service Act. All data is protected with AES-256 encryption and operated from secure cloud infrastructure.',
         },
         {
           question: 'Can it integrate with our EMR?',
-          answer: 'Yes, we\'re compatible with major Korean EMR systems (BitComputer, Ubicare, EasyCare Tech, etc.). We support both direct API integration and clipboard copy methods.',
+          answer: 'We are preparing integration with major Korean EMR systems. We support both REST API integration and clipboard copy methods. Contact us for integration inquiries.',
         },
         {
           question: 'How are recordings handled?',
@@ -740,7 +743,8 @@ const translations = {
       terms: 'Terms of Service',
       security: 'Security',
       copyright: '© 2025 ChartSok. All rights reserved.',
-      address: 'Seoul, South Korea',
+      ceo: 'CEO Junho Park',
+      address: 'Incheon, South Korea',
     },
   },
 };
@@ -749,6 +753,36 @@ const I18nContext = createContext();
 
 export function I18nProvider({ children }) {
   const [locale, setLocale] = useState('ko');
+  const [isLocaleDetected, setIsLocaleDetected] = useState(false);
+
+  // Detect user's country based on IP and set locale
+  useEffect(() => {
+    const detectCountry = async () => {
+      // Skip if locale was already manually set by user
+      if (isLocaleDetected) return;
+
+      try {
+        // Use ipapi.co for free IP geolocation
+        const response = await fetch('https://ipapi.co/json/', {
+          signal: AbortSignal.timeout(3000), // 3 second timeout
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Set Korean for users in South Korea, English for everywhere else
+          const detectedLocale = data.country_code === 'KR' ? 'ko' : 'en';
+          setLocale(detectedLocale);
+        }
+      } catch (error) {
+        // On error (timeout, network issue, etc.), keep default locale (ko)
+        console.log('Could not detect location, using default locale');
+      } finally {
+        setIsLocaleDetected(true);
+      }
+    };
+
+    detectCountry();
+  }, [isLocaleDetected]);
 
   const t = useCallback(
     (key) => {
@@ -763,6 +797,7 @@ export function I18nProvider({ children }) {
   );
 
   const toggleLocale = useCallback(() => {
+    setIsLocaleDetected(true); // Mark as user-set to prevent IP override
     setLocale((prev) => (prev === 'ko' ? 'en' : 'ko'));
   }, []);
 

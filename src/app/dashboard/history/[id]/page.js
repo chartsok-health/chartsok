@@ -172,26 +172,27 @@ export default function HistoryDetailPage() {
         </Box>
       </MotionBox>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
         {/* Left: Transcription */}
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <MotionPaper
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             elevation={0}
             sx={{
-              borderRadius: 4,
+              borderRadius: 3,
               border: '1px solid',
               borderColor: 'grey.200',
-              height: { lg: 'calc(100vh - 280px)' },
+              height: '100%',
+              minHeight: { lg: 600 },
               display: 'flex',
               flexDirection: 'column',
             }}
           >
-            <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                   녹음 내용
                 </Typography>
                 <Tooltip title="녹음 재생">
@@ -206,77 +207,82 @@ export default function HistoryDetailPage() {
             </Box>
 
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              {mockDetailData.transcription.map((item, index) => (
-                <MotionBox
-                  key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  sx={{ mb: 2 }}
-                >
-                  <Card
-                    elevation={0}
-                    sx={{
-                      bgcolor: item.speaker === '의사' ? 'primary.50' : 'grey.50',
-                      border: '1px solid',
-                      borderColor: item.speaker === '의사' ? 'primary.100' : 'grey.200',
-                      borderRadius: 2,
-                    }}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {mockDetailData.transcription.map((item, index) => (
+                  <MotionBox
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
                   >
-                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Box
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: 1,
-                            bgcolor: item.speaker === '의사' ? 'primary.main' : 'grey.400',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {item.speaker === '의사' ? (
-                            <LocalHospitalIcon sx={{ fontSize: 14, color: 'white' }} />
-                          ) : (
-                            <PersonIcon sx={{ fontSize: 14, color: 'white' }} />
-                          )}
+                    <Card
+                      elevation={0}
+                      sx={{
+                        bgcolor: item.speaker === '의사' ? '#EBF5FF' : 'grey.50',
+                        border: '1px solid',
+                        borderColor: item.speaker === '의사' ? '#C3DCF5' : 'grey.200',
+                        borderRadius: 2,
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: 1,
+                              bgcolor: item.speaker === '의사' ? '#4B9CD3' : 'grey.400',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {item.speaker === '의사' ? (
+                              <LocalHospitalIcon sx={{ fontSize: 12, color: 'white' }} />
+                            ) : (
+                              <PersonIcon sx={{ fontSize: 12, color: 'white' }} />
+                            )}
+                          </Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: item.speaker === '의사' ? '#4B9CD3' : 'text.secondary' }}>
+                            {item.speaker}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'grey.400', ml: 'auto', fontSize: '0.7rem' }}>
+                            {item.timestamp}
+                          </Typography>
                         </Box>
-                        <Typography variant="caption" sx={{ fontWeight: 700, color: item.speaker === '의사' ? 'primary.main' : 'text.secondary' }}>
-                          {item.speaker}
+                        <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.5, fontSize: '0.85rem' }}>
+                          {item.text}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'grey.400', ml: 'auto' }}>
-                          {item.timestamp}
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>
-                        {item.text}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </MotionBox>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </MotionBox>
+                ))}
+              </Box>
             </Box>
           </MotionPaper>
         </Grid>
 
         {/* Right: SOAP Chart */}
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <MotionPaper
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
             elevation={0}
             sx={{
-              borderRadius: 4,
+              borderRadius: 3,
               border: '1px solid',
               borderColor: 'grey.200',
+              height: '100%',
+              minHeight: { lg: 600 },
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                     SOAP 차트
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -284,8 +290,8 @@ export default function HistoryDetailPage() {
                       <Box
                         key={s.key}
                         sx={{
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           borderRadius: 1,
                           bgcolor: s.bgColor,
                           display: 'flex',
@@ -293,7 +299,7 @@ export default function HistoryDetailPage() {
                           justifyContent: 'center',
                         }}
                       >
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: s.color }}>
+                        <Typography variant="caption" sx={{ fontWeight: 800, color: s.color, fontSize: '0.7rem' }}>
                           {s.label}
                         </Typography>
                       </Box>
@@ -311,77 +317,77 @@ export default function HistoryDetailPage() {
               </Box>
             </Box>
 
-            <Box sx={{ p: 3 }}>
-              <Grid container spacing={3}>
+            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {soapSections.map((section, index) => (
-                  <Grid size={{ xs: 12 }} key={section.key}>
-                    <MotionBox
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
-                    >
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        {/* Label */}
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 2,
-                            bgcolor: section.bgColor,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <Typography variant="h5" sx={{ fontWeight: 800, color: section.color }}>
-                            {section.label}
-                          </Typography>
-                        </Box>
-
-                        {/* Content */}
-                        <Box sx={{ flex: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: section.color }}>
-                              {section.fullLabel}
-                            </Typography>
-                            <Tooltip title="복사">
-                              <IconButton size="small" onClick={() => handleCopy(soapData[section.key])}>
-                                <ContentCopyIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                          {isEditing ? (
-                            <TextField
-                              fullWidth
-                              multiline
-                              minRows={3}
-                              value={soapData[section.key]}
-                              onChange={(e) => setSoapData((prev) => ({ ...prev, [section.key]: e.target.value }))}
-                              sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'grey.50' } }}
-                            />
-                          ) : (
-                            <Paper
-                              elevation={0}
-                              sx={{
-                                p: 2,
-                                bgcolor: 'grey.50',
-                                borderRadius: 2,
-                                border: '1px solid',
-                                borderColor: 'grey.200',
-                              }}
-                            >
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-line', lineHeight: 1.8 }}>
-                                {soapData[section.key]}
-                              </Typography>
-                            </Paper>
-                          )}
-                        </Box>
+                  <MotionBox
+                    key={section.key}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+                  >
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      {/* Label */}
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 2,
+                          bgcolor: section.bgColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 800, color: section.color }}>
+                          {section.label}
+                        </Typography>
                       </Box>
-                    </MotionBox>
-                  </Grid>
+
+                      {/* Content */}
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: section.color }}>
+                            {section.fullLabel}
+                          </Typography>
+                          <Tooltip title="복사">
+                            <IconButton size="small" onClick={() => handleCopy(soapData[section.key])}>
+                              <ContentCopyIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        {isEditing ? (
+                          <TextField
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            value={soapData[section.key]}
+                            onChange={(e) => setSoapData((prev) => ({ ...prev, [section.key]: e.target.value }))}
+                            size="small"
+                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'grey.50' } }}
+                          />
+                        ) : (
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              bgcolor: 'grey.50',
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: 'grey.200',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-line', lineHeight: 1.7, fontSize: '0.85rem' }}>
+                              {soapData[section.key]}
+                            </Typography>
+                          </Paper>
+                        )}
+                      </Box>
+                    </Box>
+                  </MotionBox>
                 ))}
-              </Grid>
+              </Box>
             </Box>
           </MotionPaper>
         </Grid>

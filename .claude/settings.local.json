@@ -10,7 +10,9 @@
       "WebFetch(domain:www.askotter.ai)",
       "Bash(curl:*)",
       "Bash(timeout /t 5 /nobreak)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\Jpumk\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Development-chartsok\\\\tasks\\\\b8d90fa.output'' -Tail 30\")",
+      "Bash(powershell:*)"
     ]
   }
 }

@@ -1,9 +1,7 @@
 'use client';
 
 import { Box, Container, Typography, Grid, Link, Divider, IconButton, Stack } from '@mui/material';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import YouTubeIcon from '@mui/icons-material/YouTube';
+import NextLink from 'next/link';
 import EmailIcon from '@mui/icons-material/Email';
 import { useI18n } from '@/lib/i18n';
 
@@ -12,6 +10,10 @@ export default function Footer() {
 
   const scrollToSection = (id) => {
     if (!id || id === '#') return;
+    if (id.startsWith('/')) {
+      // It's a page link, not a section
+      return;
+    }
     const sectionId = id.replace('#', '');
     const element = document.getElementById(sectionId);
     if (element) {
@@ -30,35 +32,35 @@ export default function Footer() {
     {
       title: t('footer.product'),
       links: [
-        { label: t('footer.features'), href: '#features' },
-        { label: t('footer.pricing'), href: '#pricing' },
-        { label: t('footer.demo'), href: '#demo' },
-        { label: t('footer.integrations'), href: '#' },
+        { label: t('footer.features'), href: '#features', isSection: true },
+        { label: t('footer.pricing'), href: '#pricing', isSection: true },
+        { label: t('footer.demo'), href: '#demo', isSection: true },
+        { label: t('footer.integrations'), href: '/integrations', isSection: false },
       ],
     },
     {
       title: t('footer.company'),
       links: [
-        { label: t('footer.about'), href: '#' },
-        { label: t('footer.careers'), href: '#' },
-        { label: t('footer.blog'), href: '#' },
-        { label: t('footer.contact'), href: '#contact' },
+        { label: t('footer.about'), href: '/about', isSection: false },
+        { label: t('footer.careers'), href: '/careers', isSection: false },
+        { label: t('footer.blog'), href: '/blog', isSection: false },
+        { label: t('footer.contact'), href: '/contact', isSection: false },
       ],
     },
     {
       title: t('footer.support'),
       links: [
-        { label: t('footer.help'), href: '#' },
-        { label: t('footer.docs'), href: '#' },
-        { label: t('footer.status'), href: '#' },
+        { label: t('footer.help'), href: '/help', isSection: false },
+        { label: t('footer.docs'), href: '/docs', isSection: false },
+        { label: t('footer.status'), href: '/status', isSection: false },
       ],
     },
     {
       title: t('footer.legal'),
       links: [
-        { label: t('footer.privacy'), href: '#' },
-        { label: t('footer.terms'), href: '#' },
-        { label: t('footer.security'), href: '#' },
+        { label: t('footer.privacy'), href: '/privacy', isSection: false },
+        { label: t('footer.terms'), href: '/terms', isSection: false },
+        { label: t('footer.security'), href: '/security', isSection: false },
       ],
     },
   ];
@@ -108,28 +110,22 @@ export default function Footer() {
               {t('footer.description')}
             </Typography>
 
-            {/* Social links */}
+            {/* Email link */}
             <Stack direction="row" spacing={1}>
-              {[
-                { icon: <LinkedInIcon />, label: 'LinkedIn' },
-                { icon: <TwitterIcon />, label: 'Twitter' },
-                { icon: <YouTubeIcon />, label: 'YouTube' },
-                { icon: <EmailIcon />, label: 'Email' },
-              ].map((social) => (
-                <IconButton
-                  key={social.label}
-                  size="small"
-                  sx={{
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    '&:hover': {
-                      color: 'primary.main',
-                      bgcolor: 'rgba(75, 156, 211, 0.1)',
-                    },
-                  }}
-                >
-                  {social.icon}
-                </IconButton>
-              ))}
+              <IconButton
+                size="small"
+                component="a"
+                href="mailto:chartsok.health@gmail.com"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: 'rgba(75, 156, 211, 0.1)',
+                  },
+                }}
+              >
+                <EmailIcon />
+              </IconButton>
             </Stack>
           </Grid>
 
@@ -152,28 +148,46 @@ export default function Footer() {
               <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
                 {section.links.map((link) => (
                   <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
-                    <Link
-                      component="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        scrollToSection(link.href);
-                      }}
-                      sx={{
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        textDecoration: 'none',
-                        fontSize: '0.875rem',
-                        transition: 'color 0.2s ease',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                        '&:hover': {
-                          color: 'primary.main',
-                        },
-                      }}
-                    >
-                      {link.label}
-                    </Link>
+                    {link.isSection ? (
+                      <Link
+                        component="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          scrollToSection(link.href);
+                        }}
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          textDecoration: 'none',
+                          fontSize: '0.875rem',
+                          transition: 'color 0.2s ease',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                          '&:hover': {
+                            color: 'primary.main',
+                          },
+                        }}
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <Link
+                        component={NextLink}
+                        href={link.href}
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          textDecoration: 'none',
+                          fontSize: '0.875rem',
+                          transition: 'color 0.2s ease',
+                          '&:hover': {
+                            color: 'primary.main',
+                          },
+                        }}
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </Box>
                 ))}
               </Box>
@@ -200,15 +214,17 @@ export default function Footer() {
           >
             {t('footer.copyright')}
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'rgba(255, 255, 255, 0.4)',
-              fontSize: '0.8rem',
-            }}
-          >
-            {t('footer.address')}
-          </Typography>
+          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontSize: '0.8rem',
+              }}
+            >
+              {t('footer.ceo')} | {t('footer.address')}
+            </Typography>
+          </Box>
         </Box>
       </Container>
     </Box>

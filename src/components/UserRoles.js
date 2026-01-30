@@ -34,7 +34,7 @@ export default function UserRoles() {
         bgcolor: 'white',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         {/* Section Header */}
         <MotionBox
           initial={{ opacity: 0, y: 20 }}

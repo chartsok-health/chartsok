@@ -6,12 +6,14 @@ import { motion } from 'framer-motion';
 import CheckIcon from '@mui/icons-material/Check';
 import StarIcon from '@mui/icons-material/Star';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
 export default function Pricing() {
   const { t, locale } = useI18n();
+  const { user } = useAuth();
   const [isYearly, setIsYearly] = useState(false);
   const plans = t('pricing.plans');
 
@@ -227,6 +229,7 @@ export default function Pricing() {
                       variant="outlined"
                       fullWidth
                       size="large"
+                      href={user ? '/dashboard' : '/auth/signup'}
                       sx={{
                         mb: 3,
                         py: 1.5,
@@ -243,13 +246,14 @@ export default function Pricing() {
                         },
                       }}
                     >
-                      {plan.cta}
+                      {user ? t('nav.dashboard') : plan.cta}
                     </Button>
                   ) : (
                     <Button
                       variant="outlined"
                       fullWidth
                       size="large"
+                      href={user ? '/dashboard' : '/auth/signup'}
                       sx={{
                         mb: 3,
                         py: 1.5,
@@ -265,7 +269,7 @@ export default function Pricing() {
                         },
                       }}
                     >
-                      {plan.cta}
+                      {user ? t('nav.dashboard') : plan.cta}
                     </Button>
                   )}
 

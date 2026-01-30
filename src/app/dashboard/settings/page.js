@@ -21,21 +21,78 @@ import {
   Card,
   CardContent,
   Divider,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from '@mui/icons-material/Person';
-import SettingsIcon from '@mui/icons-material/Settings';
 import DescriptionIcon from '@mui/icons-material/Description';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import KeyIcon from '@mui/icons-material/Key';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '@/lib/AuthContext';
 
-const MotionBox = motion.create(Box);
-const MotionPaper = motion.create(Paper);
+// Move components outside to prevent remounting on state changes
+const SettingSection = ({ icon: Icon, title, description, children, color = '#4B9CD3' }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      borderRadius: 4,
+      border: '1px solid',
+      borderColor: 'grey.200',
+      overflow: 'hidden',
+    }}
+  >
+    <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100', bgcolor: 'grey.50' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 2,
+            bgcolor: `${color}15`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon sx={{ color, fontSize: 22 }} />
+        </Box>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+            {title}
+          </Typography>
+          {description && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {description}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
+    <Box sx={{ p: 3 }}>{children}</Box>
+  </Paper>
+);
+
+const ToggleSetting = ({ label, description, checked, onChange }) => (
+  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', py: 1.5 }}>
+    <Box sx={{ pr: 2 }}>
+      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+        {label}
+      </Typography>
+      {description && (
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
+          {description}
+        </Typography>
+      )}
+    </Box>
+    <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />
+  </Box>
+);
+
+const specialties = ['내과', '이비인후과', '정형외과', '피부과', '소아과', '정신건강의학과', '가정의학과', '신경과', '외과', '기타'];
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -55,8 +112,10 @@ export default function SettingsPage() {
     speakerDetection: true,
     autoCorrect: true,
     medicalTerms: true,
-    apiKey: '',
   });
+
+  const [customTerms, setCustomTerms] = useState(['급성 편도염', '상기도 감염', '고혈압', '당뇨병']);
+  const [newTerm, setNewTerm] = useState('');
 
   const handleChange = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -66,77 +125,23 @@ export default function SettingsPage() {
     setSnackbar({ open: true, message: '설정이 저장되었습니다', severity: 'success' });
   };
 
-  const specialties = ['내과', '이비인후과', '정형외과', '피부과', '소아과', '정신건강의학과', '가정의학과', '신경과', '외과', '기타'];
+  const handleAddTerm = () => {
+    if (newTerm.trim() && !customTerms.includes(newTerm.trim())) {
+      setCustomTerms([...customTerms, newTerm.trim()]);
+      setNewTerm('');
+      setSnackbar({ open: true, message: '용어가 추가되었습니다', severity: 'success' });
+    }
+  };
 
-  const SettingSection = ({ icon: Icon, title, description, children, color = '#4B9CD3', delay = 0 }) => (
-    <MotionPaper
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      elevation={0}
-      sx={{
-        borderRadius: 4,
-        border: '1px solid',
-        borderColor: 'grey.200',
-        overflow: 'hidden',
-      }}
-    >
-      <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100', bgcolor: 'grey.50' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2,
-              bgcolor: `${color}15`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon sx={{ color, fontSize: 22 }} />
-          </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-              {title}
-            </Typography>
-            {description && (
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {description}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      </Box>
-      <Box sx={{ p: 3 }}>{children}</Box>
-    </MotionPaper>
-  );
-
-  const ToggleSetting = ({ label, description, checked, onChange }) => (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', py: 1.5 }}>
-      <Box sx={{ pr: 2 }}>
-        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-          {label}
-        </Typography>
-        {description && (
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
-            {description}
-          </Typography>
-        )}
-      </Box>
-      <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />
-    </Box>
-  );
+  const handleDeleteTerm = (termToDelete) => {
+    setCustomTerms(customTerms.filter((term) => term !== termToDelete));
+    setSnackbar({ open: true, message: '용어가 삭제되었습니다', severity: 'info' });
+  };
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1000, mx: 'auto' }}>
       {/* Header */}
-      <MotionBox
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        sx={{ mb: 4 }}
-      >
+      <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 0.5 }}>
@@ -150,7 +155,7 @@ export default function SettingsPage() {
             저장하기
           </Button>
         </Box>
-      </MotionBox>
+      </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Profile Settings */}
@@ -275,41 +280,72 @@ export default function SettingsPage() {
           />
         </SettingSection>
 
-        {/* API Settings */}
+        {/* Custom Terms Settings */}
         <SettingSection
-          icon={KeyIcon}
-          title="API 설정"
-          description="AI 기능 사용을 위한 API 키 설정"
-          color="#F59E0B"
+          icon={LocalOfferIcon}
+          title="자주 사용하는 용어"
+          description="AI가 더 정확하게 인식할 의학 용어를 추가하세요"
+          color="#8B5CF6"
           delay={0.4}
         >
-          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-            OpenAI API 키를 설정하면 실제 AI 음성 인식 및 차트 생성 기능을 사용할 수 있습니다.
-          </Alert>
-          <TextField
-            fullWidth
-            label="OpenAI API Key"
-            type="password"
-            value={settings.apiKey}
-            onChange={(e) => handleChange('apiKey', e.target.value)}
-            placeholder="sk-..."
-            helperText="API 키는 안전하게 암호화되어 저장됩니다"
-          />
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            {settings.apiKey ? (
+          <Box sx={{ display: 'flex', gap: 1, mb: 2.5, alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              placeholder="용어 입력 후 Enter"
+              value={newTerm}
+              onChange={(e) => setNewTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTerm()}
+              size="small"
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleAddTerm}
+                        size="small"
+                        disabled={!newTerm.trim()}
+                        sx={{
+                          bgcolor: newTerm.trim() ? '#8B5CF6' : 'transparent',
+                          color: newTerm.trim() ? 'white' : 'grey.400',
+                          '&:hover': { bgcolor: newTerm.trim() ? '#7C3AED' : 'transparent' },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'grey.50',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {customTerms.map((term) => (
               <Chip
-                icon={<CheckCircleIcon />}
-                label="API 키 설정됨"
-                color="success"
-                size="small"
+                key={term}
+                label={term}
+                onDelete={() => handleDeleteTerm(term)}
+                deleteIcon={<CloseIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  bgcolor: '#EDE9FE',
+                  color: '#5B21B6',
+                  fontWeight: 500,
+                  '& .MuiChip-deleteIcon': {
+                    color: '#7C3AED',
+                    '&:hover': { color: '#5B21B6' },
+                  },
+                }}
               />
-            ) : (
-              <Chip
-                icon={<ErrorIcon />}
-                label="API 키 미설정"
-                color="warning"
-                size="small"
-              />
+            ))}
+            {customTerms.length === 0 && (
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                등록된 용어가 없습니다
+              </Typography>
             )}
           </Box>
         </SettingSection>
@@ -337,10 +373,7 @@ export default function SettingsPage() {
         </SettingSection>
 
         {/* Danger Zone */}
-        <MotionPaper
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
+        <Paper
           elevation={0}
           sx={{
             borderRadius: 4,
@@ -373,7 +406,7 @@ export default function SettingsPage() {
               계정 삭제
             </Button>
           </Box>
-        </MotionPaper>
+        </Paper>
       </Box>
 
       {/* Snackbar */}

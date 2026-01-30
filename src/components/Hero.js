@@ -8,11 +8,13 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
 
 export default function Hero() {
   const { t } = useI18n();
+  const { user } = useAuth();
 
   return (
     <Box
@@ -150,6 +152,7 @@ export default function Hero() {
                 <Button
                   variant="contained"
                   size="large"
+                  href={user ? '/dashboard' : '/auth/signup'}
                   sx={{
                     px: { xs: 3, sm: 4 },
                     py: 1.5,
@@ -157,11 +160,12 @@ export default function Hero() {
                     minWidth: { xs: '100%', sm: 160 },
                   }}
                 >
-                  {t('hero.cta')}
+                  {user ? t('nav.dashboard') : t('hero.cta')}
                 </Button>
                 <Button
                   variant="outlined"
                   size="large"
+                  href="#demo"
                   startIcon={<PlayArrowIcon />}
                   sx={{
                     px: { xs: 3, sm: 4 },
@@ -190,7 +194,7 @@ export default function Hero() {
               }}
             >
               {[
-                { icon: <SecurityIcon sx={{ fontSize: 14 }} />, label: 'HIPAA 준수' },
+                { icon: <SecurityIcon sx={{ fontSize: 14 }} />, label: '데이터 보호' },
                 { icon: <SpeedIcon sx={{ fontSize: 14 }} />, label: '실시간 처리' },
                 { icon: <AutoAwesomeIcon sx={{ fontSize: 14 }} />, label: 'AI 정확도 98%' },
               ].map((badge, i) => (
