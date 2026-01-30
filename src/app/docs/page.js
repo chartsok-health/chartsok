@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   Box,
   Container,
@@ -334,10 +335,11 @@ console.log(chart.soap); // { subjective, objective, assessment, plan }`}
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>{t.contactTitle}</Typography>
             <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>{t.contactDesc}</Typography>
             <Button
+              component={Link}
               variant="outlined"
               size="large"
               startIcon={<EmailIcon />}
-              href={`mailto:${t.email}`}
+              href="/contact"
               sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
               {t.contactButton}

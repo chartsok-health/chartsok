@@ -125,7 +125,7 @@ export default function Footer() {
             <Stack direction="row" spacing={1}>
               <IconButton
                 size="small"
-                onClick={() => window.open('mailto:chartsok.health@gmail.com', '_self')}
+                onClick={() => router.push('/contact')}
                 sx={{
                   color: 'rgba(255, 255, 255, 0.5)',
                   '&:hover': {

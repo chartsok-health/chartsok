@@ -19,6 +19,7 @@ const LoadingAnimation = dynamic(() => import('./LoadingAnimation'), {
         bgcolor: '#F8FAFC',
       }}
     >
+      
       <Typography sx={{ color: '#4B9CD3', fontWeight: 800 }}>chartsok</Typography>
     </Box>
   ),
