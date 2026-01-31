@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -34,6 +34,23 @@ import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import AuthModal from './AuthModal';
 
+// Component to handle auth params from URL - wrapped in Suspense
+function AuthParamsHandler({ setAuthModalView, setAuthModalOpen }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const authParam = searchParams.get('auth');
+    if (authParam === 'signup' || authParam === 'login') {
+      setAuthModalView(authParam);
+      setAuthModalOpen(true);
+      // Clean up the URL
+      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+    }
+  }, [searchParams, setAuthModalView, setAuthModalOpen]);
+
+  return null;
+}
+
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -47,22 +64,10 @@ export default function Header() {
   const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = mounted ? isMobileQuery : false;
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Handle auth query param to open modal - watches for URL changes
-  useEffect(() => {
-    const authParam = searchParams.get('auth');
-    if (authParam === 'signup' || authParam === 'login') {
-      setAuthModalView(authParam);
-      setAuthModalOpen(true);
-      // Clean up the URL
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-    }
-  }, [searchParams]);
 
   const openAuthModal = (view) => {
     setAuthModalView(view);
@@ -573,6 +578,13 @@ export default function Header() {
         initialView={authModalView}
       />
 
-          </>
+      {/* Handle auth params from URL */}
+      <Suspense fallback={null}>
+        <AuthParamsHandler
+          setAuthModalView={setAuthModalView}
+          setAuthModalOpen={setAuthModalOpen}
+        />
+      </Suspense>
+    </>
   );
 }
