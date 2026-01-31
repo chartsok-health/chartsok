@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Stats from '@/components/Stats';
+import Trust from '@/components/Trust';
 import HowItWorks from '@/components/HowItWorks';
 import Features from '@/components/Features';
 import CustomTemplates from '@/components/CustomTemplates';
@@ -20,6 +21,7 @@ export default function Home() {
       <main>
         <Hero />
         <Stats />
+        <Trust />
         <HowItWorks />
         <Features />
         <CustomTemplates />

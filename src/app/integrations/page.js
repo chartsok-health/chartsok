@@ -31,27 +31,33 @@ const MotionBox = motion.create(Box);
 
 const content = {
   ko: {
-    badge: 'EMR 연동 (개발 중)',
-    title: 'EMR 연동 준비 중',
-    subtitle: 'chartsok은 다양한 EMR 시스템과의 연동을 준비하고 있습니다. 현재는 클립보드 복사 방식으로 모든 EMR과 함께 사용할 수 있으며, API 기반 직접 연동은 개발 중입니다.',
+    badge: 'EMR 입력 최적화',
+    title: 'EMR 필드에 맞는 차트 출력',
+    subtitle: 'chartsok은 EMR 입력 필드에 맞춰 구조화된 차트를 생성합니다. 클립보드 복사로 모든 EMR과 함께 사용할 수 있으며, 개별 필드 복사도 가능합니다.',
     emrSystems: [
+      {
+        name: '클립보드 복사',
+        desc: '모든 EMR 지원',
+        status: '현재 사용 가능',
+        features: ['전체 차트 원클릭 복사', '필드별 개별 복사', '모든 EMR 호환', '추가 설정 불필요'],
+      },
       {
         name: '비트컴퓨터',
         desc: '국내 대표 EMR 시스템',
-        status: '개발 중',
-        features: ['API 연동 개발 예정', 'SOAP 포맷 호환', '협의 진행 중'],
+        status: '협의 중',
+        features: ['SOAP 포맷 호환', 'API 연동 검토 중', '협의 진행 중'],
       },
       {
         name: '유비케어',
         desc: '클라우드 EMR 솔루션',
-        status: '개발 중',
-        features: ['API 연동 개발 예정', '데이터 매핑 준비 중', '협의 진행 중'],
+        status: '협의 중',
+        features: ['데이터 매핑 검토', 'API 연동 검토 중', '협의 진행 중'],
       },
       {
         name: '이지케어텍',
         desc: '중소병원 EMR',
-        status: '개발 중',
-        features: ['표준 포맷 지원 예정', '연동 협의 가능', '맞춤 개발 검토'],
+        status: '협의 가능',
+        features: ['표준 포맷 지원', '연동 협의 가능', '맞춤 개발 검토'],
       },
       {
         name: '기타 EMR',
@@ -59,18 +65,12 @@ const content = {
         status: '협의 가능',
         features: ['요청 시 연동 검토', '파트너십 문의 환영'],
       },
-      {
-        name: '클립보드 연동',
-        desc: '모든 EMR 지원',
-        status: '현재 사용 가능',
-        features: ['원클릭 복사', '모든 EMR 호환', '추가 설정 불필요'],
-      },
     ],
     benefits: [
-      { icon: SpeedIcon, title: '시간 절약 (예정)', desc: 'API 연동 시 원클릭으로 차트 전송' },
-      { icon: SecurityIcon, title: '안전한 전송', desc: '암호화된 연결로 데이터 보호' },
-      { icon: CloudSyncIcon, title: '표준 포맷', desc: 'SOAP 등 의료 표준 포맷 지원' },
-      { icon: SettingsIcon, title: '유연한 연동 (예정)', desc: 'REST API를 통한 맞춤형 연동' },
+      { icon: SpeedIcon, title: 'EMR 입력 시간 단축', desc: '필드별 복사로 붙여넣기만 하면 완료' },
+      { icon: SecurityIcon, title: '음성 파일 미보관', desc: '변환 후 즉시 삭제, 텍스트만 암호화 저장' },
+      { icon: CloudSyncIcon, title: 'EMR 필드 매핑', desc: 'EMR 입력 필드에 맞춘 구조화 출력' },
+      { icon: SettingsIcon, title: '맞춤 템플릿', desc: '전문과별, 선생님 스타일에 맞게 설정' },
     ],
     howItWorks: '연동 프로세스',
     steps: [
@@ -88,27 +88,33 @@ const content = {
     customButton: '문의하기',
   },
   en: {
-    badge: 'EMR Integration (In Development)',
-    title: 'EMR Integration Coming Soon',
-    subtitle: 'chartsok is preparing integration with various EMR systems. Currently, clipboard copy works with all EMRs, and API-based direct integration is under development.',
+    badge: 'EMR-Optimized Output',
+    title: 'Charts Formatted for Your EMR',
+    subtitle: 'chartsok generates structured charts mapped to EMR input fields. Use clipboard copy with any EMR, and copy individual fields as needed.',
     emrSystems: [
       {
+        name: 'Clipboard Copy',
+        desc: 'Works with all EMRs',
+        status: 'Available Now',
+        features: ['Full chart one-click copy', 'Copy by field', 'All EMR compatible', 'No setup required'],
+      },
+      {
         name: 'BitComputer',
-        desc: 'Leading EMR system in Korea',
-        status: 'In Development',
-        features: ['API integration planned', 'SOAP format compatible', 'In discussion'],
+        desc: 'Leading EMR in Korea',
+        status: 'In Discussion',
+        features: ['SOAP format compatible', 'API integration review', 'In discussion'],
       },
       {
         name: 'Ubicare',
         desc: 'Cloud EMR solution',
-        status: 'In Development',
-        features: ['API integration planned', 'Data mapping in progress', 'In discussion'],
+        status: 'In Discussion',
+        features: ['Data mapping review', 'API integration review', 'In discussion'],
       },
       {
         name: 'EzcareTech',
         desc: 'Hospital EMR',
-        status: 'In Development',
-        features: ['Standard format support planned', 'Integration available', 'Custom development review'],
+        status: 'Open to Discussion',
+        features: ['Standard format support', 'Integration available', 'Custom development review'],
       },
       {
         name: 'Other EMR',
@@ -116,18 +122,12 @@ const content = {
         status: 'Open to Discussion',
         features: ['Integration review on request', 'Partnership inquiries welcome'],
       },
-      {
-        name: 'Clipboard Integration',
-        desc: 'Works with all EMRs',
-        status: 'Available Now',
-        features: ['One-click copy', 'All EMR compatible', 'No setup required'],
-      },
     ],
     benefits: [
-      { icon: SpeedIcon, title: 'Save Time (Planned)', desc: 'One-click chart transfer via API' },
-      { icon: SecurityIcon, title: 'Secure Transfer', desc: 'Data protection via encrypted connection' },
-      { icon: CloudSyncIcon, title: 'Standard Format', desc: 'Support for SOAP and medical standard formats' },
-      { icon: SettingsIcon, title: 'Flexible Integration (Planned)', desc: 'Custom integration via REST API' },
+      { icon: SpeedIcon, title: 'Faster EMR Entry', desc: 'Copy by field and paste—done' },
+      { icon: SecurityIcon, title: 'No Audio Stored', desc: 'Deleted after transcription, only text encrypted' },
+      { icon: CloudSyncIcon, title: 'EMR Field Mapping', desc: 'Structured output matched to EMR fields' },
+      { icon: SettingsIcon, title: 'Custom Templates', desc: 'Configure for your specialty and style' },
     ],
     howItWorks: 'Integration Process',
     steps: [

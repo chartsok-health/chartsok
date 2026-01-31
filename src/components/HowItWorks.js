@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { Box, Container, Typography, Grid, Paper, Stack } from '@mui/material';
 import { motion } from 'framer-motion';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import MicIcon from '@mui/icons-material/Mic';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import SendIcon from '@mui/icons-material/Send';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useI18n } from '@/lib/i18n';
 
@@ -15,14 +13,12 @@ const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 
 const stepIcons = {
-  patient: PersonSearchIcon,
-  vitals: MonitorHeartIcon,
   mic: MicIcon,
-  ai: AutoAwesomeIcon,
-  send: SendIcon,
+  edit: EditNoteIcon,
+  clipboard: ContentPasteIcon,
 };
 
-const stepColors = ['#4B9CD3', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+const stepColors = ['#4B9CD3', '#10B981', '#F59E0B'];
 
 export default function HowItWorks() {
   const { t } = useI18n();
@@ -83,8 +79,8 @@ export default function HowItWorks() {
               sx={{
                 position: 'absolute',
                 top: 40,
-                left: '10%',
-                right: '10%',
+                left: '15%',
+                right: '15%',
                 height: 3,
                 bgcolor: 'grey.100',
                 borderRadius: 2,
@@ -98,7 +94,7 @@ export default function HowItWorks() {
                 transition={{ duration: 1.5, delay: 0.3 }}
                 sx={{
                   height: '100%',
-                  background: `linear-gradient(90deg, ${stepColors.join(', ')})`,
+                  background: 'linear-gradient(90deg, #4B9CD3, #10B981, #F59E0B)',
                   borderRadius: 2,
                 }}
               />
@@ -129,7 +125,7 @@ export default function HowItWorks() {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      width: '18%',
+                      width: '30%',
                       cursor: 'pointer',
                     }}
                   >
@@ -218,7 +214,7 @@ export default function HowItWorks() {
               const isHovered = hoveredStep === index;
 
               return (
-                <Grid size={{ md: index < 2 ? 6 : 4 }} key={index}>
+                <Grid size={{ md: 4 }} key={index}>
                   <MotionPaper
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}

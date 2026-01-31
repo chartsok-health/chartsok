@@ -29,54 +29,54 @@ const MotionBox = motion.create(Box);
 const values = {
   ko: [
     {
-      icon: LocalHospitalIcon,
-      title: '환자 중심',
-      description: '의사가 환자에게 더 집중할 수 있도록, 행정 업무의 부담을 줄입니다.',
-      color: '#4B9CD3',
-    },
-    {
       icon: SecurityIcon,
-      title: '신뢰와 보안',
-      description: '개인정보보호법 준수, AES-256 암호화로 환자 정보를 철저히 보호합니다.',
-      color: '#10B981',
-    },
-    {
-      icon: PsychologyIcon,
-      title: '혁신적 기술',
-      description: '최첨단 AI 기술로 의료 현장의 실질적인 문제를 해결합니다.',
-      color: '#8B5CF6',
+      title: '데이터 신중 처리',
+      description: '음성 파일은 변환 후 즉시 삭제하고, 텍스트 보관 기간은 직접 설정할 수 있습니다.',
+      color: '#EF4444',
     },
     {
       icon: SpeedIcon,
-      title: '효율성 극대화',
-      description: '차트 작성 시간을 73% 절감하여 더 많은 환자를 진료할 수 있습니다.',
-      color: '#F59E0B',
+      title: 'EMR 입력 최적화',
+      description: 'EMR 필드에 맞춘 출력으로 클립보드 복사 후 바로 붙여넣기할 수 있습니다.',
+      color: '#4B9CD3',
+    },
+    {
+      icon: PsychologyIcon,
+      title: '맞춤 템플릿',
+      description: '전문과별 기본 템플릿을 제공하고, 선생님 스타일에 맞게 수정할 수 있습니다.',
+      color: '#8B5CF6',
+    },
+    {
+      icon: LocalHospitalIcon,
+      title: '의사 전용 설계',
+      description: '40년 임상 경험을 바탕으로 실제 진료 워크플로우에 맞게 설계했습니다.',
+      color: '#10B981',
     },
   ],
   en: [
     {
-      icon: LocalHospitalIcon,
-      title: 'Patient-Centered',
-      description: 'We reduce administrative burden so doctors can focus more on patients.',
-      color: '#4B9CD3',
-    },
-    {
       icon: SecurityIcon,
-      title: 'Trust & Security',
-      description: 'Privacy compliant with AES-256 encryption to protect patient data.',
-      color: '#10B981',
-    },
-    {
-      icon: PsychologyIcon,
-      title: 'Innovative Technology',
-      description: 'Cutting-edge AI technology solving real problems in healthcare.',
-      color: '#8B5CF6',
+      title: 'Careful Data Handling',
+      description: 'Audio deleted after transcription. Configure your own text retention period.',
+      color: '#EF4444',
     },
     {
       icon: SpeedIcon,
-      title: 'Maximum Efficiency',
-      description: 'Reduce charting time by 73% to see more patients.',
-      color: '#F59E0B',
+      title: 'EMR-Optimized Output',
+      description: 'Output structured for EMR fields. Copy to clipboard and paste directly.',
+      color: '#4B9CD3',
+    },
+    {
+      icon: PsychologyIcon,
+      title: 'Custom Templates',
+      description: 'Specialty templates provided. Customize to match your documentation style.',
+      color: '#8B5CF6',
+    },
+    {
+      icon: LocalHospitalIcon,
+      title: 'Designed for Doctors',
+      description: 'Built on 40 years of clinical experience to match real clinical workflows.',
+      color: '#10B981',
     },
   ],
 };
@@ -84,15 +84,15 @@ const values = {
 const stats = {
   ko: [
     { value: '40년', label: '임상 경험 기반' },
-    { value: '98%', label: 'AI 정확도 목표' },
-    { value: '73%', label: '시간 절감 목표' },
-    { value: '이비인후과', label: '첫 전문 분야' },
+    { value: '70%', label: '차트 작성 시간 절감' },
+    { value: '95%+', label: '음성 인식 정확도' },
+    { value: '6개', label: '전문과 맞춤 템플릿' },
   ],
   en: [
     { value: '40 yrs', label: 'Clinical Experience' },
-    { value: '98%', label: 'AI Accuracy Goal' },
-    { value: '73%', label: 'Time Saved Goal' },
-    { value: 'ENT', label: 'First Specialty' },
+    { value: '70%', label: 'Less Time on Charts' },
+    { value: '95%+', label: 'Transcription Accuracy' },
+    { value: '6', label: 'Specialty Templates' },
   ],
 };
 
