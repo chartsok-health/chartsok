@@ -192,12 +192,39 @@ export default function HowItWorks() {
                         textAlign: 'center',
                         fontSize: '0.8rem',
                         lineHeight: 1.6,
-                        opacity: isHovered ? 1 : 0.8,
-                        transition: 'opacity 0.3s ease',
+                        mb: 1,
                       }}
                     >
                       {step.description}
                     </Typography>
+
+                    {/* Detail - shown on hover */}
+                    <MotionBox
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{
+                        opacity: isHovered ? 1 : 0,
+                        height: isHovered ? 'auto' : 0
+                      }}
+                      transition={{ duration: 0.3 }}
+                      sx={{ overflow: 'hidden' }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          textAlign: 'center',
+                          fontSize: '0.75rem',
+                          lineHeight: 1.5,
+                          display: 'block',
+                          bgcolor: `${color}10`,
+                          p: 1.5,
+                          borderRadius: 2,
+                          mt: 1,
+                        }}
+                      >
+                        {step.detail}
+                      </Typography>
+                    </MotionBox>
                   </MotionBox>
                 );
               })}
@@ -262,8 +289,22 @@ export default function HowItWorks() {
                         >
                           {step.title}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem', mb: 1 }}>
                           {step.description}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: '0.75rem',
+                            lineHeight: 1.5,
+                            display: 'block',
+                            bgcolor: `${color}10`,
+                            p: 1,
+                            borderRadius: 1,
+                          }}
+                        >
+                          {step.detail}
                         </Typography>
                       </Box>
                     </Stack>
@@ -340,9 +381,23 @@ export default function HowItWorks() {
                         </Stack>
                         <Typography
                           variant="body2"
-                          sx={{ color: 'text.secondary', fontSize: '0.8rem', mt: 0.5 }}
+                          sx={{ color: 'text.secondary', fontSize: '0.8rem', mt: 0.5, mb: 1 }}
                         >
                           {step.description}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: '0.7rem',
+                            lineHeight: 1.5,
+                            display: 'block',
+                            bgcolor: `${color}10`,
+                            p: 1,
+                            borderRadius: 1,
+                          }}
+                        >
+                          {step.detail}
                         </Typography>
                       </Box>
                     </Stack>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,10 @@ import {
   Divider,
   Badge,
   Pagination,
+  Skeleton,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
@@ -33,72 +37,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import StarIcon from '@mui/icons-material/Star';
 import VerifiedIcon from '@mui/icons-material/Verified';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import WorkIcon from '@mui/icons-material/Work';
 import GroupsIcon from '@mui/icons-material/Groups';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
-
-// Sample doctor data
-const initialDoctors = [
-  {
-    id: 1,
-    name: '김태훈',
-    specialty: '내과',
-    role: 'owner',
-    email: 'dr.kim@hospital.com',
-    phone: '010-1111-2222',
-    licenseNo: 'M-12345',
-    joinDate: '2020-03-15',
-    status: 'active',
-    patients: 156,
-    avatar: null,
-  },
-  {
-    id: 2,
-    name: '이수진',
-    specialty: '가정의학과',
-    role: 'doctor',
-    email: 'dr.lee@hospital.com',
-    phone: '010-2222-3333',
-    licenseNo: 'M-23456',
-    joinDate: '2022-06-01',
-    status: 'active',
-    patients: 98,
-    avatar: null,
-  },
-  {
-    id: 3,
-    name: '박정민',
-    specialty: '소아청소년과',
-    role: 'doctor',
-    email: 'dr.park@hospital.com',
-    phone: '010-3333-4444',
-    licenseNo: 'M-34567',
-    joinDate: '2023-01-10',
-    status: 'active',
-    patients: 75,
-    avatar: null,
-  },
-  {
-    id: 4,
-    name: '최현우',
-    specialty: '정형외과',
-    role: 'doctor',
-    email: 'dr.choi@hospital.com',
-    phone: '010-4444-5555',
-    licenseNo: 'M-45678',
-    joinDate: '2023-08-20',
-    status: 'pending',
-    patients: 0,
-    avatar: null,
-  },
-];
+const MotionPaper = motion.create(Paper);
 
 const specialties = [
   '내과',
@@ -111,6 +60,8 @@ const specialties = [
   '안과',
   '가정의학과',
   '정신건강의학과',
+  '신경과',
+  '기타',
 ];
 
 const roleLabels = {
@@ -121,17 +72,20 @@ const roleLabels = {
 
 export default function DoctorsPage() {
   const { user, userProfile } = useAuth();
-  const [doctors, setDoctors] = useState(initialDoctors);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [dialogMode, setDialogMode] = useState('add');
   const [openInviteDialog, setOpenInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const [formData, setFormData] = useState({
     name: '',
-    specialty: '',
+    specialty: '내과',
     role: 'doctor',
     email: '',
     phone: '',
@@ -140,6 +94,28 @@ export default function DoctorsPage() {
 
   const [page, setPage] = useState(1);
   const rowsPerPage = 6;
+
+  // Fetch doctors on mount
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const hospitalId = userProfile?.hospitalId || 'default';
+        const response = await fetch(`/api/doctors?hospitalId=${hospitalId}&userId=${user?.uid || ''}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          setDoctors(data.doctors || []);
+        }
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+        setSnackbar({ open: true, message: '의료진 목록을 불러오는데 실패했습니다', severity: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, [user?.uid, userProfile?.hospitalId]);
 
   const filteredDoctors = doctors.filter(
     (doctor) =>
@@ -172,13 +148,13 @@ export default function DoctorsPage() {
         specialty: doctor.specialty,
         role: doctor.role,
         email: doctor.email,
-        phone: doctor.phone,
-        licenseNo: doctor.licenseNo,
+        phone: doctor.phone || '',
+        licenseNo: doctor.licenseNo || '',
       });
     } else {
       setFormData({
         name: '',
-        specialty: '',
+        specialty: '내과',
         role: 'doctor',
         email: '',
         phone: '',
@@ -193,41 +169,90 @@ export default function DoctorsPage() {
     setSelectedDoctor(null);
   };
 
-  const handleSaveDoctor = () => {
-    if (dialogMode === 'add') {
-      const newDoctor = {
-        id: doctors.length + 1,
-        ...formData,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'pending',
-        patients: 0,
-        avatar: null,
-      };
-      setDoctors([...doctors, newDoctor]);
-    } else if (dialogMode === 'edit' && selectedDoctor) {
-      setDoctors(
-        doctors.map((d) =>
-          d.id === selectedDoctor.id ? { ...d, ...formData } : d
-        )
-      );
+  const handleSaveDoctor = async () => {
+    setSaving(true);
+    try {
+      const hospitalId = userProfile?.hospitalId || 'default';
+
+      if (dialogMode === 'add') {
+        const response = await fetch('/api/doctors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            hospitalId,
+            ...formData,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDoctors([...doctors, data.doctor]);
+          setSnackbar({ open: true, message: '의료진이 등록되었습니다', severity: 'success' });
+        } else {
+          throw new Error('Failed to add');
+        }
+      } else if (dialogMode === 'edit' && selectedDoctor) {
+        const response = await fetch('/api/doctors', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedDoctor.id,
+            hospitalId,
+            ...formData,
+          }),
+        });
+
+        if (response.ok) {
+          setDoctors(
+            doctors.map((d) =>
+              d.id === selectedDoctor.id ? { ...d, ...formData } : d
+            )
+          );
+          setSnackbar({ open: true, message: '의료진 정보가 수정되었습니다', severity: 'success' });
+        } else {
+          throw new Error('Failed to update');
+        }
+      }
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error saving doctor:', error);
+      setSnackbar({ open: true, message: '저장에 실패했습니다', severity: 'error' });
+    } finally {
+      setSaving(false);
     }
-    handleCloseDialog();
   };
 
-  const handleDeleteDoctor = (id) => {
-    const doctor = doctors.find((d) => d.id === id);
-    if (doctor?.role === 'owner') {
-      alert('원장은 삭제할 수 없습니다.');
+  const handleDeleteDoctor = async (doctor) => {
+    if (doctor.role === 'owner') {
+      setSnackbar({ open: true, message: '원장은 삭제할 수 없습니다', severity: 'warning' });
       return;
     }
-    if (confirm('정말 이 의료진을 삭제하시겠습니까?')) {
-      setDoctors(doctors.filter((d) => d.id !== id));
+
+    if (!confirm('정말 이 의료진을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const hospitalId = userProfile?.hospitalId || 'default';
+      const response = await fetch(`/api/doctors?id=${doctor.id}&hospitalId=${hospitalId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setDoctors(doctors.filter((d) => d.id !== doctor.id));
+        setSnackbar({ open: true, message: '의료진이 삭제되었습니다', severity: 'info' });
+      } else {
+        throw new Error('Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error deleting doctor:', error);
+      setSnackbar({ open: true, message: '삭제에 실패했습니다', severity: 'error' });
     }
   };
 
   const handleInviteDoctor = () => {
     if (inviteEmail) {
-      alert(`${inviteEmail}로 초대 이메일이 전송되었습니다.`);
+      setSnackbar({ open: true, message: `${inviteEmail}로 초대 이메일이 전송되었습니다`, severity: 'success' });
       setInviteEmail('');
       setOpenInviteDialog(false);
     }
@@ -236,7 +261,32 @@ export default function DoctorsPage() {
   // Stats
   const totalDoctors = doctors.length;
   const activeDoctors = doctors.filter((d) => d.status === 'active').length;
-  const totalPatients = doctors.reduce((sum, d) => sum + d.patients, 0);
+  const totalPatients = doctors.reduce((sum, d) => sum + (d.patients || 0), 0);
+
+  if (loading) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
+        <Box sx={{ mb: 4 }}>
+          <Skeleton variant="text" width={200} height={40} />
+          <Skeleton variant="text" width={300} height={24} />
+        </Box>
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          {[1, 2, 3].map((i) => (
+            <Grid size={{ xs: 12, sm: 4 }} key={i}>
+              <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} />
+            </Grid>
+          ))}
+        </Grid>
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+              <Skeleton variant="rounded" height={280} sx={{ borderRadius: 3 }} />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
@@ -292,207 +342,248 @@ export default function DoctorsPage() {
           { label: '담당 환자 수', value: totalPatients, color: '#F59E0B', bgColor: '#FFFBEB', icon: PersonIcon },
         ].map((stat, index) => (
           <Grid size={{ xs: 12, sm: 4 }} key={index}>
-            <MotionBox
+            <MotionPaper
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'grey.200',
+                bgcolor: 'white',
+              }}
             >
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  border: '1px solid',
-                  borderColor: 'grey.200',
-                  bgcolor: 'white',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      bgcolor: stat.bgColor,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon sx={{ color: stat.color, fontSize: 24 }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {stat.label}
-                    </Typography>
-                  </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    bgcolor: stat.bgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <stat.icon sx={{ color: stat.color, fontSize: 24 }} />
                 </Box>
-              </Paper>
-            </MotionBox>
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
+              </Box>
+            </MotionPaper>
           </Grid>
         ))}
       </Grid>
 
       {/* Search */}
-      <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'grey.200', bgcolor: 'white' }}>
-        <TextField
-          fullWidth
-          placeholder="이름, 전문 분야, 이메일로 검색..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: 'grey.400' }} />
-              </InputAdornment>
-            ),
-          }}
-          size="small"
-        />
-      </Paper>
+      {doctors.length > 0 && (
+        <MotionPaper
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          elevation={0}
+          sx={{ p: 2, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'grey.200', bgcolor: 'white' }}
+        >
+          <TextField
+            fullWidth
+            placeholder="이름, 전문 분야, 이메일로 검색..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'grey.400' }} />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
+        </MotionPaper>
+      )}
 
       {/* Doctor Cards */}
-      <Grid container spacing={3}>
-        {paginatedDoctors.map((doctor, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={doctor.id}>
-            <MotionCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: doctor.role === 'owner' ? 'warning.200' : 'grey.200',
-                bgcolor: doctor.role === 'owner' ? 'warning.50' : 'white',
-                position: 'relative',
-                overflow: 'visible',
-              }}
-            >
-              {doctor.role === 'owner' && (
-                <Chip
-                  icon={<StarIcon sx={{ fontSize: 14 }} />}
-                  label="원장"
-                  size="small"
-                  color="warning"
-                  sx={{
-                    position: 'absolute',
-                    top: -10,
-                    right: 16,
-                    fontWeight: 700,
-                  }}
-                />
-              )}
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Badge
-                    overlap="circular"
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    badgeContent={
-                      doctor.status === 'active' ? (
-                        <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            bgcolor: 'success.main',
-                            border: '2px solid white',
-                          }}
-                        />
-                      ) : null
-                    }
-                  >
-                    <Avatar
-                      src={doctor.avatar}
-                      sx={{
-                        width: 56,
-                        height: 56,
-                        bgcolor: 'primary.main',
-                        fontSize: '1.25rem',
-                        fontWeight: 600,
-                      }}
+      {paginatedDoctors.length > 0 ? (
+        <Grid container spacing={3}>
+          {paginatedDoctors.map((doctor, index) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={doctor.id}>
+              <MotionCard
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
+                whileHover={{ y: -4 }}
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: doctor.role === 'owner' ? 'warning.200' : 'grey.200',
+                  bgcolor: doctor.role === 'owner' ? 'warning.50' : 'white',
+                  position: 'relative',
+                  overflow: 'visible',
+                }}
+              >
+                {doctor.role === 'owner' && (
+                  <Chip
+                    icon={<StarIcon sx={{ fontSize: 14 }} />}
+                    label="원장"
+                    size="small"
+                    color="warning"
+                    sx={{
+                      position: 'absolute',
+                      top: -10,
+                      right: 16,
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                      badgeContent={
+                        doctor.status === 'active' ? (
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              bgcolor: 'success.main',
+                              border: '2px solid white',
+                            }}
+                          />
+                        ) : null
+                      }
                     >
-                      {doctor.name.charAt(0)}
-                    </Avatar>
-                  </Badge>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                        {doctor.name}
+                      <Avatar
+                        src={doctor.avatar}
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          bgcolor: 'primary.main',
+                          fontSize: '1.25rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {doctor.name.charAt(0)}
+                      </Avatar>
+                    </Badge>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                          {doctor.name}
+                        </Typography>
+                        {doctor.status === 'pending' && (
+                          <Chip label="대기중" size="small" color="default" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }} />
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {doctor.specialty}
                       </Typography>
-                      {doctor.status === 'pending' && (
-                        <Chip label="대기중" size="small" color="default" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }} />
-                      )}
                     </Box>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {doctor.specialty}
-                    </Typography>
                   </Box>
-                </Box>
 
-                <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: 2 }} />
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmailIcon sx={{ fontSize: 16, color: 'grey.400' }} />
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      {doctor.email}
-                    </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <EmailIcon sx={{ fontSize: 16, color: 'grey.400' }} />
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                        {doctor.email || '-'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PhoneIcon sx={{ fontSize: 16, color: 'grey.400' }} />
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                        {doctor.phone || '-'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MedicalServicesIcon sx={{ fontSize: 16, color: 'grey.400' }} />
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                        면허번호: {doctor.licenseNo || '-'}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PhoneIcon sx={{ fontSize: 16, color: 'grey.400' }} />
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      {doctor.phone}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MedicalServicesIcon sx={{ fontSize: 16, color: 'grey.400' }} />
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      면허번호: {doctor.licenseNo}
-                    </Typography>
-                  </Box>
-                </Box>
 
-                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                  <Chip
-                    icon={<PersonIcon sx={{ fontSize: 14 }} />}
-                    label={`환자 ${doctor.patients}명`}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.7rem' }}
-                  />
-                  <Chip
-                    icon={<WorkIcon sx={{ fontSize: 14 }} />}
-                    label={`입사 ${doctor.joinDate}`}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.7rem' }}
-                  />
-                </Box>
-              </CardContent>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    <Chip
+                      icon={<PersonIcon sx={{ fontSize: 14 }} />}
+                      label={`환자 ${doctor.patients || 0}명`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                    <Chip
+                      icon={<WorkIcon sx={{ fontSize: 14 }} />}
+                      label={`입사 ${doctor.joinDate || '-'}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                  </Box>
+                </CardContent>
 
-              <CardActions sx={{ p: 2, pt: 0, justifyContent: 'flex-end' }}>
-                <Tooltip title="수정">
-                  <IconButton size="small" onClick={() => handleOpenDialog('edit', doctor)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                {doctor.role !== 'owner' && (
-                  <Tooltip title="삭제">
-                    <IconButton size="small" color="error" onClick={() => handleDeleteDoctor(doctor.id)}>
-                      <DeleteIcon fontSize="small" />
+                <CardActions sx={{ p: 2, pt: 0, justifyContent: 'flex-end' }}>
+                  <Tooltip title="수정">
+                    <IconButton size="small" onClick={() => handleOpenDialog('edit', doctor)}>
+                      <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                )}
-              </CardActions>
-            </MotionCard>
-          </Grid>
-        ))}
-      </Grid>
+                  {doctor.role !== 'owner' && (
+                    <Tooltip title="삭제">
+                      <IconButton size="small" color="error" onClick={() => handleDeleteDoctor(doctor)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </CardActions>
+              </MotionCard>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <MotionPaper
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          elevation={0}
+          sx={{
+            p: 6,
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: 'grey.200',
+            bgcolor: 'grey.50',
+            textAlign: 'center',
+          }}
+        >
+          <PersonAddIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>
+            등록된 의료진이 없습니다
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+            새로운 의료진을 등록하거나 초대하세요
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog('add')}
+            sx={{
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+            }}
+          >
+            의료진 등록하기
+          </Button>
+        </MotionPaper>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -579,9 +670,14 @@ export default function DoctorsPage() {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog}>취소</Button>
-          <Button variant="contained" onClick={handleSaveDoctor}>
-            {dialogMode === 'add' ? '등록' : '저장'}
+          <Button onClick={handleCloseDialog} disabled={saving}>취소</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveDoctor}
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            {saving ? '저장 중...' : (dialogMode === 'add' ? '등록' : '저장')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -609,6 +705,17 @@ export default function DoctorsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -15,6 +15,8 @@ import {
   TextField,
   Card,
   CardContent,
+  Skeleton,
+  CircularProgress,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -39,7 +41,6 @@ import HearingIcon from '@mui/icons-material/Hearing';
 import BiotechIcon from '@mui/icons-material/Biotech';
 import ScienceIcon from '@mui/icons-material/Science';
 import Avatar from '@mui/material/Avatar';
-import { getSessionDetailData } from '@/lib/services';
 import { formatCountdown, getSecondsUntilDeletion } from '@/lib/helpers';
 import { SectionColors } from '@/lib/constants';
 
@@ -60,17 +61,40 @@ export default function HistoryDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
   const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [detailData, setDetailData] = useState(null);
+  const [chartData, setChartData] = useState({});
 
-  // Load session detail data from services
-  const detailData = getSessionDetailData(params.id);
-  const [chartData, setChartData] = useState(detailData?.chartData || {});
+  // Fetch session detail from API
+  useEffect(() => {
+    async function fetchSessionDetail() {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/sessions/${params.id}`);
+        const data = await response.json();
+
+        if (data.session) {
+          setDetailData(data.session);
+          setChartData(data.session.chartData || {});
+        }
+      } catch (error) {
+        console.error('Error fetching session detail:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.id) {
+      fetchSessionDetail();
+    }
+  }, [params.id]);
 
   // Get template sections (use default SOAP if no template)
   const templateSections = detailData?.templateSections || [
-    { sectionKey: 'subjective', labelKo: 'Subjective (주관적)', color: '#4B9CD3', bgColor: '#EBF5FF' },
-    { sectionKey: 'objective', labelKo: 'Objective (객관적)', color: '#10B981', bgColor: '#ECFDF5' },
-    { sectionKey: 'assessment', labelKo: 'Assessment (평가)', color: '#F59E0B', bgColor: '#FFFBEB' },
-    { sectionKey: 'plan', labelKo: 'Plan (계획)', color: '#EF4444', bgColor: '#FEF2F2' },
+    { key: 'subjective', name: 'Subjective (주관적)' },
+    { key: 'objective', name: 'Objective (객관적)' },
+    { key: 'assessment', name: 'Assessment (평가)' },
+    { key: 'plan', name: 'Plan (계획)' },
   ];
 
   const templateName = detailData?.template?.name || 'SOAP';
@@ -90,6 +114,15 @@ export default function HistoryDetailPage() {
 
     return () => clearInterval(interval);
   }, [detailData]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   // Handle case when session is not found
   if (!detailData) {
@@ -112,15 +145,21 @@ export default function HistoryDetailPage() {
 
   const handleCopyAll = () => {
     const fullText = templateSections
-      .map(s => `[${s.labelKo}]\n${chartData[s.sectionKey] || ''}`)
+      .map(s => `[${s.name}]\n${chartData[s.key] || ''}`)
       .join('\n\n');
     navigator.clipboard.writeText(fullText);
     setSnackbar({ open: true, message: '전체 차트가 복사되었습니다' });
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    setSnackbar({ open: true, message: '차트가 저장되었습니다' });
+  const handleSave = async () => {
+    try {
+      // Save to API
+      // await fetch(`/api/charts`, { method: 'PUT', body: JSON.stringify({ chartId: detailData.chartId, chartData }) });
+      setIsEditing(false);
+      setSnackbar({ open: true, message: '차트가 저장되었습니다' });
+    } catch (error) {
+      setSnackbar({ open: true, message: '저장 중 오류가 발생했습니다' });
+    }
   };
 
   // Get section label abbreviation for display
@@ -166,17 +205,19 @@ export default function HistoryDetailPage() {
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
               <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                {detailData.diagnosis}
+                {detailData.diagnosis || '진단 없음'}
               </Typography>
-              <Chip
-                label={detailData.icdCode}
-                sx={{
-                  fontFamily: 'monospace',
-                  fontWeight: 700,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                }}
-              />
+              {detailData.icdCode && (
+                <Chip
+                  label={detailData.icdCode}
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                  }}
+                />
+              )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <Chip
@@ -193,7 +234,7 @@ export default function HistoryDetailPage() {
               />
               <Chip
                 icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                label={`${detailData.patientGender} / ${detailData.patientAge}`}
+                label={`${detailData.patientGender || ''} / ${detailData.patientAge || ''}`}
                 size="small"
                 variant="outlined"
               />
@@ -241,12 +282,12 @@ export default function HistoryDetailPage() {
                     : 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
                 }}
               >
-                {detailData.patientName?.charAt(0) || '환'}
+                {(detailData.patientName || '환').charAt(0)}
               </Avatar>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>{detailData.patientName || '환자'}</Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {detailData.patientAge} · {detailData.patientGender} · {detailData.chartNo}
+                  {detailData.patientAge || ''} · {detailData.patientGender || ''} · {detailData.chartNo || ''}
                 </Typography>
               </Box>
             </Box>
@@ -286,19 +327,6 @@ export default function HistoryDetailPage() {
                         <Typography variant="h6" sx={{ fontWeight: 800, color: item.color }}>{item.value}</Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>{item.unit}</Typography>
                       </Box>
-                      <Chip
-                        icon={item.normal ? <CheckCircleIcon sx={{ fontSize: 12 }} /> : <WarningIcon sx={{ fontSize: 12 }} />}
-                        label={item.normal ? '정상' : '주의'}
-                        size="small"
-                        sx={{
-                          mt: 1,
-                          height: 20,
-                          fontSize: '0.6rem',
-                          bgcolor: item.normal ? 'success.50' : 'warning.50',
-                          color: item.normal ? 'success.main' : 'warning.main',
-                          '& .MuiChip-icon': { color: item.normal ? 'success.main' : 'warning.main' },
-                        }}
-                      />
                     </Card>
                   </Grid>
                 );
@@ -352,57 +380,63 @@ export default function HistoryDetailPage() {
             </Box>
 
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {detailData.transcription.map((item, index) => (
-                  <MotionBox
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
-                  >
-                    <Card
-                      elevation={0}
-                      sx={{
-                        bgcolor: item.speaker === '의사' ? '#EBF5FF' : 'grey.50',
-                        border: '1px solid',
-                        borderColor: item.speaker === '의사' ? '#C3DCF5' : 'grey.200',
-                        borderRadius: 2,
-                      }}
+              {detailData.transcription && detailData.transcription.length > 0 ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {detailData.transcription.map((item, index) => (
+                    <MotionBox
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
                     >
-                      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Box
-                            sx={{
-                              width: 22,
-                              height: 22,
-                              borderRadius: 1,
-                              bgcolor: item.speaker === '의사' ? '#4B9CD3' : 'grey.400',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {item.speaker === '의사' ? (
-                              <LocalHospitalIcon sx={{ fontSize: 12, color: 'white' }} />
-                            ) : (
-                              <PersonIcon sx={{ fontSize: 12, color: 'white' }} />
-                            )}
+                      <Card
+                        elevation={0}
+                        sx={{
+                          bgcolor: item.speaker === '의사' ? '#EBF5FF' : 'grey.50',
+                          border: '1px solid',
+                          borderColor: item.speaker === '의사' ? '#C3DCF5' : 'grey.200',
+                          borderRadius: 2,
+                        }}
+                      >
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: 1,
+                                bgcolor: item.speaker === '의사' ? '#4B9CD3' : 'grey.400',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {item.speaker === '의사' ? (
+                                <LocalHospitalIcon sx={{ fontSize: 12, color: 'white' }} />
+                              ) : (
+                                <PersonIcon sx={{ fontSize: 12, color: 'white' }} />
+                              )}
+                            </Box>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: item.speaker === '의사' ? '#4B9CD3' : 'text.secondary' }}>
+                              {item.speaker}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'grey.400', ml: 'auto', fontSize: '0.7rem' }}>
+                              {item.timestamp}
+                            </Typography>
                           </Box>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: item.speaker === '의사' ? '#4B9CD3' : 'text.secondary' }}>
-                            {item.speaker}
+                          <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.5, fontSize: '0.85rem' }}>
+                            {item.text}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'grey.400', ml: 'auto', fontSize: '0.7rem' }}>
-                            {item.timestamp}
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.5, fontSize: '0.85rem' }}>
-                          {item.text}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </MotionBox>
-                ))}
-              </Box>
+                        </CardContent>
+                      </Card>
+                    </MotionBox>
+                  ))}
+                </Box>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                  <Typography variant="body2">대화 기록이 없습니다</Typography>
+                </Box>
+              )}
             </Box>
           </MotionPaper>
         </Grid>
@@ -431,32 +465,35 @@ export default function HistoryDetailPage() {
                     {templateName} 차트
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    {templateSections.slice(0, 6).map((s) => (
-                      <Box
-                        key={s.sectionKey}
-                        sx={{
-                          minWidth: 22,
-                          height: 22,
-                          px: 0.5,
-                          borderRadius: 1,
-                          bgcolor: s.bgColor || SectionColors[s.sectionKey]?.bgColor || '#F8FAFC',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
+                    {templateSections.slice(0, 6).map((s) => {
+                      const sectionKey = s.key || s.sectionKey;
+                      return (
+                        <Box
+                          key={sectionKey}
                           sx={{
-                            fontWeight: 800,
-                            color: s.color || SectionColors[s.sectionKey]?.color || '#64748B',
-                            fontSize: '0.65rem',
+                            minWidth: 22,
+                            height: 22,
+                            px: 0.5,
+                            borderRadius: 1,
+                            bgcolor: SectionColors[sectionKey]?.bgColor || '#F8FAFC',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                         >
-                          {getSectionLabel(s.sectionKey)}
-                        </Typography>
-                      </Box>
-                    ))}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 800,
+                              color: SectionColors[sectionKey]?.color || '#64748B',
+                              fontSize: '0.65rem',
+                            }}
+                          >
+                            {getSectionLabel(sectionKey)}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
                   </Box>
                 </Box>
                 <Button
@@ -473,13 +510,14 @@ export default function HistoryDetailPage() {
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {templateSections.map((section, index) => {
-                  const SectionIcon = sectionIcons[section.sectionKey] || null;
-                  const sectionColor = section.color || SectionColors[section.sectionKey]?.color || '#64748B';
-                  const sectionBgColor = section.bgColor || SectionColors[section.sectionKey]?.bgColor || '#F8FAFC';
+                  const sectionKey = section.key || section.sectionKey;
+                  const SectionIcon = sectionIcons[sectionKey] || null;
+                  const sectionColor = SectionColors[sectionKey]?.color || '#64748B';
+                  const sectionBgColor = SectionColors[sectionKey]?.bgColor || '#F8FAFC';
 
                   return (
                     <MotionBox
-                      key={section.sectionKey}
+                      key={sectionKey}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
@@ -502,7 +540,7 @@ export default function HistoryDetailPage() {
                             <SectionIcon sx={{ fontSize: 20, color: sectionColor }} />
                           ) : (
                             <Typography variant="h6" sx={{ fontWeight: 800, color: sectionColor }}>
-                              {getSectionLabel(section.sectionKey)}
+                              {getSectionLabel(sectionKey)}
                             </Typography>
                           )}
                         </Box>
@@ -510,25 +548,11 @@ export default function HistoryDetailPage() {
                         {/* Content */}
                         <Box sx={{ flex: 1 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: sectionColor }}>
-                                {section.labelKo}
-                              </Typography>
-                              {!section.isRequired && (
-                                <Chip
-                                  label="선택"
-                                  size="small"
-                                  sx={{
-                                    fontSize: '0.6rem',
-                                    height: 18,
-                                    bgcolor: 'grey.100',
-                                    color: 'grey.600',
-                                  }}
-                                />
-                              )}
-                            </Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: sectionColor }}>
+                              {section.name || section.labelKo}
+                            </Typography>
                             <Tooltip title="복사">
-                              <IconButton size="small" onClick={() => handleCopy(chartData[section.sectionKey] || '')}>
+                              <IconButton size="small" onClick={() => handleCopy(chartData[sectionKey] || '')}>
                                 <ContentCopyIcon sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Tooltip>
@@ -538,10 +562,10 @@ export default function HistoryDetailPage() {
                               fullWidth
                               multiline
                               minRows={2}
-                              value={chartData[section.sectionKey] || ''}
-                              onChange={(e) => setChartData((prev) => ({ ...prev, [section.sectionKey]: e.target.value }))}
+                              value={chartData[sectionKey] || ''}
+                              onChange={(e) => setChartData((prev) => ({ ...prev, [sectionKey]: e.target.value }))}
                               size="small"
-                              placeholder={`${section.labelKo} 내용을 입력하세요`}
+                              placeholder={`${section.name || section.labelKo} 내용을 입력하세요`}
                               sx={{ '& .MuiOutlinedInput-root': { bgcolor: sectionBgColor } }}
                             />
                           ) : (
@@ -549,7 +573,7 @@ export default function HistoryDetailPage() {
                               elevation={0}
                               sx={{
                                 p: 1.5,
-                                bgcolor: chartData[section.sectionKey] ? 'grey.50' : sectionBgColor,
+                                bgcolor: chartData[sectionKey] ? 'grey.50' : sectionBgColor,
                                 borderRadius: 2,
                                 border: '1px solid',
                                 borderColor: 'grey.200',
@@ -561,11 +585,11 @@ export default function HistoryDetailPage() {
                                   whiteSpace: 'pre-line',
                                   lineHeight: 1.7,
                                   fontSize: '0.85rem',
-                                  color: chartData[section.sectionKey] ? 'text.primary' : 'grey.400',
-                                  fontStyle: chartData[section.sectionKey] ? 'normal' : 'italic',
+                                  color: chartData[sectionKey] ? 'text.primary' : 'grey.400',
+                                  fontStyle: chartData[sectionKey] ? 'normal' : 'italic',
                                 }}
                               >
-                                {chartData[section.sectionKey] || '내용 없음'}
+                                {chartData[sectionKey] || '내용 없음'}
                               </Typography>
                             </Paper>
                           )}

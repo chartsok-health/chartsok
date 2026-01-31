@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Card,
   CardContent,
   Pagination,
+  CircularProgress,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
@@ -40,33 +41,20 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
 import { useRouter } from 'next/navigation';
-import { patients as dbPatients, recordingSessions, charts } from '@/lib/mockDatabase';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-// Transform database patients to include visit info
-const initialPatients = dbPatients.map(patient => {
-  const patientSessions = recordingSessions.filter(s => s.patientId === patient.id);
-  const lastSession = patientSessions.sort((a, b) => b.createdAt - a.createdAt)[0];
-  const lastChart = lastSession ? charts.find(c => c.sessionId === lastSession.id) : null;
-
-  return {
-    id: patient.id,
-    name: patient.name,
-    age: parseInt(patient.age) || 0,
-    gender: patient.gender,
-    phone: patient.phone,
-    birthDate: patient.birthDate,
-    chartNo: patient.chartNo,
-    lastVisit: lastSession?.date || '-',
-    visitCount: patientSessions.length,
-    status: patientSessions.length > 0 ? 'active' : 'inactive',
-    diagnosis: lastChart?.diagnosis || '-',
-    address: patient.address || '',
-    allergies: patient.allergies || null,
-  };
-});
+// Calculate age from birth date
+const calculateAge = (birthDate) => {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+};
 
 // Clean Card Component - matching history page style
 const CleanCard = ({ children, sx, ...props }) => (
@@ -88,7 +76,9 @@ const CleanCard = ({ children, sx, ...props }) => (
 
 export default function PatientsPage() {
   const router = useRouter();
-  const [patients, setPatients] = useState(initialPatients);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -106,11 +96,43 @@ export default function PatientsPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 6;
 
+  // Fetch patients on mount
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      const data = await response.json();
+
+      // API returns { patients, total } - handle both array and object response
+      const patientsList = Array.isArray(data) ? data : (data.patients || []);
+
+      // Transform data to include computed fields
+      const transformedPatients = patientsList.map(patient => ({
+        ...patient,
+        age: calculateAge(patient.birthDate),
+        lastVisit: patient.lastVisit || '-',
+        visitCount: patient.visitCount || 0,
+        status: patient.visitCount > 0 ? 'active' : 'inactive',
+      }));
+
+      setPatients(transformedPatients);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredPatients = patients.filter(
     (patient) =>
-      patient.name.includes(searchQuery) ||
-      patient.chartNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone.includes(searchQuery)
+      patient.name?.includes(searchQuery) ||
+      patient.chartNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      patient.phone?.includes(searchQuery)
   );
 
   const totalPages = Math.ceil(filteredPatients.length / rowsPerPage);
@@ -136,8 +158,8 @@ export default function PatientsPage() {
       setFormData({
         name: patient.name,
         gender: patient.gender,
-        birthDate: patient.birthDate,
-        phone: patient.phone,
+        birthDate: patient.birthDate || '',
+        phone: patient.phone || '',
         address: patient.address || '',
         notes: patient.notes || '',
       });
@@ -152,54 +174,100 @@ export default function PatientsPage() {
     setSelectedPatient(null);
   };
 
-  const handleSavePatient = () => {
-    if (dialogMode === 'add') {
-      const newPatient = {
-        id: patients.length + 1,
-        ...formData,
-        age: calculateAge(formData.birthDate),
-        chartNo: `P-2024-${String(patients.length + 1).padStart(3, '0')}`,
-        lastVisit: '-',
-        visitCount: 0,
-        status: 'active',
-        diagnosis: '-',
-      };
-      setPatients([...patients, newPatient]);
-    } else if (dialogMode === 'edit' && selectedPatient) {
-      setPatients(
-        patients.map((p) =>
-          p.id === selectedPatient.id ? { ...p, ...formData, age: calculateAge(formData.birthDate) } : p
-        )
-      );
+  const handleSavePatient = async () => {
+    try {
+      setSaving(true);
+
+      if (dialogMode === 'add') {
+        // Create new patient via API
+        const response = await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            chartNo: `P-${new Date().getFullYear()}-${String(patients.length + 1).padStart(3, '0')}`,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to create patient');
+        const result = await response.json();
+        const newPatient = result.patient;
+
+        // Add to local state with computed fields
+        setPatients([...patients, {
+          ...newPatient,
+          age: calculateAge(newPatient.birthDate),
+          lastVisit: '-',
+          visitCount: 0,
+          status: 'inactive',
+        }]);
+      } else if (dialogMode === 'edit' && selectedPatient) {
+        // Update patient via API
+        const response = await fetch(`/api/patients/${selectedPatient.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) throw new Error('Failed to update patient');
+        const result = await response.json();
+        const updatedPatient = result.patient;
+
+        // Update local state
+        setPatients(
+          patients.map((p) =>
+            p.id === selectedPatient.id
+              ? { ...p, ...updatedPatient, age: calculateAge(updatedPatient.birthDate) }
+              : p
+          )
+        );
+      }
+
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error saving patient:', error);
+      alert('환자 정보 저장에 실패했습니다.');
+    } finally {
+      setSaving(false);
     }
-    handleCloseDialog();
   };
 
-  const handleDeletePatient = (id) => {
+  const handleDeletePatient = async (id) => {
     if (confirm('정말 이 환자를 삭제하시겠습니까?')) {
-      setPatients(patients.filter((p) => p.id !== id));
-    }
-  };
+      try {
+        const response = await fetch(`/api/patients/${id}`, {
+          method: 'DELETE',
+        });
 
-  const calculateAge = (birthDate) => {
-    if (!birthDate) return 0;
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
+        if (!response.ok) throw new Error('Failed to delete patient');
+
+        setPatients(patients.filter((p) => p.id !== id));
+      } catch (error) {
+        console.error('Error deleting patient:', error);
+        alert('환자 삭제에 실패했습니다.');
+      }
+    }
   };
 
   const totalPatients = patients.length;
   const activePatients = patients.filter((p) => p.status === 'active').length;
-  const thisMonthVisits = patients.filter((p) => p.lastVisit?.startsWith('2025-01')).length;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisMonthVisits = patients.filter((p) => p.lastVisit?.startsWith(thisMonth)).length;
 
   const stats = [
     { label: '전체 환자', value: totalPatients, icon: PersonIcon, color: '#4B9CD3', bgColor: '#EBF5FF' },
     { label: '활성 환자', value: activePatients, icon: LocalHospitalIcon, color: '#10B981', bgColor: '#ECFDF5' },
     { label: '이번 달 방문', value: thisMonthVisits, icon: TrendingUpIcon, color: '#F59E0B', bgColor: '#FFFBEB' },
   ];
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
@@ -278,38 +346,83 @@ export default function PatientsPage() {
         ))}
       </Grid>
 
-      {/* Search and Filters */}
-      <CleanCard sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="환자 이름, 차트번호, 전화번호 검색..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'grey.400' }} />
-                </InputAdornment>
-              ),
-            }}
+      {/* Empty State - Show when no patients */}
+      {patients.length === 0 && (
+        <CleanCard sx={{ textAlign: 'center', py: 8, px: 4 }}>
+          <Box
             sx={{
-              flex: 1,
-              minWidth: 250,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: 'white',
-              },
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              bgcolor: 'primary.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 3,
             }}
-            size="small"
-          />
-          <Button variant="outlined" startIcon={<FilterListIcon />} sx={{ borderRadius: 2 }}>
-            필터
+          >
+            <PersonIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
+            등록된 환자가 없습니다
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: 400, mx: 'auto' }}>
+            첫 번째 환자를 등록하고 AI 차트 작성 기능을 시작해보세요
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog('add')}
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: 3,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+              boxShadow: '0 4px 14px rgba(75, 156, 211, 0.4)',
+            }}
+          >
+            새 환자 등록
           </Button>
-          <Button variant="outlined" startIcon={<FileDownloadIcon />} sx={{ borderRadius: 2 }}>
-            내보내기
-          </Button>
-        </Box>
-      </CleanCard>
+        </CleanCard>
+      )}
+
+      {/* Search and Filters - Only show when there are patients */}
+      {patients.length > 0 && (
+        <CleanCard sx={{ p: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <TextField
+              placeholder="환자 이름, 차트번호, 전화번호 검색..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'grey.400' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                flex: 1,
+                minWidth: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  bgcolor: 'white',
+                },
+              }}
+              size="small"
+            />
+            <Button variant="outlined" startIcon={<FilterListIcon />} sx={{ borderRadius: 2 }}>
+              필터
+            </Button>
+            <Button variant="outlined" startIcon={<FileDownloadIcon />} sx={{ borderRadius: 2 }}>
+              내보내기
+            </Button>
+          </Box>
+        </CleanCard>
+      )}
 
       {/* Patient Cards Grid */}
       <Grid container spacing={2}>
@@ -351,7 +464,7 @@ export default function PatientsPage() {
                           fontWeight: 700,
                         }}
                       >
-                        {patient.name.charAt(0)}
+                        {patient.name?.charAt(0) || '?'}
                       </Avatar>
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
@@ -395,7 +508,7 @@ export default function PatientsPage() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PhoneIcon sx={{ fontSize: 14, color: 'grey.400' }} />
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                        {patient.phone}
+                        {patient.phone || '-'}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -409,7 +522,7 @@ export default function PatientsPage() {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Chip
-                        label={patient.chartNo}
+                        label={patient.chartNo || '-'}
                         size="small"
                         variant="outlined"
                         sx={{ fontSize: '0.7rem', fontWeight: 600 }}
@@ -626,12 +739,13 @@ export default function PatientsPage() {
             <Button
               variant="contained"
               onClick={handleSavePatient}
+              disabled={saving}
               sx={{
                 borderRadius: 2,
                 background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
               }}
             >
-              {dialogMode === 'add' ? '등록' : '저장'}
+              {saving ? <CircularProgress size={20} /> : (dialogMode === 'add' ? '등록' : '저장')}
             </Button>
           )}
         </DialogActions>

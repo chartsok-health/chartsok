@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -23,7 +23,10 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  CircularProgress,
+  Skeleton,
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from '@mui/icons-material/Person';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -34,9 +37,15 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '@/lib/AuthContext';
 
+const MotionBox = motion.create(Box);
+const MotionPaper = motion.create(Paper);
+
 // Move components outside to prevent remounting on state changes
-const SettingSection = ({ icon: Icon, title, description, children, color = '#4B9CD3' }) => (
-  <Paper
+const SettingSection = ({ icon: Icon, title, description, children, color = '#4B9CD3', delay = 0 }) => (
+  <MotionPaper
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay }}
     elevation={0}
     sx={{
       borderRadius: 4,
@@ -73,7 +82,7 @@ const SettingSection = ({ icon: Icon, title, description, children, color = '#4B
       </Box>
     </Box>
     <Box sx={{ p: 3 }}>{children}</Box>
-  </Paper>
+  </MotionPaper>
 );
 
 const ToggleSetting = ({ label, description, checked, onChange }) => (
@@ -97,10 +106,12 @@ const specialties = ['내과', '이비인후과', '정형외과', '피부과', '
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const [settings, setSettings] = useState({
-    displayName: user?.displayName || '',
+    displayName: '',
     specialty: '내과',
     hospitalName: '',
     chartTemplate: 'soap',
@@ -114,34 +125,170 @@ export default function SettingsPage() {
     medicalTerms: true,
   });
 
-  const [customTerms, setCustomTerms] = useState(['급성 편도염', '상기도 감염', '고혈압', '당뇨병']);
+  const [customTerms, setCustomTerms] = useState([]);
   const [newTerm, setNewTerm] = useState('');
+  const [addingTerm, setAddingTerm] = useState(false);
+
+  // Fetch settings and keywords on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.uid) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch settings and keywords in parallel
+        const [settingsRes, keywordsRes] = await Promise.all([
+          fetch(`/api/settings?userId=${user.uid}`),
+          fetch(`/api/keywords?userId=${user.uid}&category=custom`),
+        ]);
+
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          if (data.settings) {
+            setSettings(prev => ({
+              ...prev,
+              displayName: user?.displayName || data.settings.displayName || '',
+              specialty: data.settings.specialty || '내과',
+              hospitalName: data.settings.hospitalName || '',
+              chartTemplate: data.settings.chartTemplate || 'soap',
+              autoSave: data.settings.autoSave ?? true,
+              includeICD: data.settings.includeICD ?? true,
+              defaultLanguage: data.settings.defaultLanguage || 'ko',
+              emailNotifications: data.settings.emailNotifications ?? true,
+              soundEnabled: data.settings.soundEnabled ?? true,
+              speakerDetection: data.settings.speakerDetection ?? true,
+              autoCorrect: data.settings.autoCorrect ?? true,
+              medicalTerms: data.settings.medicalTerms ?? true,
+            }));
+          }
+        }
+
+        if (keywordsRes.ok) {
+          const data = await keywordsRes.json();
+          setCustomTerms(data.keywords || []);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        setSnackbar({ open: true, message: '설정을 불러오는데 실패했습니다', severity: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user?.uid, user?.displayName]);
 
   const handleChange = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    setSnackbar({ open: true, message: '설정이 저장되었습니다', severity: 'success' });
-  };
+  const handleSave = async () => {
+    if (!user?.uid) return;
 
-  const handleAddTerm = () => {
-    if (newTerm.trim() && !customTerms.includes(newTerm.trim())) {
-      setCustomTerms([...customTerms, newTerm.trim()]);
-      setNewTerm('');
-      setSnackbar({ open: true, message: '용어가 추가되었습니다', severity: 'success' });
+    setSaving(true);
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          ...settings,
+        }),
+      });
+
+      if (response.ok) {
+        setSnackbar({ open: true, message: '설정이 저장되었습니다', severity: 'success' });
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSnackbar({ open: true, message: '설정 저장에 실패했습니다', severity: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDeleteTerm = (termToDelete) => {
-    setCustomTerms(customTerms.filter((term) => term !== termToDelete));
-    setSnackbar({ open: true, message: '용어가 삭제되었습니다', severity: 'info' });
+  const handleAddTerm = async () => {
+    if (!newTerm.trim() || !user?.uid) return;
+    if (customTerms.some(t => t.term === newTerm.trim())) {
+      setSnackbar({ open: true, message: '이미 등록된 용어입니다', severity: 'warning' });
+      return;
+    }
+
+    setAddingTerm(true);
+    try {
+      const response = await fetch('/api/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          term: newTerm.trim(),
+          category: 'custom',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCustomTerms([...customTerms, data.keyword]);
+        setNewTerm('');
+        setSnackbar({ open: true, message: '용어가 추가되었습니다', severity: 'success' });
+      } else {
+        throw new Error('Failed to add');
+      }
+    } catch (error) {
+      console.error('Error adding term:', error);
+      setSnackbar({ open: true, message: '용어 추가에 실패했습니다', severity: 'error' });
+    } finally {
+      setAddingTerm(false);
+    }
   };
+
+  const handleDeleteTerm = async (keyword) => {
+    try {
+      const response = await fetch(`/api/keywords?id=${keyword.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setCustomTerms(customTerms.filter((t) => t.id !== keyword.id));
+        setSnackbar({ open: true, message: '용어가 삭제되었습니다', severity: 'info' });
+      } else {
+        throw new Error('Failed to delete');
+      }
+    } catch (error) {
+      console.error('Error deleting term:', error);
+      setSnackbar({ open: true, message: '용어 삭제에 실패했습니다', severity: 'error' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1000, mx: 'auto' }}>
+        <Box sx={{ mb: 4 }}>
+          <Skeleton variant="text" width={200} height={40} />
+          <Skeleton variant="text" width={300} height={24} />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rounded" height={200} sx={{ borderRadius: 4 }} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1000, mx: 'auto' }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <MotionBox
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{ mb: 4 }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 0.5 }}>
@@ -151,11 +298,17 @@ export default function SettingsPage() {
               chartsok 환경을 개인화하세요
             </Typography>
           </Box>
-          <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} sx={{ px: 3 }}>
-            저장하기
+          <Button
+            variant="contained"
+            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            onClick={handleSave}
+            disabled={saving}
+            sx={{ px: 3 }}
+          >
+            {saving ? '저장 중...' : '저장하기'}
           </Button>
         </Box>
-      </Box>
+      </MotionBox>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Profile Settings */}
@@ -296,6 +449,7 @@ export default function SettingsPage() {
               onChange={(e) => setNewTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddTerm()}
               size="small"
+              disabled={addingTerm}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -303,15 +457,15 @@ export default function SettingsPage() {
                       <IconButton
                         onClick={handleAddTerm}
                         size="small"
-                        disabled={!newTerm.trim()}
+                        disabled={!newTerm.trim() || addingTerm}
                         sx={{
-                          bgcolor: newTerm.trim() ? '#8B5CF6' : 'transparent',
-                          color: newTerm.trim() ? 'white' : 'grey.400',
-                          '&:hover': { bgcolor: newTerm.trim() ? '#7C3AED' : 'transparent' },
+                          bgcolor: newTerm.trim() && !addingTerm ? '#8B5CF6' : 'transparent',
+                          color: newTerm.trim() && !addingTerm ? 'white' : 'grey.400',
+                          '&:hover': { bgcolor: newTerm.trim() && !addingTerm ? '#7C3AED' : 'transparent' },
                           transition: 'all 0.2s',
                         }}
                       >
-                        <AddIcon sx={{ fontSize: 18 }} />
+                        {addingTerm ? <CircularProgress size={16} color="inherit" /> : <AddIcon sx={{ fontSize: 18 }} />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -325,11 +479,11 @@ export default function SettingsPage() {
             />
           </Box>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {customTerms.map((term) => (
+            {customTerms.map((keyword) => (
               <Chip
-                key={term}
-                label={term}
-                onDelete={() => handleDeleteTerm(term)}
+                key={keyword.id}
+                label={keyword.term}
+                onDelete={() => handleDeleteTerm(keyword)}
                 deleteIcon={<CloseIcon sx={{ fontSize: 16 }} />}
                 sx={{
                   bgcolor: '#EDE9FE',
@@ -373,7 +527,10 @@ export default function SettingsPage() {
         </SettingSection>
 
         {/* Danger Zone */}
-        <Paper
+        <MotionPaper
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.6 }}
           elevation={0}
           sx={{
             borderRadius: 4,
@@ -406,7 +563,7 @@ export default function SettingsPage() {
               계정 삭제
             </Button>
           </Box>
-        </Paper>
+        </MotionPaper>
       </Box>
 
       {/* Snackbar */}

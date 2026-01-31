@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { Box, Container, Typography, Grid, Card, CardContent, Stack, Chip } from '@mui/material';
 import { motion } from 'framer-motion';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
-import MicIcon from '@mui/icons-material/Mic';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import EditNoteIcon from '@mui/icons-material/EditNote';
+import SecurityIcon from '@mui/icons-material/Security';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import SyncIcon from '@mui/icons-material/Sync';
+import DescriptionIcon from '@mui/icons-material/Description';
+import MicIcon from '@mui/icons-material/Mic';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import CheckIcon from '@mui/icons-material/Check';
 import { useI18n } from '@/lib/i18n';
 
@@ -16,21 +16,21 @@ const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
 const iconMap = {
-  patient: PersonSearchIcon,
-  vitals: MonitorHeartIcon,
-  mic: MicIcon,
-  ai: AutoAwesomeIcon,
-  edit: EditNoteIcon,
+  security: SecurityIcon,
+  time: ScheduleIcon,
   integration: SyncIcon,
+  template: DescriptionIcon,
+  mic: MicIcon,
+  edit: EditNoteIcon,
 };
 
 const colorMap = {
-  patient: '#4B9CD3',
-  vitals: '#10B981',
-  mic: '#F59E0B',
-  ai: '#8B5CF6',
-  edit: '#EC4899',
+  security: '#EF4444',
+  time: '#F59E0B',
   integration: '#06B6D4',
+  template: '#8B5CF6',
+  mic: '#10B981',
+  edit: '#EC4899',
 };
 
 export default function Features() {

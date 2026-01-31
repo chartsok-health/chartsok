@@ -30,6 +30,8 @@ import {
   DialogActions,
   Tooltip,
   Collapse,
+  MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import MicIcon from '@mui/icons-material/Mic';
@@ -60,21 +62,10 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import HomeIcon from '@mui/icons-material/Home';
 import StarIcon from '@mui/icons-material/Star';
 import { useAuth } from '@/lib/AuthContext';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 const MotionCard = motion.create(Card);
-
-// Sample patient data
-const samplePatients = [
-  { id: 1, name: '김영희', age: 45, gender: '여', lastVisit: '2025-01-15', chartNo: 'P-2024-001', recentDiagnosis: '급성 편도염' },
-  { id: 2, name: '박철수', age: 62, gender: '남', lastVisit: '2025-01-20', chartNo: 'P-2024-002', recentDiagnosis: '고혈압' },
-  { id: 3, name: '이민정', age: 33, gender: '여', lastVisit: '2025-01-22', chartNo: 'P-2024-003', recentDiagnosis: '알레르기성 비염' },
-  { id: 4, name: '정대현', age: 58, gender: '남', lastVisit: '2025-01-25', chartNo: 'P-2024-004', recentDiagnosis: '당뇨' },
-  { id: 5, name: '최수진', age: 28, gender: '여', lastVisit: '2025-01-28', chartNo: 'P-2024-005', recentDiagnosis: '급성 위염' },
-];
 
 // Common chief complaints
 const commonComplaints = [
@@ -103,10 +94,13 @@ export default function RecordPage() {
   const [activeStep, setActiveStep] = useState(0);
 
   // Step 1: Patient selection
+  const [patients, setPatients] = useState([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [newPatientDialogOpen, setNewPatientDialogOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: '', age: '', gender: '남', chartNo: '' });
+  const [newPatient, setNewPatient] = useState({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
+  const [savingPatient, setSavingPatient] = useState(false);
 
   // Step 2: Vitals
   const [vitals, setVitals] = useState({
@@ -159,6 +153,47 @@ export default function RecordPage() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
+  // Fetch patients from API
+  useEffect(() => {
+    const fetchPatients = async () => {
+      setLoadingPatients(true);
+      try {
+        const response = await fetch('/api/patients');
+        if (!response.ok) throw new Error('Failed to fetch patients');
+        const data = await response.json();
+
+        // API returns { patients, total }
+        const patientsList = data.patients || [];
+
+        // Calculate age from birthDate and add recent diagnosis
+        const transformedPatients = patientsList.map(patient => ({
+          ...patient,
+          age: patient.birthDate ? calculateAge(patient.birthDate) : patient.age || 0,
+          recentDiagnosis: patient.recentDiagnosis || '기록 없음',
+        }));
+
+        setPatients(transformedPatients);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+      } finally {
+        setLoadingPatients(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
+  // Helper function to calculate age
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return 0;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
   // Timer effect
   useEffect(() => {
     let interval;
@@ -179,15 +214,15 @@ export default function RecordPage() {
 
   // Pre-select patient from URL params (when coming from history page)
   useEffect(() => {
-    if (patientIdParam && patientNameParam) {
-      // Find patient in samplePatients by ID
-      const foundPatient = samplePatients.find(p => p.id === parseInt(patientIdParam));
+    if (patientIdParam && patientNameParam && patients.length > 0) {
+      // Find patient in loaded patients by ID
+      const foundPatient = patients.find(p => p.id === patientIdParam || p.id === parseInt(patientIdParam));
       if (foundPatient) {
         setSelectedPatient(foundPatient);
       } else {
-        // Create a patient entry from URL params if not found in sample data
+        // Create a patient entry from URL params if not found in loaded patients
         setSelectedPatient({
-          id: parseInt(patientIdParam),
+          id: patientIdParam,
           name: decodeURIComponent(patientNameParam),
           age: '-',
           gender: '-',
@@ -197,36 +232,66 @@ export default function RecordPage() {
         });
       }
     }
-  }, [patientIdParam, patientNameParam]);
+  }, [patientIdParam, patientNameParam, patients]);
 
-  // Fetch user templates
+  // Default template for fallback
+  const defaultTemplateData = {
+    id: 'default-soap',
+    name: 'SOAP 기본',
+    description: '기본 SOAP 차트 템플릿',
+    isDefault: true,
+    sections: [
+      { id: 's', title: 'Subjective', description: '주관적 증상' },
+      { id: 'o', title: 'Objective', description: '객관적 소견' },
+      { id: 'a', title: 'Assessment', description: '평가/진단' },
+      { id: 'p', title: 'Plan', description: '치료 계획' },
+    ],
+  };
+
+  // Fetch templates from API
   useEffect(() => {
     const fetchTemplates = async () => {
-      if (!user) return;
       setLoadingTemplates(true);
       try {
-        const templatesRef = collection(db, 'users', user.uid, 'templates');
-        const q = query(templatesRef, orderBy('updatedAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const userTemplates = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setTemplates(userTemplates);
+        const specialty = userProfile?.specialty || null;
+        const url = specialty
+          ? `/api/templates?specialty=${specialty}`
+          : '/api/templates';
 
-        // Auto-select default template if exists
-        const defaultTemplate = userTemplates.find(t => t.isDefault);
-        if (defaultTemplate) {
-          setSelectedTemplate(defaultTemplate);
+        const response = await fetch(url);
+        if (!response.ok) {
+          // Use default template on error
+          console.warn('Templates API unavailable, using default template');
+          setTemplates([defaultTemplateData]);
+          setSelectedTemplate(defaultTemplateData);
+          return;
+        }
+        const data = await response.json();
+
+        if (data.templates && data.templates.length > 0) {
+          setTemplates(data.templates);
+
+          // Auto-select default template if exists
+          const defaultTemplate = data.templates.find(t => t.isDefault);
+          if (defaultTemplate) {
+            setSelectedTemplate(defaultTemplate);
+          }
+        } else {
+          // No templates in DB, use default
+          setTemplates([defaultTemplateData]);
+          setSelectedTemplate(defaultTemplateData);
         }
       } catch (error) {
         console.error('Error fetching templates:', error);
+        // Use default template on error
+        setTemplates([defaultTemplateData]);
+        setSelectedTemplate(defaultTemplateData);
       } finally {
         setLoadingTemplates(false);
       }
     };
     fetchTemplates();
-  }, [user]);
+  }, [userProfile?.specialty]);
 
   // Audio visualization
   useEffect(() => {
@@ -268,27 +333,68 @@ export default function RecordPage() {
   };
 
   // Filter patients based on search
-  const filteredPatients = samplePatients.filter(
+  const filteredPatients = patients.filter(
     (patient) =>
-      patient.name.includes(searchQuery) ||
-      patient.chartNo.toLowerCase().includes(searchQuery.toLowerCase())
+      patient.name?.includes(searchQuery) ||
+      patient.chartNo?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Handle new patient creation
-  const handleCreatePatient = () => {
-    if (newPatient.name && newPatient.age) {
-      const patient = {
-        id: Date.now(),
-        name: newPatient.name,
-        age: parseInt(newPatient.age),
-        gender: newPatient.gender,
-        lastVisit: new Date().toISOString().split('T')[0],
-        chartNo: newPatient.chartNo || `P-${Date.now().toString().slice(-6)}`,
-        recentDiagnosis: '신규 환자',
-      };
-      setSelectedPatient(patient);
-      setNewPatientDialogOpen(false);
-      setNewPatient({ name: '', age: '', gender: '남', chartNo: '' });
+  const handleCreatePatient = async () => {
+    if (newPatient.name) {
+      try {
+        setSavingPatient(true);
+        const chartNo = newPatient.chartNo || `P-${new Date().getFullYear()}-${String(patients.length + 1).padStart(3, '0')}`;
+
+        // Save to database via API
+        const response = await fetch('/api/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newPatient.name,
+            gender: newPatient.gender,
+            birthDate: newPatient.birthDate || null,
+            phone: newPatient.phone || null,
+            chartNo: chartNo,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to create patient');
+        const result = await response.json();
+        const createdPatient = result.patient;
+
+        const patient = {
+          ...createdPatient,
+          age: newPatient.birthDate ? calculateAge(newPatient.birthDate) : 0,
+          lastVisit: new Date().toISOString().split('T')[0],
+          chartNo: chartNo,
+          recentDiagnosis: '신규 환자',
+        };
+
+        // Add to local patients list
+        setPatients([patient, ...patients]);
+        setSelectedPatient(patient);
+        setNewPatientDialogOpen(false);
+        setNewPatient({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
+      } catch (error) {
+        console.error('Error creating patient:', error);
+        // Fallback to local-only patient for the session
+        const patient = {
+          id: Date.now().toString(),
+          name: newPatient.name,
+          age: newPatient.birthDate ? calculateAge(newPatient.birthDate) : 0,
+          gender: newPatient.gender,
+          lastVisit: new Date().toISOString().split('T')[0],
+          chartNo: newPatient.chartNo || `P-${Date.now().toString().slice(-6)}`,
+          recentDiagnosis: '신규 환자',
+        };
+        setPatients([patient, ...patients]);
+        setSelectedPatient(patient);
+        setNewPatientDialogOpen(false);
+        setNewPatient({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
+      } finally {
+        setSavingPatient(false);
+      }
     }
   };
 
@@ -724,17 +830,58 @@ export default function RecordPage() {
                   exit={{ opacity: 0, y: -10 }}
                   sx={{ textAlign: 'center', py: 6 }}
                 >
-                  <PersonSearchIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
-                  <Typography variant="body1" sx={{ color: 'grey.500', mb: 2 }}>
-                    "{searchQuery}" 검색 결과가 없습니다
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<PersonAddIcon />}
-                    onClick={() => setNewPatientDialogOpen(true)}
-                  >
-                    새 환자로 등록
-                  </Button>
+                  {patients.length === 0 ? (
+                    // No patients at all
+                    <>
+                      <Box
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.50',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2,
+                        }}
+                      >
+                        <PersonIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                      </Box>
+                      <Typography variant="h6" sx={{ color: 'secondary.main', fontWeight: 700, mb: 1 }}>
+                        등록된 환자가 없습니다
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'grey.500', mb: 3 }}>
+                        첫 번째 환자를 등록하여 진료를 시작하세요
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<PersonAddIcon />}
+                        onClick={() => setNewPatientDialogOpen(true)}
+                        sx={{
+                          borderRadius: 2,
+                          background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                        }}
+                      >
+                        새 환자 등록
+                      </Button>
+                    </>
+                  ) : (
+                    // Has patients but search returned nothing
+                    <>
+                      <PersonSearchIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: 'grey.500', mb: 2 }}>
+                        "{searchQuery}" 검색 결과가 없습니다
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        startIcon={<PersonAddIcon />}
+                        onClick={() => setNewPatientDialogOpen(true)}
+                      >
+                        새 환자로 등록
+                      </Button>
+                    </>
+                  )}
                 </MotionBox>
               ) : (
                 <List sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 1 }}>
@@ -887,14 +1034,18 @@ export default function RecordPage() {
         </Grid>
       </Grid>
 
-      {/* New Patient Dialog */}
+      {/* New Patient Dialog - Same as patients page */}
       <Dialog
         open={newPatientDialogOpen}
         onClose={() => setNewPatientDialogOpen(false)}
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: {
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
@@ -902,44 +1053,45 @@ export default function RecordPage() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="환자 이름"
+                label="이름"
                 value={newPatient.name}
                 onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
                 placeholder="홍길동"
               />
             </Grid>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="나이"
-                type="number"
-                value={newPatient.age}
-                onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })}
-                placeholder="30"
+                select
+                label="성별"
+                value={newPatient.gender}
+                onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
+              >
+                <MenuItem value="남">남성</MenuItem>
+                <MenuItem value="여">여성</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="생년월일"
+                type="date"
+                value={newPatient.birthDate}
+                onChange={(e) => setNewPatient({ ...newPatient, birthDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid size={{ xs: 6 }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  fullWidth
-                  variant={newPatient.gender === '남' ? 'contained' : 'outlined'}
-                  onClick={() => setNewPatient({ ...newPatient, gender: '남' })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  남성
-                </Button>
-                <Button
-                  fullWidth
-                  variant={newPatient.gender === '여' ? 'contained' : 'outlined'}
-                  onClick={() => setNewPatient({ ...newPatient, gender: '여' })}
-                  sx={{ borderRadius: 2 }}
-                >
-                  여성
-                </Button>
-              </Box>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="전화번호"
+                value={newPatient.phone}
+                onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                placeholder="010-0000-0000"
+              />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
@@ -952,16 +1104,20 @@ export default function RecordPage() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 1 }}>
-          <Button onClick={() => setNewPatientDialogOpen(false)}>
+        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+          <Button onClick={() => setNewPatientDialogOpen(false)} sx={{ borderRadius: 2 }}>
             취소
           </Button>
           <Button
             variant="contained"
             onClick={handleCreatePatient}
-            disabled={!newPatient.name || !newPatient.age}
+            disabled={!newPatient.name || savingPatient}
+            sx={{
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+            }}
           >
-            등록 및 선택
+            {savingPatient ? <CircularProgress size={20} /> : '등록 및 선택'}
           </Button>
         </DialogActions>
       </Dialog>

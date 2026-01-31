@@ -38,6 +38,9 @@ export const Specialty = {
   OB_GYN: 'obgyn',
   CARDIO: 'cardio',
   SURGERY: 'surgery',
+  // Aliases for clearer code
+  PEDIATRIC: 'peds',
+  DERMATOLOGY: 'derm',
 };
 
 export const SpecialtyLabels = {
@@ -79,6 +82,8 @@ export const TemplateCategory = {
   SOAP: 'soap',
   NARRATIVE: 'narrative',
   CUSTOM: 'custom',
+  SPECIALTY: 'specialty',
+  BRIEF: 'brief',
 };
 
 export const TemplateCategoryLabels = {
@@ -115,6 +120,7 @@ export const ChartSectionKey = {
   PHYSICAL_EXAM: 'physicalExam',
   // Dermatology specific
   LESION: 'lesion',
+  LESION_DESCRIPTION: 'lesionDescription',
   // Pediatrics specific
   GROWTH: 'growth',
   VACCINATION: 'vaccination',
@@ -374,6 +380,7 @@ export const SectionColors = {
   imaging: { color: '#06B6D4', bgColor: '#ECFEFF' },
   physicalExam: { color: '#84CC16', bgColor: '#F7FEE7' },
   lesion: { color: '#F97316', bgColor: '#FFF7ED' },
+  lesionDescription: { color: '#F97316', bgColor: '#FFF7ED' },
   growth: { color: '#14B8A6', bgColor: '#F0FDFA' },
   vaccination: { color: '#6366F1', bgColor: '#EEF2FF' },
   narrative: { color: '#64748B', bgColor: '#F8FAFC' },

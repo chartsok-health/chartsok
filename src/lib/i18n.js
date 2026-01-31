@@ -20,12 +20,12 @@ const translations = {
       startTrial: '무료 체험',
       dashboard: '대시보드',
     },
-    // Hero Section - Focused on workflow outcomes, not AI technology
+    // Hero Section
     hero: {
       badge: '의사 전용 진료 차트 시스템',
-      title: '진료 끝나면',
-      titleHighlight: '차트도 끝',
-      titleEnd: '',
+      title: '진료에 집중하세요',
+      titleHighlight: '차트는 AI가',
+      titleEnd: '완성합니다',
       subtitle: '진료 중 대화를 기록하고, EMR에 바로 붙여넣을 수 있는 차트를 생성합니다. 전문과별 템플릿으로 원하는 형식의 차트를 빠르게 완성하세요.',
       cta: '데모 신청하기',
       demo: '차트 샘플 보기',
@@ -317,13 +317,14 @@ const translations = {
         },
       ],
     },
-    // Integrations Section - Honest about current state
+    // Integrations Section
     integrations: {
-      title: 'EMR 연동 방식',
-      subtitle: '현재 클립보드 복사 방식을 지원합니다',
-      description: '생성된 차트를 클립보드에 복사하여 사용 중인 EMR에 붙여넣기할 수 있습니다. 전체 차트 또는 개별 필드 복사가 가능합니다. API 직접 연동은 추후 지원 예정입니다.',
+      title: 'EMR 자동 연동',
+      subtitle: 'EMR에 직접 전송하는 자동 입력 기능 개발 중',
+      description: '현재는 클립보드 복사로 EMR에 붙여넣기할 수 있습니다. 곧 EMR 필드에 직접 자동 입력하는 기능이 출시됩니다. 클릭 한 번으로 차트가 EMR에 바로 전송됩니다.',
       systems: ['비트컴퓨터', '유비케어', '이지케어텍', '기타 EMR'],
-      cta: '연동 문의',
+      cta: '자동 연동 사전 신청',
+      comingSoon: '자동 입력 기능 곧 출시',
     },
     // Pricing Section
     pricing: {
@@ -453,9 +454,9 @@ const translations = {
     // Hero Section
     hero: {
       badge: 'Clinical Charting System for Doctors',
-      title: 'Finish Charting',
-      titleHighlight: 'When You Finish',
-      titleEnd: 'the Visit',
+      title: 'Focus on Patient Care',
+      titleHighlight: 'AI Completes',
+      titleEnd: 'Your Charts',
       subtitle: 'Record your consultations and generate charts ready to paste into your EMR. Complete charts quickly with specialty-specific templates.',
       cta: 'Request Demo',
       demo: 'View Sample Charts',

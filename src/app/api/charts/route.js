@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { charts, patients } from '@/lib/mockDatabase';
-import { getTemplateById } from '@/lib/services';
+import {
+  chartService,
+  chartContentService,
+  chartVitalsService,
+  patientService,
+  templateService,
+} from '@/lib/firestore';
 
 /**
  * GET /api/charts
@@ -13,33 +18,36 @@ export async function GET(request) {
     const templateId = searchParams.get('templateId');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    let filteredCharts = [...charts];
+    let charts;
 
     if (patientId) {
-      filteredCharts = filteredCharts.filter(c => c.patientId === parseInt(patientId));
+      charts = await chartService.getByPatientId(patientId, { limitCount: limit });
+    } else if (templateId) {
+      charts = await chartService.getByTemplateId(templateId, { limitCount: limit });
+    } else {
+      charts = await chartService.getAll({
+        orderByField: 'createdAt',
+        orderDirection: 'desc',
+        limitCount: limit
+      });
     }
-
-    if (templateId) {
-      filteredCharts = filteredCharts.filter(c => c.templateId === templateId);
-    }
-
-    // Sort by creation date descending
-    filteredCharts.sort((a, b) => b.createdAt - a.createdAt);
-
-    // Apply limit
-    filteredCharts = filteredCharts.slice(0, limit);
 
     // Enrich with patient name and template info
-    const enrichedCharts = filteredCharts.map(chart => {
-      const patient = patients.find(p => p.id === chart.patientId);
-      const template = getTemplateById(chart.templateId);
-      return {
-        ...chart,
-        patientName: patient?.name || 'Unknown',
-        patientChartNo: patient?.chartNo || '',
-        templateName: template?.name || 'SOAP',
-      };
-    });
+    const enrichedCharts = await Promise.all(
+      charts.map(async (chart) => {
+        const [patient, template] = await Promise.all([
+          chart.patientId ? patientService.getById(chart.patientId) : null,
+          chart.templateId ? templateService.getById(chart.templateId) : null,
+        ]);
+
+        return {
+          ...chart,
+          patientName: patient?.name || 'Unknown',
+          patientChartNo: patient?.chartNo || '',
+          templateName: template?.name || 'SOAP',
+        };
+      })
+    );
 
     return NextResponse.json({
       charts: enrichedCharts,
@@ -78,43 +86,87 @@ export async function POST(request) {
       );
     }
 
-    // Generate new chart ID
-    const chartId = `chrt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create chart with contents using Firestore service
+    const chart = await chartService.createWithContents(
+      {
+        sessionId: sessionId || null,
+        patientId: patientId || null,
+        templateId,
+        diagnosis: diagnosis || '',
+        icdCode: icdCode || '',
+        status: 'completed',
+      },
+      chartData,
+      vitals || null
+    );
 
-    // Create new chart
-    const newChart = {
-      id: chartId,
-      sessionId: sessionId || null,
-      patientId: patientId || null,
-      templateId,
-      diagnosis: diagnosis || '',
-      icdCode: icdCode || '',
-      status: 'completed',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    // Create chart contents for each section
-    const newContents = Object.entries(chartData).map(([sectionKey, content]) => ({
-      id: `cc_${Date.now()}_${sectionKey}`,
-      chartId,
-      sectionKey,
-      content,
-      createdAt: Date.now(),
-    }));
-
-    // In a real implementation, we would save to database here
-    // For mock, we just return the created data
+    // Get created contents
+    const contents = await chartContentService.getByChartId(chart.id);
 
     return NextResponse.json({
-      chart: newChart,
-      contents: newContents,
+      chart,
+      contents,
       message: 'Chart saved successfully',
     });
   } catch (error) {
     console.error('Error saving chart:', error);
     return NextResponse.json(
       { error: 'Failed to save chart' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PUT /api/charts
+ * Update an existing chart
+ */
+export async function PUT(request) {
+  try {
+    const body = await request.json();
+    const { chartId, diagnosis, icdCode, chartData, vitals } = body;
+
+    if (!chartId) {
+      return NextResponse.json(
+        { error: 'chartId is required' },
+        { status: 400 }
+      );
+    }
+
+    const existing = await chartService.getById(chartId);
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Chart not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update chart data
+    const updateData = {};
+    if (diagnosis !== undefined) updateData.diagnosis = diagnosis;
+    if (icdCode !== undefined) updateData.icdCode = icdCode;
+
+    if (chartData) {
+      await chartService.updateWithContents(chartId, updateData, chartData);
+    } else if (Object.keys(updateData).length > 0) {
+      await chartService.update(chartId, updateData);
+    }
+
+    // Update vitals if provided
+    if (vitals) {
+      await chartVitalsService.upsertVitals(chartId, vitals);
+    }
+
+    const updatedChart = await chartService.getFullChart(chartId);
+
+    return NextResponse.json({
+      chart: updatedChart,
+      message: 'Chart updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating chart:', error);
+    return NextResponse.json(
+      { error: 'Failed to update chart' },
       { status: 500 }
     );
   }

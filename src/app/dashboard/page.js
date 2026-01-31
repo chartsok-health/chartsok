@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -15,12 +15,8 @@ import {
   IconButton,
   Divider,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Skeleton,
+  CircularProgress,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import MicIcon from '@mui/icons-material/Mic';
@@ -32,21 +28,13 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import PersonIcon from '@mui/icons-material/Person';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useAuth } from '@/lib/AuthContext';
-import { getTodayRecords, getDashboardStats } from '@/lib/services';
+import { formatDuration } from '@/lib/helpers';
 
 const MotionCard = motion.create(Card);
 const MotionBox = motion.create(Box);
-const MotionPaper = motion.create(Paper);
-
-// Get data from services
-const todayRecords = getTodayRecords();
-const dashboardStats = getDashboardStats();
-const weeklyStats = dashboardStats.weeklyData;
 
 // Clean Card Component - matching history page style
 const CleanCard = ({ children, sx, ...props }) => (
@@ -69,41 +57,122 @@ const CleanCard = ({ children, sx, ...props }) => (
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
   const router = useRouter();
+  const [todayRecords, setTodayRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    todayCount: 0,
+    weekCount: 0,
+    monthCount: 0,
+    avgDuration: 0,
+    avgDurationFormatted: '0:00',
+    timeSavedHours: '0',
+    timeSavedPercent: '0%',
+    dailyAverage: '0',
+    busiestDay: '-',
+    weekChange: '+0%',
+    topDiagnosis: '-',
+    accuracy: '0%',
+  });
+  const [weeklyStats, setWeeklyStats] = useState([
+    { day: '월', count: 0 },
+    { day: '화', count: 0 },
+    { day: '수', count: 0 },
+    { day: '목', count: 0 },
+    { day: '금', count: 0 },
+    { day: '토', count: 0 },
+    { day: '일', count: 0 },
+  ]);
+
+  // Fetch dashboard stats from API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+
+        // Fetch comprehensive stats from dashboard stats API
+        const statsResponse = await fetch('/api/dashboard/stats');
+        const statsData = await statsResponse.json();
+
+        if (statsData) {
+          // Update stats
+          setStats({
+            todayCount: statsData.todayCount || 0,
+            weekCount: statsData.weekCount || 0,
+            monthCount: statsData.monthCount || 0,
+            avgDuration: statsData.avgDuration || 0,
+            avgDurationFormatted: statsData.avgDurationFormatted || '0:00',
+            timeSavedHours: statsData.timeSavedHours || '0',
+            timeSavedPercent: statsData.timeSavedPercent || '0%',
+            dailyAverage: statsData.dailyAverage || '0',
+            busiestDay: statsData.busiestDay || '-',
+            weekChange: statsData.weekChange || '+0%',
+            topDiagnosis: statsData.topDiagnosis || '-',
+            accuracy: statsData.accuracy || '0%',
+          });
+
+          // Update weekly data for bar chart
+          if (statsData.weeklyData && statsData.weeklyData.length > 0) {
+            setWeeklyStats(statsData.weeklyData);
+          }
+
+          // Set today's sessions for the list
+          if (statsData.todaySessions && statsData.todaySessions.length > 0) {
+            const records = statsData.todaySessions.map((session) => ({
+              id: session.id,
+              time: session.time || '',
+              patient: session.patientName || '환자',
+              patientInfo: `${session.patientGender || ''}/${session.patientAge || ''}`,
+              diagnosis: session.diagnosis || '',
+              duration: session.durationFormatted || formatDuration(session.duration || 0),
+              status: session.status,
+            }));
+            setTodayRecords(records);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
 
   const displayName = userProfile?.doctorName || user?.displayName || '선생님';
 
-  const stats = [
+  const statCards = [
     {
       label: '오늘 진료',
-      value: '4',
-      change: '+2',
-      trend: 'up',
+      value: stats.todayCount.toString(),
+      change: stats.weekChange,
+      trend: stats.weekChange.startsWith('+') ? 'up' : 'down',
       icon: MicIcon,
       color: '#4B9CD3',
       bgColor: '#EBF5FF',
     },
     {
       label: '이번 주',
-      value: '73',
-      change: '+12%',
-      trend: 'up',
+      value: stats.weekCount.toString(),
+      change: stats.weekChange,
+      trend: stats.weekChange.startsWith('+') ? 'up' : 'down',
       icon: CalendarTodayIcon,
       color: '#10B981',
       bgColor: '#ECFDF5',
     },
     {
       label: '평균 진료 시간',
-      value: '5:42',
-      change: '-23%',
-      trend: 'down',
+      value: stats.avgDurationFormatted,
+      change: '',
+      trend: 'neutral',
       icon: AccessTimeIcon,
       color: '#F59E0B',
       bgColor: '#FFFBEB',
     },
     {
       label: '시간 절감',
-      value: '73%',
-      change: '+5%',
+      value: `${stats.timeSavedHours}시간`,
+      change: stats.timeSavedPercent,
       trend: 'up',
       icon: TrendingUpIcon,
       color: '#EC4899',
@@ -111,7 +180,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const maxCount = Math.max(...weeklyStats.map((s) => s.count));
+  const maxCount = Math.max(...weeklyStats.map((s) => s.count), 1);
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1600, mx: 'auto' }}>
@@ -138,7 +207,7 @@ export default function DashboardPage() {
                   WELCOME BACK
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-                  안녕하세요, {displayName} 선생님 👋
+                  안녕하세요, {displayName} 👋
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
                   오늘 하루도 chartsok과 함께 효율적인 진료를 시작하세요.
@@ -180,7 +249,7 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {stats.map((stat, index) => {
+        {statCards.map((stat, index) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trend === 'up' ? TrendingUpIcon : TrendingDownIcon;
           return (
@@ -207,27 +276,17 @@ export default function DashboardPage() {
                       <Icon sx={{ fontSize: 24, color: stat.color }} />
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                        {stat.value}
-                      </Typography>
+                      {loading ? (
+                        <Skeleton variant="text" width={60} height={40} />
+                      ) : (
+                        <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+                          {stat.value}
+                        </Typography>
+                      )}
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         {stat.label}
                       </Typography>
                     </Box>
-                    <Chip
-                      icon={<TrendIcon sx={{ fontSize: 14 }} />}
-                      label={stat.change}
-                      size="small"
-                      sx={{
-                        bgcolor: stat.trend === 'up' ? '#ECFDF5' : '#FEF2F2',
-                        color: stat.trend === 'up' ? '#10B981' : '#EF4444',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        '& .MuiChip-icon': {
-                          color: stat.trend === 'up' ? '#10B981' : '#EF4444',
-                        },
-                      }}
-                    />
                   </CardContent>
                 </CleanCard>
               </MotionBox>
@@ -252,7 +311,7 @@ export default function DashboardPage() {
                     주간 진료 현황
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    이번 주 총 <strong>73건</strong>의 진료를 완료했습니다
+                    이번 주 총 <strong>{stats.weekCount}</strong>건의 진료를 완료했습니다
                   </Typography>
                 </Box>
                 <Button
@@ -267,7 +326,11 @@ export default function DashboardPage() {
               {/* Bar Chart */}
               <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: { xs: 1.5, md: 3 }, height: 120, px: 2 }}>
                 {weeklyStats.map((day, index) => {
-                  const isToday = index === new Date().getDay() - 1;
+                  // getDay() returns 0 for Sunday, 1 for Monday, etc.
+                  // Our array is Mon-Sun (0-6), so Monday=0 means getDay()-1, Sunday=6 means getDay()=0
+                  const dayOfWeek = new Date().getDay();
+                  const todayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                  const isToday = index === todayIndex;
                   return (
                     <Box
                       key={day.day}
@@ -316,38 +379,55 @@ export default function DashboardPage() {
                 })}
               </Box>
 
-              {/* Weekly Summary */}
-              <Box sx={{ display: 'flex', gap: 2, mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+              {/* Weekly Stats Summary */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  pt: 2,
+                  mt: 2,
+                  borderTop: '1px solid',
+                  borderColor: 'grey.100',
+                }}
+              >
                 <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     일 평균
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                    10.4건
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+                    {stats.dailyAverage}건
                   </Typography>
                 </Box>
                 <Divider orientation="vertical" flexItem />
                 <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     최다 요일
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#4B9CD3' }}>
-                    목요일
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#4B9CD3' }}>
+                    {stats.busiestDay && stats.busiestDay !== '-' ? `${stats.busiestDay}요일` : '-'}
                   </Typography>
                 </Box>
                 <Divider orientation="vertical" flexItem />
                 <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     지난주 대비
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#10B981' }}>
-                    +12%
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      color: !stats.weekChange || stats.weekChange === '+0%' || stats.weekChange === '0%'
+                        ? 'text.secondary'
+                        : stats.weekChange.startsWith('+') ? '#10B981' : '#EF4444',
+                    }}
+                  >
+                    {stats.weekChange || '-'}
                   </Typography>
                 </Box>
               </Box>
 
               {/* Quick Actions */}
-              <Box sx={{ display: 'flex', gap: 1.5, mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+              <Box sx={{ display: 'flex', gap: 1.5, mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
                 <Button
                   variant="contained"
                   startIcon={<MicIcon />}
@@ -414,9 +494,27 @@ export default function DashboardPage() {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {[
-                  { label: '차트 작성 시간', value: '4.2시간', sub: '절감', color: '#10B981', bgColor: '#ECFDF5' },
-                  { label: '정확도', value: '98.5%', progress: 98.5, color: '#4B9CD3', bgColor: '#EBF5FF' },
-                  { label: '가장 많은 진단', value: '급성 상기도 감염', sub: null, color: '#F59E0B', bgColor: '#FFFBEB' },
+                  {
+                    label: '차트 작성 시간',
+                    value: stats.timeSavedHours !== '0' ? `${stats.timeSavedHours}시간` : '데이터 없음',
+                    sub: stats.timeSavedHours !== '0' ? '절감' : null,
+                    color: '#10B981',
+                    bgColor: '#ECFDF5',
+                  },
+                  {
+                    label: '정확도',
+                    value: stats.accuracy && stats.accuracy !== '0%' ? stats.accuracy : '데이터 없음',
+                    progress: stats.accuracy && stats.accuracy !== '0%' ? parseFloat(stats.accuracy) : null,
+                    color: '#4B9CD3',
+                    bgColor: '#EBF5FF',
+                  },
+                  {
+                    label: '가장 많은 진단',
+                    value: stats.topDiagnosis !== '-' ? stats.topDiagnosis : '데이터 없음',
+                    sub: null,
+                    color: '#F59E0B',
+                    bgColor: '#FFFBEB',
+                  },
                 ].map((item, i) => (
                   <Box
                     key={i}
@@ -488,89 +586,95 @@ export default function DashboardPage() {
                 </Button>
               </Box>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {todayRecords.map((record, index) => (
-                  <MotionBox
-                    key={record.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.7 + index * 0.05 }}
-                    whileHover={{ x: 4, backgroundColor: '#F8FAFC' }}
-                    onClick={() => router.push(`/dashboard/history/${record.id}`)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      py: 1.5,
-                      px: 2,
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: 'grey.200',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        borderColor: 'primary.200',
-                      },
-                    }}
-                  >
-                    {/* Time */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 70 }}>
-                      <AccessTimeIcon sx={{ fontSize: 14, color: 'grey.400' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
-                        {record.time}
-                      </Typography>
-                    </Box>
-
-                    {/* Patient */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
-                      <Avatar
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          bgcolor: record.patientInfo.includes('여') ? '#F472B6' : '#60A5FA',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {record.patient.charAt(0)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {record.patient}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {record.patientInfo}
+              {loading ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} variant="rounded" height={60} />
+                  ))}
+                </Box>
+              ) : todayRecords.length > 0 ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {todayRecords.map((record, index) => (
+                    <MotionBox
+                      key={record.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+                      whileHover={{ x: 4, backgroundColor: '#F8FAFC' }}
+                      onClick={() => router.push(`/dashboard/history/${record.id}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: 'primary.200',
+                        },
+                      }}
+                    >
+                      {/* Time */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 70 }}>
+                        <AccessTimeIcon sx={{ fontSize: 14, color: 'grey.400' }} />
+                        <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                          {record.time}
                         </Typography>
                       </Box>
-                    </Box>
 
-                    {/* Diagnosis */}
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {record.diagnosis}
-                      </Typography>
-                    </Box>
+                      {/* Patient */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: record.patientInfo.includes('여') ? '#F472B6' : '#60A5FA',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {record.patient.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {record.patient}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {record.patientInfo}
+                          </Typography>
+                        </Box>
+                      </Box>
 
-                    {/* Duration */}
-                    <Chip
-                      label={record.duration}
-                      size="small"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontWeight: 600,
-                        bgcolor: 'grey.100',
-                      }}
-                    />
+                      {/* Diagnosis */}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {record.diagnosis || '-'}
+                        </Typography>
+                      </Box>
 
-                    {/* More */}
-                    <IconButton size="small" sx={{ color: 'grey.400' }}>
-                      <MoreHorizIcon fontSize="small" />
-                    </IconButton>
-                  </MotionBox>
-                ))}
-              </Box>
+                      {/* Duration */}
+                      <Chip
+                        label={record.duration}
+                        size="small"
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontWeight: 600,
+                          bgcolor: 'grey.100',
+                        }}
+                      />
 
-              {todayRecords.length === 0 && (
+                      {/* More */}
+                      <IconButton size="small" sx={{ color: 'grey.400' }}>
+                        <MoreHorizIcon fontSize="small" />
+                      </IconButton>
+                    </MotionBox>
+                  ))}
+                </Box>
+              ) : (
                 <Box sx={{ textAlign: 'center', py: 6 }}>
                   <Box
                     sx={{
