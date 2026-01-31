@@ -59,7 +59,7 @@ import { useAuth } from '@/lib/AuthContext';
 import PatientFormDialog from '@/app/dashboard/patients/PatientFormDialog';
 import TemplateFormDialog from '@/app/dashboard/templates/TemplateFormDialog';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, doc, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -114,6 +114,12 @@ export default function RecordPage() {
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [newTemplateDialogOpen, setNewTemplateDialogOpen] = useState(false);
 
+  // User settings for AI (keywords and aiTone)
+  const [userSettings, setUserSettings] = useState({
+    aiTone: '',
+    keywords: [],
+  });
+
   // Step 3: Recording
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -150,12 +156,14 @@ export default function RecordPage() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
-  // Fetch patients from API
+  // Fetch patients from API based on hospitalId
   useEffect(() => {
+    if (!userProfile?.hospitalId) return;
+
     const fetchPatients = async () => {
       setLoadingPatients(true);
       try {
-        const response = await fetch('/api/patients');
+        const response = await fetch(`/api/patients?hospitalId=${userProfile.hospitalId}`);
         if (!response.ok) throw new Error('Failed to fetch patients');
         const data = await response.json();
 
@@ -178,7 +186,7 @@ export default function RecordPage() {
     };
 
     fetchPatients();
-  }, []);
+  }, [userProfile?.hospitalId]);
 
   // Helper function to calculate age
   const calculateAge = (birthDate) => {
@@ -276,16 +284,20 @@ export default function RecordPage() {
       setLoadingTemplates(true);
       try {
         const templatesRef = collection(db, 'users', user.uid, 'templates');
-        const q = query(templatesRef, orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
+        // Fetch without orderBy to avoid index requirements
+        const snapshot = await getDocs(templatesRef);
         const userTemplates = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           status: doc.data().status || 'active',
+          createdAt: doc.data().createdAt || new Date(0).toISOString(),
         }));
 
         // Filter only active templates
         const activeTemplates = userTemplates.filter(t => t.status === 'active');
+
+        // Sort by createdAt descending (newest first)
+        activeTemplates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         // Check if user has a default template
         const userDefault = activeTemplates.find(t => t.isDefault);
@@ -314,6 +326,40 @@ export default function RecordPage() {
     };
 
     fetchTemplates();
+  }, [user?.uid]);
+
+  // Fetch user settings (aiTone and keywords) for AI analysis
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const fetchUserSettings = async () => {
+      try {
+        // Fetch settings and keywords in parallel
+        const [settingsRes, keywordsRes] = await Promise.all([
+          fetch(`/api/settings?userId=${user.uid}`),
+          fetch(`/api/keywords?userId=${user.uid}`),
+        ]);
+
+        let aiTone = '';
+        let keywords = [];
+
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          aiTone = data.settings?.aiTone || '';
+        }
+
+        if (keywordsRes.ok) {
+          const data = await keywordsRes.json();
+          keywords = data.keywords || [];
+        }
+
+        setUserSettings({ aiTone, keywords });
+      } catch (error) {
+        console.error('Error fetching user settings:', error);
+      }
+    };
+
+    fetchUserSettings();
   }, [user?.uid]);
 
   // Audio visualization
@@ -690,6 +736,14 @@ export default function RecordPage() {
     sessionStorage.setItem('patientInfo', JSON.stringify(selectedPatient));
     sessionStorage.setItem('vitalsInfo', JSON.stringify(vitals));
     sessionStorage.setItem('selectedTemplate', JSON.stringify(selectedTemplate));
+    sessionStorage.setItem('userSettings', JSON.stringify(userSettings));
+    sessionStorage.setItem('userData', JSON.stringify({
+      userId: user?.uid || '',
+      hospitalId: userProfile?.hospitalId || '',
+      hospitalName: userProfile?.hospitalName || '',
+      doctorName: userProfile?.displayName || user?.displayName || '',
+      specialty: userProfile?.specialty || '',
+    }));
 
     setIsProcessing(false);
     setActiveStep(4);
@@ -1861,18 +1915,7 @@ export default function RecordPage() {
         </Grid>
       </MotionPaper>
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            startIcon={<HomeIcon />}
-            onClick={() => router.push('/dashboard')}
-            sx={{ px: 4, py: 1.5, borderRadius: 2 }}
-          >
-            대시보드로
-          </Button>
-        </motion.div>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             variant="contained"

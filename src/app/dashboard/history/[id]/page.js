@@ -43,6 +43,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import Avatar from '@mui/material/Avatar';
 import { formatCountdown, getSecondsUntilDeletion } from '@/lib/helpers';
 import { SectionColors } from '@/lib/constants';
+import { useAuth } from '@/lib/AuthContext';
 
 const MotionPaper = motion.create(Paper);
 const MotionBox = motion.create(Box);
@@ -58,6 +59,7 @@ const sectionIcons = {
 export default function HistoryDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { userProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
   const [remainingSeconds, setRemainingSeconds] = useState(0);
@@ -65,12 +67,19 @@ export default function HistoryDetailPage() {
   const [detailData, setDetailData] = useState(null);
   const [chartData, setChartData] = useState({});
 
-  // Fetch session detail from API
+  // Fetch chart detail from API
   useEffect(() => {
-    async function fetchSessionDetail() {
+    async function fetchChartDetail() {
       try {
         setLoading(true);
-        const response = await fetch(`/api/sessions/${params.id}`);
+
+        // Build URL with hospitalId
+        let url = `/api/charts/${params.id}`;
+        if (userProfile?.hospitalId) {
+          url += `?hospitalId=${userProfile.hospitalId}`;
+        }
+
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.session) {
@@ -78,16 +87,16 @@ export default function HistoryDetailPage() {
           setChartData(data.session.chartData || {});
         }
       } catch (error) {
-        console.error('Error fetching session detail:', error);
+        console.error('Error fetching chart detail:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    if (params.id) {
-      fetchSessionDetail();
+    if (params.id && userProfile) {
+      fetchChartDetail();
     }
-  }, [params.id]);
+  }, [params.id, userProfile]);
 
   // Get template sections (use default SOAP if no template)
   const templateSections = detailData?.templateSections || [
@@ -153,11 +162,26 @@ export default function HistoryDetailPage() {
 
   const handleSave = async () => {
     try {
-      // Save to API
-      // await fetch(`/api/charts`, { method: 'PUT', body: JSON.stringify({ chartId: detailData.chartId, chartData }) });
+      const response = await fetch('/api/charts', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chartId: detailData.id,
+          hospitalId: userProfile?.hospitalId || null,
+          chartData: chartData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save chart');
+      }
+
       setIsEditing(false);
       setSnackbar({ open: true, message: '차트가 저장되었습니다' });
     } catch (error) {
+      console.error('Save error:', error);
       setSnackbar({ open: true, message: '저장 중 오류가 발생했습니다' });
     }
   };

@@ -69,44 +69,92 @@ export default function HistoryPage() {
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState({ today: 0, week: 0, month: 0 });
   const [, setTick] = useState(0); // For countdown refresh
+  const { userProfile, loading: authLoading } = useAuth();
 
-  // Fetch sessions from API
+  // Fetch charts from API based on hospitalId
   useEffect(() => {
-    async function fetchSessions() {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    async function fetchCharts() {
       try {
         setLoading(true);
-        let url = '/api/sessions?limit=100';
 
-        if (patientIdParam) {
-          url += `&patientId=${patientIdParam}`;
+        // Build URL with hospitalId
+        const params = new URLSearchParams();
+        params.append('limit', '100');
+
+        // Add hospitalId from userProfile
+        if (userProfile?.hospitalId) {
+          params.append('hospitalId', userProfile.hospitalId);
         }
 
-        const response = await fetch(url);
+        if (patientIdParam) {
+          params.append('patientId', patientIdParam);
+        }
+
+        const response = await fetch(`/api/charts?${params.toString()}`);
         const data = await response.json();
 
-        if (data.sessions) {
-          setHistoryData(data.sessions);
+        if (data.charts) {
+          // Transform charts to match expected format
+          const transformedCharts = data.charts.map(chart => {
+            // Handle createdAt - could be string, Firestore Timestamp, or Date
+            let createdAtDate = null;
+            if (chart.createdAt) {
+              if (typeof chart.createdAt === 'string') {
+                createdAtDate = new Date(chart.createdAt);
+              } else if (chart.createdAt.toDate) {
+                // Firestore Timestamp
+                createdAtDate = chart.createdAt.toDate();
+              } else if (chart.createdAt.seconds) {
+                // Firestore Timestamp as plain object
+                createdAtDate = new Date(chart.createdAt.seconds * 1000);
+              } else {
+                createdAtDate = new Date(chart.createdAt);
+              }
+            }
+
+            return {
+              id: chart.id,
+              date: createdAtDate ? createdAtDate.toISOString().split('T')[0] : '',
+              time: createdAtDate ? createdAtDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '',
+              patientName: chart.patientName || 'Unknown',
+              patientGender: chart.patientGender || '',
+              diagnosis: chart.diagnosis || chart.chartData?.assessment?.split('\n')[0] || '',
+              icdCode: chart.icdCode || '',
+              createdAt: createdAtDate ? createdAtDate.toISOString() : null,
+              doctorName: chart.doctorName || '',
+            };
+          });
+
+          setHistoryData(transformedCharts);
 
           // Calculate stats
           const today = new Date().toISOString().split('T')[0];
           const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
           const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-          const todayCount = data.sessions.filter(s => s.date === today).length;
-          const weekCount = data.sessions.filter(s => s.date >= weekAgo).length;
-          const monthCount = data.sessions.filter(s => s.date >= monthAgo).length;
+          const todayCount = transformedCharts.filter(s => s.date === today).length;
+          const weekCount = transformedCharts.filter(s => s.date >= weekAgo).length;
+          const monthCount = transformedCharts.filter(s => s.date >= monthAgo).length;
 
           setStats({ today: todayCount, week: weekCount, month: monthCount });
         }
       } catch (error) {
-        console.error('Error fetching sessions:', error);
+        console.error('Error fetching charts:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchSessions();
-  }, [patientIdParam]);
+    // Fetch if we have hospitalId, otherwise just stop loading
+    if (userProfile?.hospitalId) {
+      fetchCharts();
+    } else {
+      setLoading(false);
+    }
+  }, [authLoading, patientIdParam, userProfile?.hospitalId]);
 
   // Update countdown every second
   useEffect(() => {

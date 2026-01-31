@@ -19,6 +19,7 @@ import {
   useTheme,
   Badge,
   Paper,
+  Popover,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -39,7 +40,6 @@ import { useAuth } from '@/lib/AuthContext';
 import SearchModal from './SearchModal';
 
 const MotionBox = motion.create(Box);
-const MotionPaper = motion.create(Paper);
 
 const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED_WIDTH = 72;
@@ -75,6 +75,7 @@ export default function DashboardLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationAnchor, setNotificationAnchor] = useState(null);
 
   useEffect(() => {
     setMounted(true);
@@ -508,10 +509,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content Area */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Top Bar */}
-        <MotionBox
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4 }}
+        <Box
           sx={{
             height: TOPBAR_HEIGHT,
             bgcolor: 'white',
@@ -550,10 +548,7 @@ export default function DashboardLayout({ children }) {
           </Box>
 
           {/* Search Bar - Click to open modal */}
-          <MotionPaper
-            component={motion.div}
-            whileHover={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-            whileTap={{ scale: 0.98 }}
+          <Paper
             elevation={0}
             onClick={() => setSearchOpen(true)}
             sx={{
@@ -573,6 +568,7 @@ export default function DashboardLayout({ children }) {
               '&:hover': {
                 borderColor: 'primary.main',
                 bgcolor: 'grey.100',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
               },
             }}
           >
@@ -596,15 +592,13 @@ export default function DashboardLayout({ children }) {
                 K
               </Typography>
             </Box>
-          </MotionPaper>
+          </Paper>
 
           {/* Right Actions */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: { xs: 'auto', md: 0 } }}>
             <Tooltip title="알림" arrow>
               <IconButton
-                component={motion.button}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+                onClick={(e) => setNotificationAnchor(e.currentTarget)}
                 sx={{
                   bgcolor: 'grey.50',
                   border: '1px solid',
@@ -612,19 +606,7 @@ export default function DashboardLayout({ children }) {
                   '&:hover': { bgcolor: 'grey.100' },
                 }}
               >
-                <Badge
-                  badgeContent={3}
-                  color="error"
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      fontSize: '0.65rem',
-                      height: 16,
-                      minWidth: 16,
-                    },
-                  }}
-                >
-                  <NotificationsNoneIcon sx={{ fontSize: 20 }} />
-                </Badge>
+                <NotificationsNoneIcon sx={{ fontSize: 20 }} />
               </IconButton>
             </Tooltip>
             <Tooltip title="도움말" arrow>
@@ -644,19 +626,53 @@ export default function DashboardLayout({ children }) {
               </IconButton>
             </Tooltip>
           </Box>
-        </MotionBox>
+        </Box>
 
         {/* Page Content */}
         <Box
-          component={motion.div}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
           sx={{ flex: 1, overflow: 'auto' }}
         >
           {children}
         </Box>
       </Box>
+
+      {/* Notification Popover */}
+      <Popover
+        open={Boolean(notificationAnchor)}
+        anchorEl={notificationAnchor}
+        onClose={() => setNotificationAnchor(null)}
+        disableScrollLock
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              borderRadius: 3,
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              minWidth: 280,
+            },
+          },
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            알림
+          </Typography>
+        </Box>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <NotificationsNoneIcon sx={{ fontSize: 48, color: 'grey.300', mb: 1 }} />
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+            새로운 알림이 없습니다
+          </Typography>
+        </Box>
+      </Popover>
 
       {/* Global Search Modal */}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />

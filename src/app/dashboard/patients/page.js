@@ -73,7 +73,7 @@ const CleanCard = ({ children, sx, ...props }) => (
 
 export default function PatientsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,17 +88,23 @@ export default function PatientsPage() {
 
   // Fetch patients on mount
   useEffect(() => {
-    if (user?.uid) {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    if (userProfile?.hospitalId) {
       fetchPatients();
+    } else {
+      // No hospitalId or not logged in - stop loading
+      setLoading(false);
     }
-  }, [user?.uid]);
+  }, [authLoading, userProfile?.hospitalId]);
 
   const fetchPatients = async () => {
-    if (!user?.uid) return;
+    if (!userProfile?.hospitalId) return;
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/patients?userId=${user.uid}`);
+      const response = await fetch(`/api/patients?hospitalId=${userProfile.hospitalId}`);
       if (!response.ok) throw new Error('Failed to fetch patients');
       const data = await response.json();
 
@@ -184,6 +190,7 @@ export default function PatientsPage() {
           body: JSON.stringify({
             ...formData,
             userId: user.uid,
+            hospitalId: userProfile?.hospitalId || null, // Inherit hospitalId from user
             status: 'active', // New patients are active by default
           }),
         });
@@ -297,10 +304,18 @@ export default function PatientsPage() {
     };
   }, [patients]);
 
-  if (loading || !user) {
+  if (authLoading || loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Typography>로그인이 필요합니다.</Typography>
       </Box>
     );
   }

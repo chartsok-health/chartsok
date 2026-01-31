@@ -88,7 +88,7 @@ const formatPhoneNumber = (value) => {
 };
 
 export default function DoctorsPage() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -119,6 +119,9 @@ export default function DoctorsPage() {
 
   // Fetch doctors on mount
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
     const fetchDoctors = async () => {
       try {
         const hospitalId = userProfile?.hospitalId || 'default';
@@ -136,8 +139,12 @@ export default function DoctorsPage() {
       }
     };
 
-    fetchDoctors();
-  }, [user?.uid, userProfile?.hospitalId]);
+    if (userProfile?.hospitalId) {
+      fetchDoctors();
+    } else {
+      setLoading(false);
+    }
+  }, [authLoading, user?.uid, userProfile?.hospitalId]);
 
   const filteredDoctors = useMemo(() => {
     return doctors.filter((doctor) => {

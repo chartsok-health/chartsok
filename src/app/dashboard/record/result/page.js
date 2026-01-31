@@ -15,14 +15,9 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DownloadIcon from '@mui/icons-material/Download';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -38,6 +33,14 @@ import ScienceIcon from '@mui/icons-material/Science';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
+
+// Default SOAP sections for when template doesn't have sections defined
+const defaultSOAPSections = [
+  { sectionKey: 'subjective', labelKo: 'Subjective (주관적)', color: '#4B9CD3', isRequired: true },
+  { sectionKey: 'objective', labelKo: 'Objective (객관적)', color: '#10B981', isRequired: true },
+  { sectionKey: 'assessment', labelKo: 'Assessment (평가)', color: '#F59E0B', isRequired: true },
+  { sectionKey: 'plan', labelKo: 'Plan (계획)', color: '#8B5CF6', isRequired: true },
+];
 
 // Icon mapping for special sections
 const sectionIcons = {
@@ -58,10 +61,17 @@ export default function RecordResultPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [error, setError] = useState(null);
 
-  // Template states
+  // Template states - initialize with default SOAP sections
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [templateSections, setTemplateSections] = useState([]);
+  const [templateSections, setTemplateSections] = useState(defaultSOAPSections);
+
+  // Data from record page
+  const [patientInfo, setPatientInfo] = useState(null);
+  const [vitalsInfo, setVitalsInfo] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [userSettings, setUserSettings] = useState({ aiTone: '', keywords: [] });
+  const [userData, setUserData] = useState({ userId: '', hospitalId: '', doctorName: '' });
 
   // Fetch templates on mount
   useEffect(() => {
@@ -84,7 +94,18 @@ export default function RecordResultPage() {
 
           if (defaultTemplate) {
             setSelectedTemplateId(defaultTemplate.id);
-            setTemplateSections(defaultTemplate.sections || []);
+            // For SOAP templates, ALWAYS use defaultSOAPSections
+            const isSOAP = defaultTemplate.category === 'soap' ||
+              defaultTemplate.id === 'default-soap' ||
+              (defaultTemplate.content && defaultTemplate.content.includes('[Subjective]'));
+
+            if (isSOAP) {
+              // Always use default SOAP sections for SOAP templates
+              setTemplateSections(defaultSOAPSections);
+            } else if (defaultTemplate.sections && defaultTemplate.sections.length > 0) {
+              // Only use template sections for non-SOAP templates with valid sections
+              setTemplateSections(defaultTemplate.sections);
+            }
           }
         }
       } catch (err) {
@@ -95,46 +116,71 @@ export default function RecordResultPage() {
     fetchTemplates();
   }, [userProfile?.specialty]);
 
-  // Handle template change
-  const handleTemplateChange = async (templateId) => {
-    setSelectedTemplateId(templateId);
+  // Debug: Log chartData and templateSections changes
+  useEffect(() => {
+    console.log('chartData updated:', chartData);
+    console.log('templateSections:', templateSections);
+  }, [chartData, templateSections]);
 
-    try {
-      const response = await fetch(`/api/templates/${templateId}`);
-      const data = await response.json();
-
-      if (data.template?.sections) {
-        setTemplateSections(data.template.sections);
-
-        // Initialize empty chart data for new sections
-        const newChartData = {};
-        data.template.sections.forEach(section => {
-          newChartData[section.sectionKey] = chartData[section.sectionKey] || '';
-        });
-        setChartData(newChartData);
-      }
-    } catch (err) {
-      console.error('Error fetching template sections:', err);
-    }
-  };
-
-  // Load transcription from sessionStorage and generate chart
+  // Load all data from sessionStorage and generate chart
   useEffect(() => {
     const loadAndGenerate = async () => {
       try {
+        // Load all stored data
         const storedTranscription = sessionStorage.getItem('transcription');
         const storedDuration = sessionStorage.getItem('recordingDuration');
+        const storedPatientInfo = sessionStorage.getItem('patientInfo');
+        const storedVitalsInfo = sessionStorage.getItem('vitalsInfo');
+        const storedTemplate = sessionStorage.getItem('selectedTemplate');
+        const storedUserSettings = sessionStorage.getItem('userSettings');
+        const storedUserData = sessionStorage.getItem('userData');
+
+        // Parse and set all data
+        if (storedPatientInfo) {
+          setPatientInfo(JSON.parse(storedPatientInfo));
+        }
+        if (storedVitalsInfo) {
+          setVitalsInfo(JSON.parse(storedVitalsInfo));
+        }
+        if (storedTemplate) {
+          const parsedTemplate = JSON.parse(storedTemplate);
+          setSelectedTemplate(parsedTemplate);
+
+          // Set templateSections based on the stored template
+          const isSOAP = parsedTemplate.category === 'soap' ||
+            parsedTemplate.id === 'default-soap' ||
+            (parsedTemplate.content && parsedTemplate.content.includes('[Subjective]'));
+
+          if (isSOAP) {
+            // Always use default SOAP sections for SOAP templates
+            setTemplateSections(defaultSOAPSections);
+          } else {
+            // For non-SOAP, clear sections (will show text content instead)
+            setTemplateSections([]);
+          }
+        }
+        if (storedUserSettings) {
+          setUserSettings(JSON.parse(storedUserSettings));
+        }
+        if (storedUserData) {
+          setUserData(JSON.parse(storedUserData));
+        }
+        if (storedDuration) {
+          setRecordingDuration(storedDuration);
+        }
 
         if (storedTranscription) {
           const parsedTranscription = JSON.parse(storedTranscription);
           setTranscription(parsedTranscription);
 
-          if (storedDuration) {
-            setRecordingDuration(storedDuration);
-          }
-
           if (parsedTranscription.length > 0) {
-            await generateChart(parsedTranscription);
+            // Pass all data to generateChart
+            await generateChart(parsedTranscription, {
+              patientInfo: storedPatientInfo ? JSON.parse(storedPatientInfo) : null,
+              vitalsInfo: storedVitalsInfo ? JSON.parse(storedVitalsInfo) : null,
+              template: storedTemplate ? JSON.parse(storedTemplate) : null,
+              userSettings: storedUserSettings ? JSON.parse(storedUserSettings) : null,
+            });
           } else {
             setError('녹음된 내용이 없습니다. 다시 녹음해 주세요.');
             setIsGenerating(false);
@@ -197,10 +243,12 @@ export default function RecordResultPage() {
     }
   };
 
-  const generateChart = async (transcriptionData) => {
+  const generateChart = async (transcriptionData, additionalData = {}) => {
     try {
       setIsGenerating(true);
       setError(null);
+
+      const { patientInfo, vitalsInfo, template, userSettings: settings } = additionalData;
 
       const response = await fetch('/api/generate-chart', {
         method: 'POST',
@@ -211,6 +259,12 @@ export default function RecordResultPage() {
           transcription: transcriptionData,
           specialty: userProfile?.specialty || 'general',
           templateId: selectedTemplateId,
+          // Additional data for AI analysis
+          template: template || null,
+          vitals: vitalsInfo || null,
+          patientInfo: patientInfo || null,
+          aiTone: settings?.aiTone || '',
+          keywords: settings?.keywords || [],
         }),
       });
 
@@ -220,7 +274,20 @@ export default function RecordResultPage() {
       }
 
       const data = await response.json();
-      setChartData(data.soap);
+      console.log('API Response:', data); // Debug log
+
+      // Handle both SOAP format and text-based format
+      if (data.chartContent) {
+        console.log('Setting chartContent:', data.chartContent);
+        setChartData({ content: data.chartContent });
+      } else if (data.soap && Object.keys(data.soap).length > 0) {
+        console.log('Setting SOAP data:', data.soap);
+        setChartData(data.soap);
+      } else {
+        // If API returned empty or invalid data, use demo data
+        console.warn('API returned empty data, using demo data');
+        generateDemoData();
+      }
     } catch (err) {
       console.error('Chart generation error:', err);
       setError('차트 생성 중 오류가 발생했습니다: ' + err.message);
@@ -241,14 +308,6 @@ export default function RecordResultPage() {
     setSnackbar({ open: true, message: '클립보드에 복사되었습니다', severity: 'success' });
   };
 
-  const handleCopyAll = () => {
-    const fullText = templateSections
-      .map(section => `[${section.labelKo}]\n${chartData[section.sectionKey] || ''}`)
-      .join('\n\n');
-    navigator.clipboard.writeText(fullText);
-    setSnackbar({ open: true, message: '전체 차트가 복사되었습니다', severity: 'success' });
-  };
-
   const handleSave = async () => {
     try {
       const response = await fetch('/api/charts', {
@@ -259,7 +318,19 @@ export default function RecordResultPage() {
         body: JSON.stringify({
           templateId: selectedTemplateId,
           chartData: chartData,
-          diagnosis: chartData.assessment?.split('\n')[0] || '',
+          diagnosis: chartData.assessment?.split('\n')[0] || chartData.content?.split('\n')[0] || '',
+          // Add patient info
+          patientId: patientInfo?.id || null,
+          patientName: patientInfo?.name || null,
+          patientChartNo: patientInfo?.chartNo || null,
+          // Add hospital and user info
+          hospitalId: userData?.hospitalId || null,
+          userId: userData?.userId || null,
+          doctorName: userData?.doctorName || '',
+          // Include vitals and transcription
+          vitals: vitalsInfo || null,
+          transcription: transcription || [],
+          recordingDuration: recordingDuration || '00:00',
         }),
       });
 
@@ -269,15 +340,41 @@ export default function RecordResultPage() {
 
       setIsEditing(false);
       setSnackbar({ open: true, message: '차트가 저장되었습니다', severity: 'success' });
+      return true;
     } catch (err) {
       console.error('Save error:', err);
       setSnackbar({ open: true, message: '저장 중 오류가 발생했습니다', severity: 'error' });
+      return false;
     }
   };
 
   const getSelectedTemplateName = () => {
     const template = templates.find(t => t.id === selectedTemplateId);
     return template?.name || 'SOAP';
+  };
+
+  // Check if current template is SOAP-based
+  const isSOAPTemplate = () => {
+    // If we have the selected template from sessionStorage, check it
+    if (selectedTemplate) {
+      return (
+        selectedTemplate.category === 'soap' ||
+        selectedTemplate.id === 'default-soap' ||
+        (selectedTemplate.content && selectedTemplate.content.includes('[Subjective]'))
+      );
+    }
+    // Check by template ID
+    if (selectedTemplateId === 'default-soap' || selectedTemplateId.includes('soap')) {
+      return true;
+    }
+    // Check if we have SOAP data structure
+    if (chartData.subjective || chartData.objective || chartData.assessment || chartData.plan) {
+      return true;
+    }
+    // Fallback to checking templateSections has SOAP keys
+    return templateSections.some(s =>
+      ['subjective', 'objective', 'assessment', 'plan'].includes(s.sectionKey)
+    );
   };
 
   return (
@@ -295,49 +392,6 @@ export default function RecordResultPage() {
           </Typography>
         </Box>
 
-        {/* Template Selector */}
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>템플릿</InputLabel>
-            <Select
-              value={selectedTemplateId}
-              label="템플릿"
-              onChange={(e) => handleTemplateChange(e.target.value)}
-              disabled={isGenerating}
-            >
-              {templates.map((template) => (
-                <MenuItem key={template.id} value={template.id}>
-                  {template.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {!isGenerating && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={handleCopyAll}
-                >
-                  전체 복사
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  onClick={handleSave}
-                >
-                  저장하기
-                </Button>
-              </Box>
-            </motion.div>
-          )}
-        </Box>
       </Box>
 
       {/* Error Alert */}
@@ -518,116 +572,196 @@ export default function RecordResultPage() {
               </Box>
               <Divider sx={{ mb: 3 }} />
 
-              {/* Dynamic Sections based on Template */}
+              {/* Dynamic Content based on Template Type */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {templateSections.map((section, index) => {
-                  const SectionIcon = sectionIcons[section.sectionKey] || null;
+                {isSOAPTemplate() ? (
+                  // SOAP template: show sections - always use defaultSOAPSections for consistent display
+                  (templateSections.length > 0 && templateSections[0].labelKo
+                    ? templateSections
+                    : defaultSOAPSections
+                  ).map((section, index) => {
+                    const SectionIcon = sectionIcons[section.sectionKey] || null;
 
-                  return (
-                    <MotionBox
-                      key={section.sectionKey || `section-${index}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Box
-                        sx={{
-                          borderLeft: '4px solid',
-                          borderColor: section.color,
-                          pl: 2,
-                        }}
+                    return (
+                      <MotionBox
+                        key={section.sectionKey || `section-${index}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {SectionIcon && (
-                              <SectionIcon sx={{ fontSize: 18, color: section.color }} />
-                            )}
-                            <Typography
-                              variant="subtitle2"
-                              sx={{ fontWeight: 700, color: section.color }}
-                            >
-                              {section.labelKo}
-                            </Typography>
-                            {!section.isRequired && (
-                              <Chip
-                                label="선택"
+                        <Box
+                          sx={{
+                            borderLeft: '4px solid',
+                            borderColor: section.color || 'primary.main',
+                            pl: 2,
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {SectionIcon && (
+                                <SectionIcon sx={{ fontSize: 18, color: section.color }} />
+                              )}
+                              <Typography
+                                variant="subtitle2"
+                                sx={{ fontWeight: 700, color: section.color || 'primary.main' }}
+                              >
+                                {section.labelKo}
+                              </Typography>
+                              {!section.isRequired && (
+                                <Chip
+                                  label="선택"
+                                  size="small"
+                                  sx={{
+                                    fontSize: '0.65rem',
+                                    height: 18,
+                                    bgcolor: 'grey.100',
+                                    color: 'grey.600',
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            <Tooltip title="복사">
+                              <IconButton
                                 size="small"
-                                sx={{
-                                  fontSize: '0.65rem',
-                                  height: 18,
-                                  bgcolor: 'grey.100',
-                                  color: 'grey.600',
-                                }}
-                              />
-                            )}
+                                onClick={() => handleCopy(chartData[section.sectionKey] || '')}
+                              >
+                                <ContentCopyIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
                           </Box>
-                          <Tooltip title="복사">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleCopy(chartData[section.sectionKey] || '')}
-                            >
-                              <ContentCopyIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                        {isEditing ? (
-                          <TextField
-                            fullWidth
-                            multiline
-                            minRows={3}
-                            value={chartData[section.sectionKey] || ''}
-                            onChange={(e) =>
-                              setChartData((prev) => ({
-                                ...prev,
-                                [section.sectionKey]: e.target.value,
-                              }))
-                            }
-                            placeholder={`${section.labelKo} 내용을 입력하세요`}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
+                          {isEditing ? (
+                            <TextField
+                              fullWidth
+                              multiline
+                              minRows={3}
+                              value={chartData[section.sectionKey] || ''}
+                              onChange={(e) =>
+                                setChartData((prev) => ({
+                                  ...prev,
+                                  [section.sectionKey]: e.target.value,
+                                }))
+                              }
+                              placeholder={`${section.labelKo} 내용을 입력하세요`}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  bgcolor: section.bgColor || 'grey.50',
+                                  fontSize: '0.875rem',
+                                },
+                              }}
+                            />
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: chartData[section.sectionKey] ? 'text.primary' : 'grey.400',
+                                whiteSpace: 'pre-line',
+                                lineHeight: 1.7,
                                 bgcolor: section.bgColor || 'grey.50',
-                                fontSize: '0.875rem',
-                              },
-                            }}
-                          />
-                        ) : (
+                                p: 2,
+                                borderRadius: 2,
+                                fontStyle: chartData[section.sectionKey] ? 'normal' : 'italic',
+                              }}
+                            >
+                              {chartData[section.sectionKey] || '내용 없음'}
+                            </Typography>
+                          )}
+                        </Box>
+                      </MotionBox>
+                    );
+                  })
+                ) : (
+                  // Non-SOAP template: show text-based content
+                  <MotionBox
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Box
+                      sx={{
+                        borderLeft: '4px solid',
+                        borderColor: 'primary.main',
+                        pl: 2,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <DescriptionIcon sx={{ fontSize: 18, color: 'primary.main' }} />
                           <Typography
-                            variant="body2"
-                            sx={{
-                              color: chartData[section.sectionKey] ? 'text.primary' : 'grey.400',
-                              whiteSpace: 'pre-line',
-                              lineHeight: 1.7,
-                              bgcolor: section.bgColor || 'grey.50',
-                              p: 2,
-                              borderRadius: 2,
-                              fontStyle: chartData[section.sectionKey] ? 'normal' : 'italic',
-                            }}
+                            variant="subtitle2"
+                            sx={{ fontWeight: 700, color: 'primary.main' }}
                           >
-                            {chartData[section.sectionKey] || '내용 없음'}
+                            {selectedTemplate?.name || '차트 내용'}
                           </Typography>
-                        )}
+                        </Box>
+                        <Tooltip title="복사">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCopy(chartData.content || '')}
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
-                    </MotionBox>
-                  );
-                })}
+                      {isEditing ? (
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={10}
+                          value={chartData.content || ''}
+                          onChange={(e) =>
+                            setChartData((prev) => ({
+                              ...prev,
+                              content: e.target.value,
+                            }))
+                          }
+                          placeholder="차트 내용을 입력하세요"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'grey.50',
+                              fontSize: '0.875rem',
+                              fontFamily: 'monospace',
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: chartData.content ? 'text.primary' : 'grey.400',
+                            whiteSpace: 'pre-line',
+                            lineHeight: 1.7,
+                            bgcolor: 'grey.50',
+                            p: 2,
+                            borderRadius: 2,
+                            fontStyle: chartData.content ? 'normal' : 'italic',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {chartData.content || '내용 없음'}
+                        </Typography>
+                      )}
+                    </Box>
+                  </MotionBox>
+                )}
               </Box>
 
-              {/* Action Buttons */}
-              <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => setSnackbar({ open: true, message: 'PDF 다운로드 기능은 준비 중입니다', severity: 'info' })}
-                >
-                  PDF 다운로드
-                </Button>
+              {/* Action Button */}
+              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
-                  onClick={() => {
-                    handleSave();
-                    sessionStorage.removeItem('transcription');
-                    sessionStorage.removeItem('recordingDuration');
-                    router.push('/dashboard/history');
+                  onClick={async () => {
+                    const saved = await handleSave();
+                    if (saved) {
+                      // Clean up sessionStorage
+                      sessionStorage.removeItem('transcription');
+                      sessionStorage.removeItem('recordingDuration');
+                      sessionStorage.removeItem('patientInfo');
+                      sessionStorage.removeItem('vitalsInfo');
+                      sessionStorage.removeItem('selectedTemplate');
+                      sessionStorage.removeItem('userSettings');
+                      sessionStorage.removeItem('userData');
+                      router.push('/dashboard/history');
+                    }
                   }}
                 >
                   저장 및 완료

@@ -1,50 +1,101 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import {
   chartService,
   chartContentService,
   chartVitalsService,
   patientService,
-  templateService,
 } from '@/lib/firestore';
 
 /**
  * GET /api/charts
- * Fetch all charts (with optional filters)
+ * Fetch charts - supports hospitalId-based fetching
  */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const hospitalId = searchParams.get('hospitalId');
     const patientId = searchParams.get('patientId');
-    const templateId = searchParams.get('templateId');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const userId = searchParams.get('userId');
+    const limitCount = parseInt(searchParams.get('limit') || '50');
 
-    let charts;
+    let charts = [];
 
-    if (patientId) {
-      charts = await chartService.getByPatientId(patientId, { limitCount: limit });
-    } else if (templateId) {
-      charts = await chartService.getByTemplateId(templateId, { limitCount: limit });
-    } else {
-      charts = await chartService.getAll({
-        orderByField: 'createdAt',
-        orderDirection: 'desc',
-        limitCount: limit
+    // Fetch from hospital's records subcollection if hospitalId is provided
+    if (hospitalId) {
+      const recordsRef = collection(db, 'hospitals', hospitalId, 'records');
+      let q;
+
+      if (patientId) {
+        q = query(recordsRef, where('patientId', '==', patientId));
+      } else if (userId) {
+        q = query(recordsRef, where('userId', '==', userId));
+      } else {
+        q = query(recordsRef);
+      }
+
+      const snapshot = await getDocs(q);
+      charts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert Firestore Timestamps to ISO strings
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.()
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()
+            ? data.updatedAt.toDate().toISOString()
+            : data.updatedAt,
+        };
       });
+
+      // Sort by createdAt descending
+      charts.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
+
+      // Apply limit
+      charts = charts.slice(0, limitCount);
+    } else {
+      // Fallback to global charts collection (legacy)
+      if (patientId) {
+        charts = await chartService.getByPatientId(patientId, { limitCount });
+      } else {
+        charts = await chartService.getAll({
+          orderByField: 'createdAt',
+          orderDirection: 'desc',
+          limitCount
+        });
+      }
     }
 
-    // Enrich with patient name and template info
+    // Enrich with patient name
     const enrichedCharts = await Promise.all(
       charts.map(async (chart) => {
-        const [patient, template] = await Promise.all([
-          chart.patientId ? patientService.getById(chart.patientId) : null,
-          chart.templateId ? templateService.getById(chart.templateId) : null,
-        ]);
+        let patientName = chart.patientName || 'Unknown';
+        let patientChartNo = chart.patientChartNo || '';
+
+        // Try to get patient info if not embedded
+        if (chart.patientId && !chart.patientName) {
+          try {
+            const patient = await patientService.getById(chart.patientId);
+            if (patient) {
+              patientName = patient.name;
+              patientChartNo = patient.chartNo || '';
+            }
+          } catch (e) {
+            console.error('Error fetching patient:', e);
+          }
+        }
 
         return {
           ...chart,
-          patientName: patient?.name || 'Unknown',
-          patientChartNo: patient?.chartNo || '',
-          templateName: template?.name || 'SOAP',
+          patientName,
+          patientChartNo,
         };
       })
     );
@@ -64,7 +115,7 @@ export async function GET(request) {
 
 /**
  * POST /api/charts
- * Save a new chart
+ * Save a new chart - saves under hospitals/{hospitalId}/records
  */
 export async function POST(request) {
   try {
@@ -77,35 +128,87 @@ export async function POST(request) {
       icdCode,
       chartData,
       vitals,
+      // Required for hospital-based storage
+      hospitalId,
+      userId,
+      doctorName,
+      transcription,
+      recordingDuration,
+      // Optional patient info to embed
+      patientName,
+      patientChartNo,
     } = body;
 
-    if (!templateId || !chartData) {
+    if (!chartData) {
       return NextResponse.json(
-        { error: 'templateId and chartData are required' },
+        { error: 'chartData is required' },
         { status: 400 }
       );
     }
 
-    // Create chart with contents using Firestore service
-    const chart = await chartService.createWithContents(
-      {
-        sessionId: sessionId || null,
-        patientId: patientId || null,
-        templateId,
-        diagnosis: diagnosis || '',
-        icdCode: icdCode || '',
-        status: 'completed',
-      },
-      chartData,
-      vitals || null
-    );
+    const now = new Date().toISOString();
 
-    // Get created contents
-    const contents = await chartContentService.getByChartId(chart.id);
+    // Build record data
+    const recordData = {
+      sessionId: sessionId || null,
+      patientId: patientId || null,
+      patientName: patientName || null,
+      patientChartNo: patientChartNo || null,
+      templateId: templateId || 'default-soap',
+      diagnosis: diagnosis || '',
+      icdCode: icdCode || '',
+      status: 'completed',
+      hospitalId: hospitalId || null,
+      userId: userId || null,
+      doctorName: doctorName || '',
+      transcription: transcription || [],
+      recordingDuration: recordingDuration || '00:00',
+      chartData: chartData,
+      vitals: vitals || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    let savedRecord;
+
+    // Save to hospital's records subcollection if hospitalId is provided
+    if (hospitalId) {
+      const recordsRef = collection(db, 'hospitals', hospitalId, 'records');
+      const docRef = await addDoc(recordsRef, recordData);
+      savedRecord = {
+        id: docRef.id,
+        ...recordData,
+      };
+      console.log(`Record saved to hospitals/${hospitalId}/records/${docRef.id}`);
+    } else {
+      // Fallback to global charts collection (legacy)
+      const chart = await chartService.createWithContents(
+        {
+          sessionId: sessionId || null,
+          patientId: patientId || null,
+          templateId: templateId || 'default-soap',
+          diagnosis: diagnosis || '',
+          icdCode: icdCode || '',
+          status: 'completed',
+          hospitalId: hospitalId || null,
+          userId: userId || null,
+          doctorName: doctorName || '',
+          transcription: transcription || [],
+          recordingDuration: recordingDuration || '00:00',
+        },
+        chartData,
+        vitals || null
+      );
+
+      const contents = await chartContentService.getByChartId(chart.id);
+      savedRecord = {
+        ...chart,
+        contents,
+      };
+    }
 
     return NextResponse.json({
-      chart,
-      contents,
+      chart: savedRecord,
       message: 'Chart saved successfully',
     });
   } catch (error) {
@@ -124,7 +227,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { chartId, diagnosis, icdCode, chartData, vitals } = body;
+    const { chartId, hospitalId, diagnosis, icdCode, chartData, vitals } = body;
 
     if (!chartId) {
       return NextResponse.json(
@@ -133,6 +236,29 @@ export async function PUT(request) {
       );
     }
 
+    const now = new Date().toISOString();
+
+    // Update in hospital's records subcollection if hospitalId is provided
+    if (hospitalId) {
+      const recordRef = doc(db, 'hospitals', hospitalId, 'records', chartId);
+      const updateData = {
+        updatedAt: now,
+      };
+
+      if (diagnosis !== undefined) updateData.diagnosis = diagnosis;
+      if (icdCode !== undefined) updateData.icdCode = icdCode;
+      if (chartData !== undefined) updateData.chartData = chartData;
+      if (vitals !== undefined) updateData.vitals = vitals;
+
+      await updateDoc(recordRef, updateData);
+
+      return NextResponse.json({
+        chart: { id: chartId, ...updateData },
+        message: 'Chart updated successfully',
+      });
+    }
+
+    // Fallback to global charts collection (legacy)
     const existing = await chartService.getById(chartId);
     if (!existing) {
       return NextResponse.json(
@@ -141,7 +267,6 @@ export async function PUT(request) {
       );
     }
 
-    // Update chart data
     const updateData = {};
     if (diagnosis !== undefined) updateData.diagnosis = diagnosis;
     if (icdCode !== undefined) updateData.icdCode = icdCode;
@@ -152,7 +277,6 @@ export async function PUT(request) {
       await chartService.update(chartId, updateData);
     }
 
-    // Update vitals if provided
     if (vitals) {
       await chartVitalsService.upsertVitals(chartId, vitals);
     }

@@ -21,7 +21,8 @@
       "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\")",
       "Bash(if exist .next rmdir /s /q .next)",
       "Bash(cd:*)",
-      "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\")"
+      "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\")",
+      "Bash(timeout:*)"
     ]
   }
 }

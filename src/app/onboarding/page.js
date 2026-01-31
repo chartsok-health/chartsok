@@ -31,6 +31,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import { useAuth } from '@/lib/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -131,7 +133,29 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
-      await completeOnboarding(formData);
+      // Create a hospital for the user
+      const hospitalData = {
+        name: formData.clinicName,
+        type: formData.practiceType,
+        size: formData.practiceSize,
+        specialty: formData.specialty,
+        phone: formData.phoneNumber || '',
+        ownerId: user.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const hospitalRef = await addDoc(collection(db, 'hospitals'), hospitalData);
+      const hospitalId = hospitalRef.id;
+
+      // Complete onboarding with hospitalId
+      await completeOnboarding({
+        ...formData,
+        hospitalId: hospitalId,
+        hospitalName: formData.clinicName,
+        displayName: formData.doctorName,
+      });
+
       // Move to completion step
       setActiveStep(5);
       setTimeout(() => {
