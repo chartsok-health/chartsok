@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AppBar,
   Toolbar,
@@ -47,21 +47,22 @@ export default function Header() {
   const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'));
   const isMobile = mounted ? isMobileQuery : false;
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setMounted(true);
+  }, []);
 
-    // Handle auth query param to open modal (client-side only)
-    const url = new URL(window.location.href);
-    const authParam = url.searchParams.get('auth');
+  // Handle auth query param to open modal - watches for URL changes
+  useEffect(() => {
+    const authParam = searchParams.get('auth');
     if (authParam === 'signup' || authParam === 'login') {
       setAuthModalView(authParam);
       setAuthModalOpen(true);
       // Clean up the URL
-      url.searchParams.delete('auth');
-      window.history.replaceState({}, '', url.pathname + url.hash);
+      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
     }
-  }, []);
+  }, [searchParams]);
 
   const openAuthModal = (view) => {
     setAuthModalView(view);

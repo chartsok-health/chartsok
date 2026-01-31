@@ -16,7 +16,7 @@ const translations = {
       blog: '블로그',
       integrations: 'EMR 연동',
       login: '로그인',
-      getStarted: '데모 신청',
+      getStarted: '무료 체험',
       startTrial: '무료 체험',
       dashboard: '대시보드',
     },
@@ -27,7 +27,7 @@ const translations = {
       titleHighlight: '차트는 AI가',
       titleEnd: '완성합니다',
       subtitle: '진료 중 대화를 기록하고, EMR에 바로 붙여넣을 수 있는 차트를 생성합니다. 전문과별 템플릿으로 원하는 형식의 차트를 빠르게 완성하세요.',
-      cta: '데모 신청하기',
+      cta: '무료 체험',
       demo: '차트 샘플 보기',
       badges: [
         { icon: 'security', text: '음성 파일 즉시 삭제' },
@@ -416,11 +416,11 @@ const translations = {
     },
     // CTA Section
     cta: {
-      title: '데모를 신청하세요',
+      title: '지금 바로 시작하세요',
       subtitle: '차트쏙이 진료 차트 작성을 어떻게 간소화하는지 직접 확인해보세요.',
-      button: '데모 신청',
+      button: '무료 체험',
       demo: '문의하기',
-      note: '',
+      note: '신용카드 없이 무료로 시작',
     },
     // Footer
     footer: {
@@ -461,8 +461,8 @@ const translations = {
       blog: 'Blog',
       integrations: 'EMR Integration',
       login: 'Log In',
-      getStarted: 'Request Demo',
-      startTrial: 'Free Trial',
+      getStarted: 'Start Free',
+      startTrial: 'Start Free',
       dashboard: 'Dashboard',
     },
     // Hero Section
@@ -472,7 +472,7 @@ const translations = {
       titleHighlight: 'AI Completes',
       titleEnd: 'Your Charts',
       subtitle: 'Record your consultations and generate charts ready to paste into your EMR. Complete charts quickly with specialty-specific templates.',
-      cta: 'Request Demo',
+      cta: 'Start Free',
       demo: 'View Sample Charts',
       badges: [
         { icon: 'security', text: 'Audio Deleted Immediately' },
@@ -860,11 +860,11 @@ const translations = {
     },
     // CTA Section
     cta: {
-      title: 'Request a Demo',
+      title: 'Start Your Free Trial',
       subtitle: 'See how ChartSok simplifies clinical charting.',
-      button: 'Request Demo',
+      button: 'Start Free',
       demo: 'Contact Us',
-      note: '',
+      note: 'No credit card required',
     },
     // Footer
     footer: {

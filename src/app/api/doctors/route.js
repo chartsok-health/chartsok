@@ -1,6 +1,24 @@
 import { NextResponse } from 'next/server';
 import { userService, userHospitalService, patientService } from '@/lib/firestore';
 
+// Helper to convert Firestore Timestamp or string to date string
+const formatDateString = (dateValue) => {
+  if (!dateValue) return new Date().toISOString().split('T')[0];
+  // Handle Firestore Timestamp
+  if (dateValue?.toDate) {
+    return dateValue.toDate().toISOString().split('T')[0];
+  }
+  // Handle string
+  if (typeof dateValue === 'string') {
+    return dateValue.split('T')[0];
+  }
+  // Handle Date object
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString().split('T')[0];
+  }
+  return new Date().toISOString().split('T')[0];
+};
+
 /**
  * GET /api/doctors
  * Fetch doctors for a hospital
@@ -30,7 +48,7 @@ export async function GET(request) {
             email: currentUser.email || '',
             phone: currentUser.phone || '',
             licenseNo: currentUser.licenseNo || '',
-            joinDate: currentUser.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+            joinDate: formatDateString(currentUser.createdAt),
             status: 'active',
             patients: patients.length,
             avatar: currentUser.profileImage || null,
@@ -57,7 +75,7 @@ export async function GET(request) {
         email: user.email || '',
         phone: user.phone || '',
         licenseNo: user.licenseNo || '',
-        joinDate: user.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+        joinDate: formatDateString(user.createdAt),
         status: 'active',
         patients: patientCount,
         avatar: user.profileImage || null,

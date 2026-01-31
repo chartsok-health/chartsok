@@ -25,20 +25,34 @@ class ChartService extends FirestoreService {
    * Get charts by patient ID
    */
   async getByPatientId(patientId, options = {}) {
-    return this.query(
+    const charts = await this.query(
       [{ field: 'patientId', operator: '==', value: patientId }],
-      { orderByField: 'createdAt', orderDirection: 'desc', ...options }
+      { ...options }
     );
+    // Sort in memory to avoid composite index requirement
+    charts.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return charts;
   }
 
   /**
    * Get charts by template
    */
   async getByTemplateId(templateId, options = {}) {
-    return this.query(
+    const charts = await this.query(
       [{ field: 'templateId', operator: '==', value: templateId }],
-      { orderByField: 'createdAt', orderDirection: 'desc', ...options }
+      { ...options }
     );
+    // Sort in memory to avoid composite index requirement
+    charts.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return charts;
   }
 
   /**

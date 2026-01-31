@@ -17,10 +17,12 @@ class TemplateService extends FirestoreService {
    * Get all system templates
    */
   async getSystemTemplates() {
-    return this.query(
-      [{ field: 'isSystem', operator: '==', value: true }],
-      { orderByField: 'name' }
+    const templates = await this.query(
+      [{ field: 'isSystem', operator: '==', value: true }]
     );
+    // Sort in memory to avoid composite index requirement
+    templates.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return templates;
   }
 
   /**
@@ -39,10 +41,16 @@ class TemplateService extends FirestoreService {
    * Get user's custom templates
    */
   async getByCreator(userId) {
-    return this.query(
-      [{ field: 'createdBy', operator: '==', value: userId }],
-      { orderByField: 'createdAt', orderDirection: 'desc' }
+    const templates = await this.query(
+      [{ field: 'createdBy', operator: '==', value: userId }]
     );
+    // Sort in memory to avoid composite index requirement
+    templates.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return templates;
   }
 
   /**
@@ -107,10 +115,12 @@ class TemplateSectionService extends FirestoreService {
    * Get sections by template ID
    */
   async getByTemplateId(templateId) {
-    return this.query(
-      [{ field: 'templateId', operator: '==', value: templateId }],
-      { orderByField: 'order', orderDirection: 'asc' }
+    const sections = await this.query(
+      [{ field: 'templateId', operator: '==', value: templateId }]
     );
+    // Sort in memory to avoid composite index requirement
+    sections.sort((a, b) => (a.order || 0) - (b.order || 0));
+    return sections;
   }
 
   /**

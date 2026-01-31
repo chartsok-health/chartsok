@@ -1223,7 +1223,7 @@ export default function Demo() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => router.push('/auth/signup')}
+                onClick={() => router.push('/?auth=signup')}
                 sx={{
                   borderRadius: 3,
                   px: 5,
@@ -1238,7 +1238,7 @@ export default function Demo() {
                 variant="outlined"
                 size="large"
                 startIcon={<LoginIcon />}
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push('/?auth=login')}
                 sx={{
                   borderRadius: 3,
                   px: 4,

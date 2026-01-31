@@ -17,20 +17,34 @@ class RecordingSessionService extends FirestoreService {
    * Get sessions by user ID
    */
   async getByUserId(userId, options = {}) {
-    return this.query(
+    const sessions = await this.query(
       [{ field: 'userId', operator: '==', value: userId }],
-      { orderByField: 'createdAt', orderDirection: 'desc', ...options }
+      { ...options }
     );
+    // Sort in memory to avoid composite index requirement
+    sessions.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return sessions;
   }
 
   /**
    * Get sessions by patient ID
    */
   async getByPatientId(patientId, options = {}) {
-    return this.query(
+    const sessions = await this.query(
       [{ field: 'patientId', operator: '==', value: patientId }],
-      { orderByField: 'createdAt', orderDirection: 'desc', ...options }
+      { ...options }
     );
+    // Sort in memory to avoid composite index requirement
+    sessions.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return sessions;
   }
 
   /**
@@ -152,10 +166,12 @@ class TranscriptionSegmentService extends FirestoreService {
    * Get segments by transcription ID
    */
   async getByTranscriptionId(transcriptionId) {
-    return this.query(
-      [{ field: 'transcriptionId', operator: '==', value: transcriptionId }],
-      { orderByField: 'sequence', orderDirection: 'asc' }
+    const segments = await this.query(
+      [{ field: 'transcriptionId', operator: '==', value: transcriptionId }]
     );
+    // Sort in memory to avoid composite index requirement
+    segments.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+    return segments;
   }
 
   /**

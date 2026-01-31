@@ -121,10 +121,16 @@ class UserKeywordsService extends FirestoreService {
    * Get all keywords for a user
    */
   async getByUserId(userId) {
-    return this.query(
-      [{ field: 'userId', operator: '==', value: userId }],
-      { orderByField: 'createdAt', orderDirection: 'desc' }
+    const keywords = await this.query(
+      [{ field: 'userId', operator: '==', value: userId }]
     );
+    // Sort in memory to avoid composite index requirement
+    keywords.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return keywords;
   }
 
   /**

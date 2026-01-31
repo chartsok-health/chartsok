@@ -16,10 +16,17 @@ class PatientService extends FirestoreService {
    * Get patients by hospital ID
    */
   async getByHospitalId(hospitalId, options = {}) {
-    return this.query(
+    const patients = await this.query(
       [{ field: 'hospitalId', operator: '==', value: hospitalId }],
-      { orderByField: 'createdAt', orderDirection: 'desc', ...options }
+      { ...options }
     );
+    // Sort in memory to avoid composite index requirement
+    patients.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return patients;
   }
 
   /**
@@ -85,10 +92,16 @@ class PatientConsentService extends FirestoreService {
    * Get consents by patient ID
    */
   async getByPatientId(patientId) {
-    return this.query(
-      [{ field: 'patientId', operator: '==', value: patientId }],
-      { orderByField: 'timestamp', orderDirection: 'desc' }
+    const consents = await this.query(
+      [{ field: 'patientId', operator: '==', value: patientId }]
     );
+    // Sort in memory to avoid composite index requirement
+    consents.sort((a, b) => {
+      const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : (a.timestamp ? new Date(a.timestamp) : new Date(0));
+      const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : (b.timestamp ? new Date(b.timestamp) : new Date(0));
+      return dateB - dateA;
+    });
+    return consents;
   }
 
   /**
@@ -132,10 +145,16 @@ class PatientAttachmentService extends FirestoreService {
    * Get attachments by patient ID
    */
   async getByPatientId(patientId) {
-    return this.query(
-      [{ field: 'patientId', operator: '==', value: patientId }],
-      { orderByField: 'createdAt', orderDirection: 'desc' }
+    const attachments = await this.query(
+      [{ field: 'patientId', operator: '==', value: patientId }]
     );
+    // Sort in memory to avoid composite index requirement
+    attachments.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+    return attachments;
   }
 
   /**

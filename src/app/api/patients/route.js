@@ -8,16 +8,29 @@ import { patientService, patientConsentService, patientAttachmentService } from 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
     const hospitalId = searchParams.get('hospitalId');
     const chartNo = searchParams.get('chartNo');
     const search = searchParams.get('search');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '100');
 
     let patients;
 
     if (chartNo) {
       const patient = await patientService.getByChartNo(chartNo);
       patients = patient ? [patient] : [];
+    } else if (userId) {
+      // Get patients by userId (no orderBy to avoid composite index requirement)
+      patients = await patientService.query(
+        [{ field: 'userId', operator: '==', value: userId }],
+        { limitCount: limit }
+      );
+      // Sort in memory by createdAt descending
+      patients.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
     } else if (hospitalId) {
       patients = await patientService.getByHospitalId(hospitalId, { limitCount: limit });
 
@@ -36,6 +49,9 @@ export async function GET(request) {
         limitCount: limit
       });
     }
+
+    // Filter out deleted patients
+    patients = patients.filter(p => !p.deletedAt && p.status !== 'deleted');
 
     return NextResponse.json({
       patients,
@@ -57,7 +73,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { hospitalId, name, birthDate, gender, phone, allergies, chartNo, address, notes } = body;
+    const { userId, hospitalId, name, birthDate, gender, phone, allergies, chartNo, address, notes, status } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -66,10 +82,18 @@ export async function POST(request) {
       );
     }
 
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'userId is required' },
+        { status: 400 }
+      );
+    }
+
     // Use default hospitalId if not provided
     const effectiveHospitalId = hospitalId || 'default';
 
     const patient = await patientService.createPatient(effectiveHospitalId, {
+      userId,
       name,
       birthDate: birthDate || null,
       gender: gender || null,
@@ -78,6 +102,7 @@ export async function POST(request) {
       chartNo: chartNo || null,
       address: address || null,
       notes: notes || null,
+      status: status || 'active', // Default to active
     });
 
     return NextResponse.json({

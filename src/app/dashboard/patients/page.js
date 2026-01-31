@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   TextField,
   InputAdornment,
   Button,
@@ -12,11 +11,6 @@ import {
   Chip,
   Avatar,
   Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
   Tooltip,
   Card,
   CardContent,
@@ -27,20 +21,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/AuthContext';
+import PatientFormDialog from './PatientFormDialog';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
@@ -76,35 +70,31 @@ const CleanCard = ({ children, sx, ...props }) => (
 
 export default function PatientsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [dialogMode, setDialogMode] = useState('add');
 
-  const [formData, setFormData] = useState({
-    name: '',
-    gender: '남',
-    birthDate: '',
-    phone: '',
-    address: '',
-    notes: '',
-  });
-
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'archived' | 'all'
   const rowsPerPage = 6;
 
   // Fetch patients on mount
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    if (user?.uid) {
+      fetchPatients();
+    }
+  }, [user?.uid]);
 
   const fetchPatients = async () => {
+    if (!user?.uid) return;
+
     try {
       setLoading(true);
-      const response = await fetch('/api/patients');
+      const response = await fetch(`/api/patients?userId=${user.uid}`);
       if (!response.ok) throw new Error('Failed to fetch patients');
       const data = await response.json();
 
@@ -117,7 +107,7 @@ export default function PatientsPage() {
         age: calculateAge(patient.birthDate),
         lastVisit: patient.lastVisit || '-',
         visitCount: patient.visitCount || 0,
-        status: patient.visitCount > 0 ? 'active' : 'inactive',
+        status: patient.status || 'active', // Use status from DB, default to active
       }));
 
       setPatients(transformedPatients);
@@ -128,18 +118,31 @@ export default function PatientsPage() {
     }
   };
 
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name?.includes(searchQuery) ||
-      patient.chartNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone?.includes(searchQuery)
-  );
+  const filteredPatients = useMemo(() => {
+    return patients.filter((patient) => {
+      // Filter by status
+      if (statusFilter !== 'all' && patient.status !== statusFilter) {
+        return false;
+      }
+      // Filter by search query
+      if (searchQuery) {
+        return (
+          patient.name?.includes(searchQuery) ||
+          patient.chartNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          patient.phone?.includes(searchQuery)
+        );
+      }
+      return true;
+    });
+  }, [patients, statusFilter, searchQuery]);
 
   const totalPages = Math.ceil(filteredPatients.length / rowsPerPage);
-  const paginatedPatients = filteredPatients.slice(
-    (page - 1) * rowsPerPage,
-    page * rowsPerPage
-  );
+  const paginatedPatients = useMemo(() => {
+    return filteredPatients.slice(
+      (page - 1) * rowsPerPage,
+      page * rowsPerPage
+    );
+  }, [filteredPatients, page, rowsPerPage]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
@@ -154,18 +157,6 @@ export default function PatientsPage() {
   const handleOpenDialog = (mode, patient = null) => {
     setDialogMode(mode);
     setSelectedPatient(patient);
-    if (patient && mode !== 'add') {
-      setFormData({
-        name: patient.name,
-        gender: patient.gender,
-        birthDate: patient.birthDate || '',
-        phone: patient.phone || '',
-        address: patient.address || '',
-        notes: patient.notes || '',
-      });
-    } else {
-      setFormData({ name: '', gender: '남', birthDate: '', phone: '', address: '', notes: '' });
-    }
     setOpenDialog(true);
   };
 
@@ -174,10 +165,13 @@ export default function PatientsPage() {
     setSelectedPatient(null);
   };
 
-  const handleSavePatient = async () => {
-    try {
-      setSaving(true);
+  const handleSavePatient = async (formData) => {
+    if (!user?.uid) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
 
+    try {
       if (dialogMode === 'add') {
         // Create new patient via API
         const response = await fetch('/api/patients', {
@@ -185,7 +179,8 @@ export default function PatientsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...formData,
-            chartNo: `P-${new Date().getFullYear()}-${String(patients.length + 1).padStart(3, '0')}`,
+            userId: user.uid,
+            status: 'active', // New patients are active by default
           }),
         });
 
@@ -199,7 +194,7 @@ export default function PatientsPage() {
           age: calculateAge(newPatient.birthDate),
           lastVisit: '-',
           visitCount: 0,
-          status: 'inactive',
+          status: 'active',
         }]);
       } else if (dialogMode === 'edit' && selectedPatient) {
         // Update patient via API
@@ -227,41 +222,54 @@ export default function PatientsPage() {
     } catch (error) {
       console.error('Error saving patient:', error);
       alert('환자 정보 저장에 실패했습니다.');
-    } finally {
-      setSaving(false);
     }
   };
 
-  const handleDeletePatient = async (id) => {
-    if (confirm('정말 이 환자를 삭제하시겠습니까?')) {
+  const handleArchivePatient = async (id, currentStatus) => {
+    const isArchiving = currentStatus === 'active';
+    const message = isArchiving
+      ? '이 환자를 보관함으로 이동하시겠습니까?'
+      : '이 환자를 활성 상태로 복원하시겠습니까?';
+
+    if (confirm(message)) {
       try {
+        const newStatus = isArchiving ? 'archived' : 'active';
         const response = await fetch(`/api/patients/${id}`, {
-          method: 'DELETE',
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
         });
 
-        if (!response.ok) throw new Error('Failed to delete patient');
+        if (!response.ok) throw new Error('Failed to update patient status');
 
-        setPatients(patients.filter((p) => p.id !== id));
+        // Update local state
+        setPatients(patients.map((p) =>
+          p.id === id ? { ...p, status: newStatus } : p
+        ));
       } catch (error) {
-        console.error('Error deleting patient:', error);
-        alert('환자 삭제에 실패했습니다.');
+        console.error('Error updating patient status:', error);
+        alert('환자 상태 변경에 실패했습니다.');
       }
     }
   };
 
-  const totalPatients = patients.length;
-  const activePatients = patients.filter((p) => p.status === 'active').length;
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const thisMonthVisits = patients.filter((p) => p.lastVisit?.startsWith(thisMonth)).length;
+  const { totalPatients, activePatients, archivedPatients, stats } = useMemo(() => {
+    const total = patients.length;
+    const active = patients.filter((p) => p.status === 'active').length;
+    const archived = patients.filter((p) => p.status === 'archived').length;
+    return {
+      totalPatients: total,
+      activePatients: active,
+      archivedPatients: archived,
+      stats: [
+        { label: '전체 환자', value: total, icon: PersonIcon, color: '#4B9CD3', bgColor: '#EBF5FF' },
+        { label: '활성 환자', value: active, icon: LocalHospitalIcon, color: '#10B981', bgColor: '#ECFDF5' },
+        { label: '보관된 환자', value: archived, icon: ArchiveIcon, color: '#6B7280', bgColor: '#F3F4F6' },
+      ],
+    };
+  }, [patients]);
 
-  const stats = [
-    { label: '전체 환자', value: totalPatients, icon: PersonIcon, color: '#4B9CD3', bgColor: '#EBF5FF' },
-    { label: '활성 환자', value: activePatients, icon: LocalHospitalIcon, color: '#10B981', bgColor: '#ECFDF5' },
-    { label: '이번 달 방문', value: thisMonthVisits, icon: TrendingUpIcon, color: '#F59E0B', bgColor: '#FFFBEB' },
-  ];
-
-  if (loading) {
+  if (loading || !user) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <CircularProgress />
@@ -392,7 +400,7 @@ export default function PatientsPage() {
       {/* Search and Filters - Only show when there are patients */}
       {patients.length > 0 && (
         <CleanCard sx={{ p: 2, mb: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <TextField
               placeholder="환자 이름, 차트번호, 전화번호 검색..."
               value={searchQuery}
@@ -414,12 +422,72 @@ export default function PatientsPage() {
               }}
               size="small"
             />
-            <Button variant="outlined" startIcon={<FilterListIcon />} sx={{ borderRadius: 2 }}>
-              필터
-            </Button>
-            <Button variant="outlined" startIcon={<FileDownloadIcon />} sx={{ borderRadius: 2 }}>
-              내보내기
-            </Button>
+            {/* Status Filter Buttons */}
+            <Box sx={{ display: 'flex', gap: 0.5, bgcolor: 'grey.100', borderRadius: 2, p: 0.5 }}>
+              <Button
+                size="small"
+                variant={statusFilter === 'active' ? 'contained' : 'text'}
+                onClick={() => { setStatusFilter('active'); setPage(1); }}
+                sx={{
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 0.5,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  minWidth: 'auto',
+                  ...(statusFilter === 'active' ? {
+                    bgcolor: '#10B981',
+                    '&:hover': { bgcolor: '#059669' },
+                  } : {
+                    color: 'text.secondary',
+                  }),
+                }}
+              >
+                활성 ({activePatients})
+              </Button>
+              <Button
+                size="small"
+                variant={statusFilter === 'archived' ? 'contained' : 'text'}
+                onClick={() => { setStatusFilter('archived'); setPage(1); }}
+                sx={{
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 0.5,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  minWidth: 'auto',
+                  ...(statusFilter === 'archived' ? {
+                    bgcolor: '#6B7280',
+                    '&:hover': { bgcolor: '#4B5563' },
+                  } : {
+                    color: 'text.secondary',
+                  }),
+                }}
+              >
+                보관됨 ({archivedPatients})
+              </Button>
+              <Button
+                size="small"
+                variant={statusFilter === 'all' ? 'contained' : 'text'}
+                onClick={() => { setStatusFilter('all'); setPage(1); }}
+                sx={{
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 0.5,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  minWidth: 'auto',
+                  ...(statusFilter === 'all' ? {
+                    bgcolor: '#4B9CD3',
+                    '&:hover': { bgcolor: '#3A7BA8' },
+                  } : {
+                    color: 'text.secondary',
+                  }),
+                }}
+              >
+                전체 ({totalPatients})
+              </Button>
+            </Box>
           </Box>
         </CleanCard>
       )}
@@ -494,14 +562,6 @@ export default function PatientsPage() {
                         </Box>
                       </Box>
                     </Box>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
                   </Box>
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
@@ -517,6 +577,21 @@ export default function PatientsPage() {
                         최근 방문: {patient.lastVisit}
                       </Typography>
                     </Box>
+                    {patient.allergies && (
+                      <Chip
+                        label={`알레르기: ${patient.allergies}`}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          bgcolor: '#FEF2F2',
+                          color: '#DC2626',
+                          border: '1px solid #FECACA',
+                          '& .MuiChip-label': { px: 1 },
+                        }}
+                      />
+                    )}
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -538,13 +613,13 @@ export default function PatientsPage() {
                       />
                     </Box>
                     <Chip
-                      label={patient.status === 'active' ? '활성' : '비활성'}
+                      label={patient.status === 'active' ? '활성' : '보관됨'}
                       size="small"
                       sx={{
                         fontSize: '0.65rem',
                         fontWeight: 600,
-                        bgcolor: patient.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'grey.100',
-                        color: patient.status === 'active' ? '#10B981' : 'text.secondary',
+                        bgcolor: patient.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                        color: patient.status === 'active' ? '#10B981' : '#6B7280',
                       }}
                     />
                   </Box>
@@ -598,17 +673,21 @@ export default function PatientsPage() {
                     >
                       수정
                     </Button>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePatient(patient.id);
-                      }}
-                      sx={{ bgcolor: 'error.50' }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title={patient.status === 'active' ? '보관' : '복원'}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleArchivePatient(patient.id, patient.status);
+                        }}
+                        sx={{
+                          bgcolor: patient.status === 'active' ? 'grey.100' : 'success.50',
+                          color: patient.status === 'active' ? 'grey.600' : 'success.main',
+                        }}
+                      >
+                        {patient.status === 'active' ? <ArchiveIcon fontSize="small" /> : <UnarchiveIcon fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </Box>
               </MotionCard>
@@ -631,125 +710,14 @@ export default function PatientsPage() {
         </Box>
       )}
 
-      {/* Dialog */}
-      <Dialog
+      {/* Patient Form Dialog */}
+      <PatientFormDialog
         open={openDialog}
+        mode={dialogMode}
+        patient={selectedPatient}
         onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-          },
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          {dialogMode === 'add' ? '새 환자 등록' : dialogMode === 'edit' ? '환자 정보 수정' : '환자 정보'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="이름"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                disabled={dialogMode === 'view'}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                select
-                label="성별"
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                disabled={dialogMode === 'view'}
-              >
-                <MenuItem value="남">남성</MenuItem>
-                <MenuItem value="여">여성</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="생년월일"
-                type="date"
-                value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-                disabled={dialogMode === 'view'}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="전화번호"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="010-0000-0000"
-                disabled={dialogMode === 'view'}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="주소"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                disabled={dialogMode === 'view'}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="메모"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                multiline
-                rows={3}
-                disabled={dialogMode === 'view'}
-              />
-            </Grid>
-            {dialogMode === 'view' && selectedPatient && (
-              <>
-                <Grid size={{ xs: 6 }}>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary">차트번호</Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>{selectedPatient.chartNo}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary">총 방문 횟수</Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>{selectedPatient.visitCount}회</Typography>
-                  </Paper>
-                </Grid>
-              </>
-            )}
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={handleCloseDialog} sx={{ borderRadius: 2 }}>
-            {dialogMode === 'view' ? '닫기' : '취소'}
-          </Button>
-          {dialogMode !== 'view' && (
-            <Button
-              variant="contained"
-              onClick={handleSavePatient}
-              disabled={saving}
-              sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-              }}
-            >
-              {saving ? <CircularProgress size={20} /> : (dialogMode === 'add' ? '등록' : '저장')}
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+        onSave={handleSavePatient}
+      />
     </Box>
   );
 }

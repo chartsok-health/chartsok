@@ -18,7 +18,8 @@
       "Bash(npx eslint:*)",
       "Bash(findstr:*)",
       "Bash(ls -la \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\"\" 2>/dev/null || dir \"c:Developmentchartsoksrcappdashboardhistory\"\")",
-      "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\")"
+      "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\\\\history\")",
+      "Bash(if exist .next rmdir /s /q .next)"
     ]
   }
 }

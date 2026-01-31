@@ -98,6 +98,48 @@ export async function PUT(request, { params }) {
 }
 
 /**
+ * PATCH /api/patients/[id]
+ * Partial update (e.g., status change for archive/restore)
+ */
+export async function PATCH(request, { params }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { status } = body;
+
+    const existing = await patientService.getById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Patient not found' },
+        { status: 404 }
+      );
+    }
+
+    const updateData = {};
+    if (status !== undefined) {
+      updateData.status = status;
+      // If restoring from archived, clear deletedAt
+      if (status === 'active') {
+        updateData.deletedAt = null;
+      }
+    }
+
+    const updated = await patientService.update(id, updateData);
+
+    return NextResponse.json({
+      patient: updated,
+      message: 'Patient status updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating patient status:', error);
+    return NextResponse.json(
+      { error: 'Failed to update patient status' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/patients/[id]
  * Delete a patient (soft delete recommended for medical records)
  */
