@@ -43,6 +43,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -271,6 +272,23 @@ export default function DoctorsPage() {
               d.id === selectedDoctor.id ? { ...d, ...formData } : d
             )
           );
+
+          // If editing self, also sync to settings
+          if (selectedDoctor.isMe && user?.uid) {
+            await fetch('/api/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.uid,
+                displayName: formData.name,
+                specialty: formData.specialty,
+                phone: formData.phone,
+                licenseNo: formData.licenseNo,
+                address: formData.address,
+              }),
+            });
+          }
+
           setSnackbar({ open: true, message: '의료진 정보가 수정되었습니다', severity: 'success' });
         } else {
           throw new Error('Failed to update');
@@ -618,6 +636,22 @@ export default function DoctorsPage() {
                     },
                   }}
                 >
+                  {doctor.isMe && (
+                    <Chip
+                      icon={<PersonIcon sx={{ fontSize: 14 }} />}
+                      label="나"
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: -10,
+                        left: 16,
+                        fontWeight: 700,
+                        bgcolor: '#4B9CD3',
+                        color: 'white',
+                        '& .MuiChip-icon': { color: 'white' },
+                      }}
+                    />
+                  )}
                   {doctor.role === 'admin' && (
                     <Chip
                       label="관리자"
@@ -746,19 +780,21 @@ export default function DoctorsPage() {
                     >
                       수정
                     </Button>
-                    <Tooltip title={doctor.status === 'active' ? '보관' : '복원'}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleArchiveDoctor(doctor.id, doctor.status)}
-                        sx={{
-                          bgcolor: doctor.status === 'active' ? 'grey.100' : 'success.50',
-                          color: doctor.status === 'active' ? 'grey.600' : 'success.main',
-                        }}
-                      >
-                        {doctor.status === 'active' ? <ArchiveIcon fontSize="small" /> : <UnarchiveIcon fontSize="small" />}
-                      </IconButton>
-                    </Tooltip>
-                    {doctor.status === 'archived' && (
+                    {!doctor.isMe && (
+                      <Tooltip title={doctor.status === 'active' ? '보관' : '복원'}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleArchiveDoctor(doctor.id, doctor.status)}
+                          sx={{
+                            bgcolor: doctor.status === 'active' ? 'grey.100' : 'success.50',
+                            color: doctor.status === 'active' ? 'grey.600' : 'success.main',
+                          }}
+                        >
+                          {doctor.status === 'active' ? <ArchiveIcon fontSize="small" /> : <UnarchiveIcon fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {!doctor.isMe && doctor.status === 'archived' && (
                       <Tooltip title="삭제">
                         <IconButton
                           size="small"
@@ -883,7 +919,8 @@ export default function DoctorsPage() {
                 type="email"
                 inputRef={emailRef}
                 defaultValue=""
-                disabled={dialogMode === 'view'}
+                disabled={dialogMode === 'view' || (dialogMode === 'edit' && selectedDoctor?.isMe)}
+                helperText={dialogMode === 'edit' && selectedDoctor?.isMe ? '본인 이메일은 변경할 수 없습니다' : ''}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

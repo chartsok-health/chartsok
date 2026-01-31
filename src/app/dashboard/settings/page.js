@@ -8,7 +8,6 @@ import {
   Paper,
   Button,
   Switch,
-  FormControlLabel,
   TextField,
   Select,
   MenuItem,
@@ -18,9 +17,6 @@ import {
   Alert,
   Chip,
   Grid,
-  Card,
-  CardContent,
-  Divider,
   IconButton,
   InputAdornment,
   CircularProgress,
@@ -29,10 +25,9 @@ import {
 import { motion } from 'framer-motion';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from '@mui/icons-material/Person';
-import DescriptionIcon from '@mui/icons-material/Description';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '@/lib/AuthContext';
@@ -114,15 +109,13 @@ export default function SettingsPage() {
     displayName: '',
     specialty: '내과',
     hospitalName: '',
-    chartTemplate: 'soap',
-    autoSave: true,
-    includeICD: true,
-    defaultLanguage: 'ko',
+    email: '',
+    phone: '',
+    licenseNo: '',
+    address: '',
     emailNotifications: true,
     soundEnabled: true,
-    speakerDetection: true,
-    autoCorrect: true,
-    medicalTerms: true,
+    aiTone: '',
   });
 
   const [customTerms, setCustomTerms] = useState([]);
@@ -149,18 +142,16 @@ export default function SettingsPage() {
           if (data.settings) {
             setSettings(prev => ({
               ...prev,
-              displayName: user?.displayName || data.settings.displayName || '',
+              displayName: data.settings.displayName || user?.displayName || '',
               specialty: data.settings.specialty || '내과',
               hospitalName: data.settings.hospitalName || '',
-              chartTemplate: data.settings.chartTemplate || 'soap',
-              autoSave: data.settings.autoSave ?? true,
-              includeICD: data.settings.includeICD ?? true,
-              defaultLanguage: data.settings.defaultLanguage || 'ko',
+              email: data.settings.email || user?.email || '',
+              phone: data.settings.phone || '',
+              licenseNo: data.settings.licenseNo || '',
+              address: data.settings.address || '',
               emailNotifications: data.settings.emailNotifications ?? true,
               soundEnabled: data.settings.soundEnabled ?? true,
-              speakerDetection: data.settings.speakerDetection ?? true,
-              autoCorrect: data.settings.autoCorrect ?? true,
-              medicalTerms: data.settings.medicalTerms ?? true,
+              aiTone: data.settings.aiTone || '',
             }));
           }
         }
@@ -341,7 +332,35 @@ export default function SettingsPage() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="이메일"
+                type="email"
+                value={settings.email}
+                disabled
+                helperText="이메일은 계정에 연결되어 변경할 수 없습니다"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="전화번호"
+                value={settings.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                placeholder="010-0000-0000"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="의사 면허번호"
+                value={settings.licenseNo}
+                onChange={(e) => handleChange('licenseNo', e.target.value)}
+                placeholder="예: 12345"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="병원/의원명"
@@ -350,87 +369,16 @@ export default function SettingsPage() {
                 placeholder="예: 서울내과의원"
               />
             </Grid>
-          </Grid>
-        </SettingSection>
-
-        {/* Chart Settings */}
-        <SettingSection
-          icon={DescriptionIcon}
-          title="차트 설정"
-          description="차트 생성 방식을 설정합니다"
-          color="#10B981"
-          delay={0.2}
-        >
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>차트 템플릿</InputLabel>
-                <Select
-                  value={settings.chartTemplate}
-                  label="차트 템플릿"
-                  onChange={(e) => handleChange('chartTemplate', e.target.value)}
-                >
-                  <MenuItem value="soap">SOAP 형식</MenuItem>
-                  <MenuItem value="narrative">서술형</MenuItem>
-                  <MenuItem value="problem">문제 중심</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>기본 언어</InputLabel>
-                <Select
-                  value={settings.defaultLanguage}
-                  label="기본 언어"
-                  onChange={(e) => handleChange('defaultLanguage', e.target.value)}
-                >
-                  <MenuItem value="ko">한국어</MenuItem>
-                  <MenuItem value="en">English</MenuItem>
-                </Select>
-              </FormControl>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="주소"
+                value={settings.address}
+                onChange={(e) => handleChange('address', e.target.value)}
+                placeholder="예: 서울특별시 강남구 테헤란로 123"
+              />
             </Grid>
           </Grid>
-          <Divider sx={{ my: 3 }} />
-          <ToggleSetting
-            label="자동 저장"
-            description="녹음 종료 시 자동으로 차트를 저장합니다"
-            checked={settings.autoSave}
-            onChange={(v) => handleChange('autoSave', v)}
-          />
-          <ToggleSetting
-            label="ICD 코드 자동 포함"
-            description="진단에 해당하는 ICD 코드를 자동으로 포함합니다"
-            checked={settings.includeICD}
-            onChange={(v) => handleChange('includeICD', v)}
-          />
-        </SettingSection>
-
-        {/* AI Settings */}
-        <SettingSection
-          icon={AutoAwesomeIcon}
-          title="AI 설정"
-          description="AI 음성 인식 및 차트 생성 설정"
-          color="#8B5CF6"
-          delay={0.3}
-        >
-          <ToggleSetting
-            label="화자 자동 구분"
-            description="AI가 의사와 환자의 대화를 자동으로 구분합니다"
-            checked={settings.speakerDetection}
-            onChange={(v) => handleChange('speakerDetection', v)}
-          />
-          <ToggleSetting
-            label="자동 교정"
-            description="음성 인식 오류를 AI가 자동으로 교정합니다"
-            checked={settings.autoCorrect}
-            onChange={(v) => handleChange('autoCorrect', v)}
-          />
-          <ToggleSetting
-            label="의학 용어 최적화"
-            description="의학 전문 용어 인식을 최적화합니다"
-            checked={settings.medicalTerms}
-            onChange={(v) => handleChange('medicalTerms', v)}
-          />
         </SettingSection>
 
         {/* Custom Terms Settings */}
@@ -439,7 +387,7 @@ export default function SettingsPage() {
           title="자주 사용하는 용어"
           description="AI가 더 정확하게 인식할 의학 용어를 추가하세요"
           color="#8B5CF6"
-          delay={0.4}
+          delay={0.2}
         >
           <Box sx={{ display: 'flex', gap: 1, mb: 2.5, alignItems: 'center' }}>
             <TextField
@@ -504,13 +452,38 @@ export default function SettingsPage() {
           </Box>
         </SettingSection>
 
+        {/* AI Tone Settings */}
+        <SettingSection
+          icon={PsychologyIcon}
+          title="AI 톤 설정"
+          description="AI가 차트를 작성할 때 참고할 스타일과 톤을 설정합니다"
+          color="#EC4899"
+          delay={0.3}
+        >
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="AI 작성 스타일"
+            value={settings.aiTone}
+            onChange={(e) => handleChange('aiTone', e.target.value)}
+            placeholder="예: 간결하고 객관적인 톤으로 작성해주세요. 환자에게 공감하는 표현을 포함하고, 전문 의학 용어를 적절히 사용해주세요. 진단과 치료 계획은 명확하게 구분해서 작성해주세요."
+            helperText="AI가 차트를 요약하거나 작성할 때 이 설명을 참고합니다. 원하는 문체, 톤, 형식 등을 자유롭게 설명해주세요."
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'grey.50',
+              },
+            }}
+          />
+        </SettingSection>
+
         {/* Notification Settings */}
         <SettingSection
           icon={NotificationsIcon}
           title="알림 설정"
           description="알림 수신 방법을 설정합니다"
           color="#64748B"
-          delay={0.5}
+          delay={0.4}
         >
           <ToggleSetting
             label="이메일 알림"
@@ -530,7 +503,7 @@ export default function SettingsPage() {
         <MotionPaper
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
           elevation={0}
           sx={{
             borderRadius: 4,

@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [todayRecords, setTodayRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState('');
   const [stats, setStats] = useState({
     todayCount: 0,
     weekCount: 0,
@@ -82,6 +83,25 @@ export default function DashboardPage() {
     { day: '토', count: 0 },
     { day: '일', count: 0 },
   ]);
+
+  // Fetch user settings for displayName
+  useEffect(() => {
+    async function fetchSettings() {
+      if (!user?.uid) return;
+      try {
+        const response = await fetch(`/api/settings?userId=${user.uid}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings?.displayName) {
+            setDisplayName(data.settings.displayName);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    }
+    fetchSettings();
+  }, [user?.uid]);
 
   // Fetch dashboard stats from API
   useEffect(() => {
@@ -139,7 +159,7 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const displayName = userProfile?.doctorName || user?.displayName || '선생님';
+  const greeting = displayName || userProfile?.doctorName || user?.displayName || '선생님';
 
   const statCards = [
     {
@@ -207,7 +227,7 @@ export default function DashboardPage() {
                   WELCOME BACK
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-                  안녕하세요, {displayName} 👋
+                  안녕하세요, {greeting} 👋
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
                   오늘 하루도 chartsok과 함께 효율적인 진료를 시작하세요.

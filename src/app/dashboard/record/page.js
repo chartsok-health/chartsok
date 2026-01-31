@@ -24,14 +24,8 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Tooltip,
   Collapse,
-  MenuItem,
-  CircularProgress,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import MicIcon from '@mui/icons-material/Mic';
@@ -62,6 +56,10 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import HomeIcon from '@mui/icons-material/Home';
 import StarIcon from '@mui/icons-material/Star';
 import { useAuth } from '@/lib/AuthContext';
+import PatientFormDialog from '@/app/dashboard/patients/PatientFormDialog';
+import TemplateFormDialog from '@/app/dashboard/templates/TemplateFormDialog';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, updateDoc, doc, getDocs, query, orderBy } from 'firebase/firestore';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -99,8 +97,6 @@ export default function RecordPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [newPatientDialogOpen, setNewPatientDialogOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
-  const [savingPatient, setSavingPatient] = useState(false);
 
   // Step 2: Vitals
   const [vitals, setVitals] = useState({
@@ -116,6 +112,7 @@ export default function RecordPage() {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [newTemplateDialogOpen, setNewTemplateDialogOpen] = useState(false);
 
   // Step 3: Recording
   const [isRecording, setIsRecording] = useState(false);
@@ -234,64 +231,90 @@ export default function RecordPage() {
     }
   }, [patientIdParam, patientNameParam, patients]);
 
-  // Default template for fallback
-  const defaultTemplateData = {
-    id: 'default-soap',
-    name: 'SOAP 기본',
-    description: '기본 SOAP 차트 템플릿',
-    isDefault: true,
-    sections: [
-      { id: 's', title: 'Subjective', description: '주관적 증상' },
-      { id: 'o', title: 'Objective', description: '객관적 소견' },
-      { id: 'a', title: 'Assessment', description: '평가/진단' },
-      { id: 'p', title: 'Plan', description: '치료 계획' },
-    ],
-  };
+  // Default SOAP template (same as templates page)
+  const defaultTemplates = [
+    {
+      id: 'default-soap',
+      name: 'SOAP 기본',
+      description: '표준 SOAP 형식 차트 템플릿',
+      category: 'soap',
+      isDefault: false, // Will be computed based on user templates
+      isSystem: true,
+      status: 'active',
+      content: `[Subjective]
+환자의 주호소 및 현병력을 기록합니다.
+- 주호소:
+- 발병 시기:
+- 증상 양상:
+- 동반 증상:
+- 과거력:
 
-  // Fetch templates from API
+[Objective]
+신체 검진 및 검사 소견을 기록합니다.
+- V/S: BP    /   , HR    , BT    ℃
+- 신체 검진:
+- 검사 소견:
+
+[Assessment]
+진단 및 감별 진단을 기록합니다.
+- 진단:
+- ICD 코드:
+
+[Plan]
+치료 계획 및 처방을 기록합니다.
+- 처방:
+- 교육:
+- 추적 관찰:`,
+    },
+  ];
+
+  // Fetch templates directly from Firestore (same as templates page)
   useEffect(() => {
+    if (!user?.uid) return;
+
     const fetchTemplates = async () => {
       setLoadingTemplates(true);
       try {
-        const specialty = userProfile?.specialty || null;
-        const url = specialty
-          ? `/api/templates?specialty=${specialty}`
-          : '/api/templates';
+        const templatesRef = collection(db, 'users', user.uid, 'templates');
+        const q = query(templatesRef, orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const userTemplates = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          status: doc.data().status || 'active',
+        }));
 
-        const response = await fetch(url);
-        if (!response.ok) {
-          // Use default template on error
-          console.warn('Templates API unavailable, using default template');
-          setTemplates([defaultTemplateData]);
-          setSelectedTemplate(defaultTemplateData);
-          return;
-        }
-        const data = await response.json();
+        // Filter only active templates
+        const activeTemplates = userTemplates.filter(t => t.status === 'active');
 
-        if (data.templates && data.templates.length > 0) {
-          setTemplates(data.templates);
+        // Check if user has a default template
+        const userDefault = activeTemplates.find(t => t.isDefault);
 
-          // Auto-select default template if exists
-          const defaultTemplate = data.templates.find(t => t.isDefault);
-          if (defaultTemplate) {
-            setSelectedTemplate(defaultTemplate);
-          }
-        } else {
-          // No templates in DB, use default
-          setTemplates([defaultTemplateData]);
-          setSelectedTemplate(defaultTemplateData);
+        // Set SOAP as default only if no user template is default
+        const soapWithDefault = {
+          ...defaultTemplates[0],
+          isDefault: !userDefault,
+        };
+
+        const allTemplates = [soapWithDefault, ...activeTemplates];
+        setTemplates(allTemplates);
+
+        // Auto-select the default template
+        const defaultTemplate = allTemplates.find(t => t.isDefault);
+        if (defaultTemplate) {
+          setSelectedTemplate(defaultTemplate);
         }
       } catch (error) {
         console.error('Error fetching templates:', error);
-        // Use default template on error
-        setTemplates([defaultTemplateData]);
-        setSelectedTemplate(defaultTemplateData);
+        setTemplates(defaultTemplates);
+        setSelectedTemplate(defaultTemplates[0]);
       } finally {
         setLoadingTemplates(false);
       }
     };
+
     fetchTemplates();
-  }, [userProfile?.specialty]);
+  }, [user?.uid]);
 
   // Audio visualization
   useEffect(() => {
@@ -339,62 +362,58 @@ export default function RecordPage() {
       patient.chartNo?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle new patient creation
-  const handleCreatePatient = async () => {
-    if (newPatient.name) {
-      try {
-        setSavingPatient(true);
-        const chartNo = newPatient.chartNo || `P-${new Date().getFullYear()}-${String(patients.length + 1).padStart(3, '0')}`;
+  // Handle new patient creation (receives formData from PatientFormDialog)
+  const handleCreatePatient = async (formData) => {
+    try {
+      const chartNo = `P-${new Date().getFullYear()}-${String(patients.length + 1).padStart(3, '0')}`;
 
-        // Save to database via API
-        const response = await fetch('/api/patients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: newPatient.name,
-            gender: newPatient.gender,
-            birthDate: newPatient.birthDate || null,
-            phone: newPatient.phone || null,
-            chartNo: chartNo,
-          }),
-        });
-
-        if (!response.ok) throw new Error('Failed to create patient');
-        const result = await response.json();
-        const createdPatient = result.patient;
-
-        const patient = {
-          ...createdPatient,
-          age: newPatient.birthDate ? calculateAge(newPatient.birthDate) : 0,
-          lastVisit: new Date().toISOString().split('T')[0],
+      // Save to database via API
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.uid,
+          name: formData.name,
+          gender: formData.gender,
+          birthDate: formData.birthDate,
+          phone: formData.phone,
+          address: formData.address,
+          notes: formData.notes || '',
           chartNo: chartNo,
-          recentDiagnosis: '신규 환자',
-        };
+        }),
+      });
 
-        // Add to local patients list
-        setPatients([patient, ...patients]);
-        setSelectedPatient(patient);
-        setNewPatientDialogOpen(false);
-        setNewPatient({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
-      } catch (error) {
-        console.error('Error creating patient:', error);
-        // Fallback to local-only patient for the session
-        const patient = {
-          id: Date.now().toString(),
-          name: newPatient.name,
-          age: newPatient.birthDate ? calculateAge(newPatient.birthDate) : 0,
-          gender: newPatient.gender,
-          lastVisit: new Date().toISOString().split('T')[0],
-          chartNo: newPatient.chartNo || `P-${Date.now().toString().slice(-6)}`,
-          recentDiagnosis: '신규 환자',
-        };
-        setPatients([patient, ...patients]);
-        setSelectedPatient(patient);
-        setNewPatientDialogOpen(false);
-        setNewPatient({ name: '', birthDate: '', gender: '남', phone: '', chartNo: '' });
-      } finally {
-        setSavingPatient(false);
-      }
+      if (!response.ok) throw new Error('Failed to create patient');
+      const result = await response.json();
+      const createdPatient = result.patient;
+
+      const patient = {
+        ...createdPatient,
+        age: formData.birthDate ? calculateAge(formData.birthDate) : 0,
+        lastVisit: new Date().toISOString().split('T')[0],
+        chartNo: createdPatient.chartNo || chartNo,
+        recentDiagnosis: '신규 환자',
+      };
+
+      // Add to local patients list
+      setPatients([patient, ...patients]);
+      setSelectedPatient(patient);
+      setNewPatientDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating patient:', error);
+      // Fallback to local-only patient for the session
+      const patient = {
+        id: Date.now().toString(),
+        name: formData.name,
+        age: formData.birthDate ? calculateAge(formData.birthDate) : 0,
+        gender: formData.gender,
+        lastVisit: new Date().toISOString().split('T')[0],
+        chartNo: `P-${Date.now().toString().slice(-6)}`,
+        recentDiagnosis: '신규 환자',
+      };
+      setPatients([patient, ...patients]);
+      setSelectedPatient(patient);
+      setNewPatientDialogOpen(false);
     }
   };
 
@@ -405,6 +424,58 @@ export default function RecordPage() {
       setVitals({ ...vitals, chiefComplaint: current + ', ' + complaint });
     } else {
       setVitals({ ...vitals, chiefComplaint: complaint });
+    }
+  };
+
+  // Handle new template creation (receives formData from TemplateFormDialog)
+  const handleCreateTemplate = async (formData) => {
+    if (!user?.uid) return;
+
+    try {
+      const templatesRef = collection(db, 'users', user.uid, 'templates');
+
+      // If setting as default, unset other defaults first
+      if (formData.isDefault) {
+        const currentDefault = templates.find(t => t.isDefault && !t.isSystem);
+        if (currentDefault) {
+          await updateDoc(doc(db, 'users', user.uid, 'templates', currentDefault.id), {
+            isDefault: false,
+          });
+        }
+      }
+
+      const newTemplate = {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        content: formData.content,
+        isDefault: formData.isDefault,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const docRef = await addDoc(templatesRef, newTemplate);
+
+      const createdTemplate = {
+        id: docRef.id,
+        ...newTemplate,
+      };
+
+      // Update local templates list
+      setTemplates(prev => {
+        // If new template is default, unset other defaults in local state
+        const updated = formData.isDefault
+          ? prev.map(t => t.isSystem ? t : { ...t, isDefault: false })
+          : prev;
+        return [updated[0], createdTemplate, ...updated.slice(1)]; // Keep SOAP at top
+      });
+
+      // Auto-select the new template
+      setSelectedTemplate(createdTemplate);
+      setNewTemplateDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating template:', error);
     }
   };
 
@@ -1035,92 +1106,13 @@ export default function RecordPage() {
       </Grid>
 
       {/* New Patient Dialog - Same as patients page */}
-      <Dialog
+      <PatientFormDialog
         open={newPatientDialogOpen}
+        mode="add"
+        patient={null}
         onClose={() => setNewPatientDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-          }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          새 환자 등록
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="이름"
-                value={newPatient.name}
-                onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                placeholder="홍길동"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                select
-                label="성별"
-                value={newPatient.gender}
-                onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-              >
-                <MenuItem value="남">남성</MenuItem>
-                <MenuItem value="여">여성</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="생년월일"
-                type="date"
-                value={newPatient.birthDate}
-                onChange={(e) => setNewPatient({ ...newPatient, birthDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="전화번호"
-                value={newPatient.phone}
-                onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                placeholder="010-0000-0000"
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="차트 번호 (선택)"
-                value={newPatient.chartNo}
-                onChange={(e) => setNewPatient({ ...newPatient, chartNo: e.target.value })}
-                placeholder="자동 생성됩니다"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
-          <Button onClick={() => setNewPatientDialogOpen(false)} sx={{ borderRadius: 2 }}>
-            취소
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCreatePatient}
-            disabled={!newPatient.name || savingPatient}
-            sx={{
-              borderRadius: 2,
-              background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-            }}
-          >
-            {savingPatient ? <CircularProgress size={20} /> : '등록 및 선택'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSave={handleCreatePatient}
+      />
     </MotionBox>
   );
 
@@ -1269,57 +1261,7 @@ export default function RecordPage() {
               </Typography>
 
               <Grid container spacing={1.5}>
-                {/* SOAP Default Option */}
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Paper
-                      elevation={0}
-                      onClick={() => setSelectedTemplate(null)}
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        cursor: 'pointer',
-                        border: '2px solid',
-                        borderColor: selectedTemplate === null ? 'primary.main' : 'grey.200',
-                        bgcolor: selectedTemplate === null ? 'primary.50' : 'white',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          borderColor: selectedTemplate === null ? 'primary.main' : 'grey.300',
-                          bgcolor: selectedTemplate === null ? 'primary.50' : 'grey.50',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 1.5,
-                            bgcolor: selectedTemplate === null ? 'primary.main' : 'grey.100',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <AssignmentIcon sx={{ fontSize: 18, color: selectedTemplate === null ? 'white' : 'grey.500' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem' }} noWrap>
-                            SOAP 노트
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                            표준 형식
-                          </Typography>
-                        </Box>
-                        {selectedTemplate === null && (
-                          <CheckCircleIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-                        )}
-                      </Box>
-                    </Paper>
-                  </motion.div>
-                </Grid>
-
-                {/* User Templates */}
+                {/* Templates from API (includes SOAP default) */}
                 {templates.map((template) => (
                   <Grid size={{ xs: 6, sm: 4 }} key={template.id}>
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -1364,7 +1306,8 @@ export default function RecordPage() {
                               )}
                             </Box>
                             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                              {template.category === 'narrative' ? '서술형' :
+                              {template.category === 'soap' ? 'SOAP 형식' :
+                               template.category === 'narrative' ? '서술형' :
                                template.category === 'problem' ? '문제 중심' :
                                template.category === 'custom' ? '사용자 정의' : template.category}
                             </Typography>
@@ -1378,54 +1321,52 @@ export default function RecordPage() {
                   </Grid>
                 ))}
 
-                {/* Add Template Link */}
-                {templates.length < 6 && (
-                  <Grid size={{ xs: 6, sm: 4 }}>
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Paper
-                        elevation={0}
-                        onClick={() => router.push('/dashboard/templates')}
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          cursor: 'pointer',
-                          border: '2px dashed',
-                          borderColor: 'grey.300',
-                          bgcolor: 'white',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.50',
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 1.5,
-                              bgcolor: 'grey.100',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <PersonAddIcon sx={{ fontSize: 18, color: 'grey.500' }} />
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.secondary' }}>
-                              템플릿 추가
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                              나만의 템플릿
-                            </Typography>
-                          </Box>
+                {/* Add Template Button */}
+                <Grid size={{ xs: 6, sm: 4 }}>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Paper
+                      elevation={0}
+                      onClick={() => setNewTemplateDialogOpen(true)}
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        border: '2px dashed',
+                        borderColor: 'grey.300',
+                        bgcolor: 'white',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'primary.50',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            bgcolor: 'grey.100',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <PersonAddIcon sx={{ fontSize: 18, color: 'grey.500' }} />
                         </Box>
-                      </Paper>
-                    </motion.div>
-                  </Grid>
-                )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.secondary' }}>
+                            템플릿 추가
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                            나만의 템플릿
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </motion.div>
+                </Grid>
               </Grid>
 
               {selectedTemplate && (
@@ -1438,7 +1379,7 @@ export default function RecordPage() {
                     선택된 템플릿 미리보기
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-                    {selectedTemplate.template ? `${selectedTemplate.template.slice(0, 200)}...` : '템플릿 내용 없음'}
+                    {selectedTemplate.content ? `${selectedTemplate.content.slice(0, 200)}...` : '템플릿 내용 없음'}
                   </Typography>
                 </MotionBox>
               )}
@@ -1482,6 +1423,15 @@ export default function RecordPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* New Template Dialog - Same as templates page */}
+      <TemplateFormDialog
+        open={newTemplateDialogOpen}
+        mode="add"
+        template={null}
+        onClose={() => setNewTemplateDialogOpen(false)}
+        onSave={handleCreateTemplate}
+      />
     </MotionBox>
   );
 

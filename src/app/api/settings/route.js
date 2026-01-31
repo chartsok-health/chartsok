@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { userSettingsService } from '@/lib/firestore';
+import { userService } from '@/lib/firestore';
 
 /**
  * GET /api/settings
- * Fetch user settings
+ * Fetch user settings from users collection
  */
 export async function GET(request) {
   try {
@@ -17,12 +17,28 @@ export async function GET(request) {
       );
     }
 
-    let settings = await userSettingsService.getByUserId(userId);
+    const user = await userService.getById(userId);
 
-    // Create default settings if none exist
-    if (!settings) {
-      settings = await userSettingsService.createDefault(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
     }
+
+    // Return user data as settings
+    const settings = {
+      displayName: user.displayName || '',
+      specialty: user.specialty || '내과',
+      hospitalName: user.hospitalName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      licenseNo: user.licenseNo || '',
+      address: user.address || '',
+      emailNotifications: user.emailNotifications ?? true,
+      soundEnabled: user.soundEnabled ?? true,
+      aiTone: user.aiTone || '',
+    };
 
     return NextResponse.json({ settings });
   } catch (error) {
@@ -36,7 +52,7 @@ export async function GET(request) {
 
 /**
  * PUT /api/settings
- * Update user settings
+ * Update user settings in users collection
  */
 export async function PUT(request) {
   try {
@@ -50,16 +66,24 @@ export async function PUT(request) {
       );
     }
 
-    // Check if settings exist, create if not
-    let existing = await userSettingsService.getByUserId(userId);
-    if (!existing) {
-      await userSettingsService.createDefault(userId);
-    }
+    // Update user directly
+    await userService.update(userId, settingsData);
 
-    const updated = await userSettingsService.updateByUserId(userId, settingsData);
+    const updated = await userService.getById(userId);
 
     return NextResponse.json({
-      settings: updated,
+      settings: {
+        displayName: updated.displayName || '',
+        specialty: updated.specialty || '내과',
+        hospitalName: updated.hospitalName || '',
+        email: updated.email || '',
+        phone: updated.phone || '',
+        licenseNo: updated.licenseNo || '',
+        address: updated.address || '',
+        emailNotifications: updated.emailNotifications ?? true,
+        soundEnabled: updated.soundEnabled ?? true,
+        aiTone: updated.aiTone || '',
+      },
       message: 'Settings updated successfully',
     });
   } catch (error) {

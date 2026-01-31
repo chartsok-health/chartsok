@@ -32,29 +32,6 @@ export async function GET(request) {
     // Get all user-hospital relationships for this hospital
     const userHospitals = await userHospitalService.getByHospitalId(hospitalId);
 
-    // If no doctors found, return the current user as a doctor
-    if (userHospitals.length === 0 && userId) {
-      const currentUser = await userService.getById(userId);
-      if (currentUser) {
-        return NextResponse.json({
-          doctors: [{
-            id: currentUser.id,
-            name: currentUser.displayName || '이름 없음',
-            specialty: currentUser.specialty || '내과',
-            role: 'owner',
-            email: currentUser.email || '',
-            phone: currentUser.phone || '',
-            licenseNo: currentUser.licenseNo || '',
-            address: currentUser.address || '',
-            joinDate: formatDateString(currentUser.createdAt),
-            status: 'active',
-            avatar: currentUser.profileImage || null,
-          }],
-          total: 1,
-        });
-      }
-    }
-
     // Fetch user details for each user in the hospital
     const doctorsPromises = userHospitals.map(async (uh) => {
       const user = await userService.getById(uh.userId);
@@ -69,13 +46,45 @@ export async function GET(request) {
         phone: user.phone || '',
         licenseNo: user.licenseNo || '',
         address: user.address || '',
-        joinDate: formatDateString(user.createdAt),
+        joinDate: uh.joinDate || formatDateString(user.createdAt),
         status: uh.status || 'active',
         avatar: user.profileImage || null,
+        isMe: userId && user.id === userId,
       };
     });
 
-    const doctors = (await Promise.all(doctorsPromises)).filter(Boolean);
+    let doctors = (await Promise.all(doctorsPromises)).filter(Boolean);
+
+    // If current user is not in the list, add them (they might not have userHospital record yet)
+    if (userId) {
+      const currentUserInList = doctors.find(d => d.id === userId);
+      if (!currentUserInList) {
+        const currentUser = await userService.getById(userId);
+        if (currentUser) {
+          doctors.unshift({
+            id: currentUser.id,
+            name: currentUser.displayName || '이름 없음',
+            specialty: currentUser.specialty || '내과',
+            role: 'owner',
+            email: currentUser.email || '',
+            phone: currentUser.phone || '',
+            licenseNo: currentUser.licenseNo || '',
+            address: currentUser.address || '',
+            joinDate: formatDateString(currentUser.createdAt),
+            status: 'active',
+            avatar: currentUser.profileImage || null,
+            isMe: true,
+          });
+        }
+      }
+    }
+
+    // Sort so current user (isMe) appears first
+    doctors = doctors.sort((a, b) => {
+      if (a.isMe && !b.isMe) return -1;
+      if (!a.isMe && b.isMe) return 1;
+      return 0;
+    });
 
     return NextResponse.json({
       doctors,
