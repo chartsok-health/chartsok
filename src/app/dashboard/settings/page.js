@@ -365,8 +365,8 @@ export default function SettingsPage() {
                 fullWidth
                 label="병원/의원명"
                 value={settings.hospitalName}
-                onChange={(e) => handleChange('hospitalName', e.target.value)}
-                placeholder="예: 서울내과의원"
+                disabled
+                helperText="병원 변경은 고객센터로 문의해주세요"
               />
             </Grid>
             <Grid size={{ xs: 12 }}>

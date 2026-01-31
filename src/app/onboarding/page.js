@@ -32,7 +32,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import { useAuth } from '@/lib/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
@@ -133,26 +133,42 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
-      // Create a hospital for the user
-      const hospitalData = {
-        name: formData.clinicName,
-        type: formData.practiceType,
-        size: formData.practiceSize,
-        specialty: formData.specialty,
-        phone: formData.phoneNumber || '',
-        ownerId: user.uid,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      // Normalize hospital name: trim and remove all whitespace for comparison
+      const normalizedName = formData.clinicName.trim().replace(/\s+/g, '').toLowerCase();
 
-      const hospitalRef = await addDoc(collection(db, 'hospitals'), hospitalData);
-      const hospitalId = hospitalRef.id;
+      // Check if hospital with this normalized name already exists
+      const hospitalsRef = collection(db, 'hospitals');
+      const q = query(hospitalsRef, where('normalizedName', '==', normalizedName));
+      const querySnapshot = await getDocs(q);
+
+      let hospitalId;
+
+      if (!querySnapshot.empty) {
+        // Hospital exists, use the existing one
+        hospitalId = querySnapshot.docs[0].id;
+      } else {
+        // Create a new hospital
+        const hospitalData = {
+          name: formData.clinicName.trim(),
+          normalizedName: normalizedName,
+          type: formData.practiceType,
+          size: formData.practiceSize,
+          specialty: formData.specialty,
+          phone: formData.phoneNumber || '',
+          ownerId: user.uid,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const hospitalRef = await addDoc(hospitalsRef, hospitalData);
+        hospitalId = hospitalRef.id;
+      }
 
       // Complete onboarding with hospitalId
       await completeOnboarding({
         ...formData,
         hospitalId: hospitalId,
-        hospitalName: formData.clinicName,
+        hospitalName: formData.clinicName.trim(),
         displayName: formData.doctorName,
       });
 
