@@ -40,21 +40,33 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
 import { useRouter } from 'next/navigation';
+import { patients as dbPatients, recordingSessions, charts } from '@/lib/mockDatabase';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-// Sample patient data
-const initialPatients = [
-  { id: 1, name: '김영희', age: 45, gender: '여', phone: '010-1234-5678', birthDate: '1980-03-15', chartNo: 'P-2024-001', lastVisit: '2025-01-15', visitCount: 12, status: 'active', diagnosis: '고혈압' },
-  { id: 2, name: '박철수', age: 62, gender: '남', phone: '010-2345-6789', birthDate: '1963-07-22', chartNo: 'P-2024-002', lastVisit: '2025-01-20', visitCount: 8, status: 'active', diagnosis: '당뇨' },
-  { id: 3, name: '이민정', age: 33, gender: '여', phone: '010-3456-7890', birthDate: '1992-11-08', chartNo: 'P-2024-003', lastVisit: '2025-01-22', visitCount: 3, status: 'active', diagnosis: '편도염' },
-  { id: 4, name: '정대현', age: 58, gender: '남', phone: '010-4567-8901', birthDate: '1967-05-30', chartNo: 'P-2024-004', lastVisit: '2025-01-25', visitCount: 15, status: 'active', diagnosis: '관절염' },
-  { id: 5, name: '최수진', age: 28, gender: '여', phone: '010-5678-9012', birthDate: '1997-09-12', chartNo: 'P-2024-005', lastVisit: '2025-01-10', visitCount: 2, status: 'inactive', diagnosis: '감기' },
-  { id: 6, name: '강민호', age: 51, gender: '남', phone: '010-6789-0123', birthDate: '1974-02-28', chartNo: 'P-2024-006', lastVisit: '2025-01-18', visitCount: 20, status: 'active', diagnosis: '위염' },
-  { id: 7, name: '윤서연', age: 39, gender: '여', phone: '010-7890-1234', birthDate: '1986-06-05', chartNo: 'P-2024-007', lastVisit: '2025-01-23', visitCount: 7, status: 'active', diagnosis: '알레르기' },
-  { id: 8, name: '임재혁', age: 71, gender: '남', phone: '010-8901-2345', birthDate: '1954-12-19', chartNo: 'P-2024-008', lastVisit: '2025-01-21', visitCount: 25, status: 'active', diagnosis: '고지혈증' },
-];
+// Transform database patients to include visit info
+const initialPatients = dbPatients.map(patient => {
+  const patientSessions = recordingSessions.filter(s => s.patientId === patient.id);
+  const lastSession = patientSessions.sort((a, b) => b.createdAt - a.createdAt)[0];
+  const lastChart = lastSession ? charts.find(c => c.sessionId === lastSession.id) : null;
+
+  return {
+    id: patient.id,
+    name: patient.name,
+    age: parseInt(patient.age) || 0,
+    gender: patient.gender,
+    phone: patient.phone,
+    birthDate: patient.birthDate,
+    chartNo: patient.chartNo,
+    lastVisit: lastSession?.date || '-',
+    visitCount: patientSessions.length,
+    status: patientSessions.length > 0 ? 'active' : 'inactive',
+    diagnosis: lastChart?.diagnosis || '-',
+    address: patient.address || '',
+    allergies: patient.allergies || null,
+  };
+});
 
 // Clean Card Component - matching history page style
 const CleanCard = ({ children, sx, ...props }) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   Button,
   IconButton,
   Chip,
-  Divider,
   Snackbar,
   Tooltip,
   Grid,
@@ -24,7 +23,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import TimerIcon from '@mui/icons-material/Timer';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
@@ -36,74 +35,75 @@ import AirIcon from '@mui/icons-material/Air';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
+import HearingIcon from '@mui/icons-material/Hearing';
+import BiotechIcon from '@mui/icons-material/Biotech';
+import ScienceIcon from '@mui/icons-material/Science';
 import Avatar from '@mui/material/Avatar';
-import { useAuth } from '@/lib/AuthContext';
+import { getSessionDetailData } from '@/lib/services';
+import { formatCountdown, getSecondsUntilDeletion } from '@/lib/helpers';
+import { SectionColors } from '@/lib/constants';
 
 const MotionPaper = motion.create(Paper);
 const MotionBox = motion.create(Box);
 
-// Mock data for detail view
-const mockDetailData = {
-  id: '1',
-  date: '2024-01-29',
-  time: '14:30',
-  duration: '5:23',
-  diagnosis: '급성 편도염',
-  icdCode: 'J03.9',
-  patientName: '김영희',
-  patientAge: '45세',
-  patientGender: '여',
-  chartNo: 'P-2024-001',
-  vitals: {
-    systolic: '125',
-    diastolic: '82',
-    heartRate: '78',
-    temperature: '37.8',
-    spO2: '98',
-  },
-  chiefComplaint: '3일 전부터 목이 아프고 열이 나요. 음식을 삼킬 때 통증이 심해요.',
-  transcription: [
-    { speaker: '의사', text: '안녕하세요, 어디가 불편하셔서 오셨나요?', timestamp: '00:03' },
-    { speaker: '환자', text: '며칠 전부터 목이 아프고 기침이 나요.', timestamp: '00:08' },
-    { speaker: '의사', text: '열은 있으셨나요?', timestamp: '00:15' },
-    { speaker: '환자', text: '어제 밤에 37.8도까지 올랐어요.', timestamp: '00:20' },
-    { speaker: '의사', text: '목 좀 볼게요. 아, 편도가 많이 부어있네요.', timestamp: '00:28' },
-    { speaker: '환자', text: '삼킬 때 많이 아파요.', timestamp: '00:35' },
-    { speaker: '의사', text: '급성 편도염으로 보입니다. 항생제와 진통제 처방해 드릴게요.', timestamp: '00:42' },
-  ],
-  soap: {
-    subjective: `주소: 인후통, 기침
-현병력: 3일 전부터 목이 아프고 기침이 시작됨. 어제 밤 37.8°C 발열 있었음. 삼킬 때 통증 심함.
-과거력: 특이 병력 없음
-알레르기: 없음`,
-    objective: `활력징후: BP 120/80, HR 78, BT 37.2°C
-신체검사:
-- 편도: 양측 비대, 발적, 백색 삼출물 동반
-- 경부 림프절: 양측 압통 있는 림프절 촉지
-- 폐: 청진상 수포음 없음`,
-    assessment: `급성 편도염 (Acute tonsillitis)
-- J03.9 급성 편도염, 상세불명`,
-    plan: `1. 항생제: 아목시실린 500mg 1일 3회, 7일간
-2. 진통소염제: 이부프로펜 400mg 1일 3회, 식후
-3. 가글액: 탄툼베르데 1일 3-4회
-4. 환자 교육: 충분한 수분 섭취, 휴식
-5. 추적: 3일 후 호전 없으면 재진`,
-  },
+// Icon mapping for special sections
+const sectionIcons = {
+  endoscopy: BiotechIcon,
+  audiometry: HearingIcon,
+  chronicDisease: MonitorHeartIcon,
+  labResults: ScienceIcon,
 };
-
-const soapSections = [
-  { key: 'subjective', label: 'S', fullLabel: 'Subjective (주관적)', color: '#4B9CD3', bgColor: '#EBF5FF' },
-  { key: 'objective', label: 'O', fullLabel: 'Objective (객관적)', color: '#10B981', bgColor: '#ECFDF5' },
-  { key: 'assessment', label: 'A', fullLabel: 'Assessment (평가)', color: '#F59E0B', bgColor: '#FFFBEB' },
-  { key: 'plan', label: 'P', fullLabel: 'Plan (계획)', color: '#EF4444', bgColor: '#FEF2F2' },
-];
 
 export default function HistoryDetailPage() {
   const router = useRouter();
   const params = useParams();
   const [isEditing, setIsEditing] = useState(false);
-  const [soapData, setSoapData] = useState(mockDetailData.soap);
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
+  // Load session detail data from services
+  const detailData = getSessionDetailData(params.id);
+  const [chartData, setChartData] = useState(detailData?.chartData || {});
+
+  // Get template sections (use default SOAP if no template)
+  const templateSections = detailData?.templateSections || [
+    { sectionKey: 'subjective', labelKo: 'Subjective (주관적)', color: '#4B9CD3', bgColor: '#EBF5FF' },
+    { sectionKey: 'objective', labelKo: 'Objective (객관적)', color: '#10B981', bgColor: '#ECFDF5' },
+    { sectionKey: 'assessment', labelKo: 'Assessment (평가)', color: '#F59E0B', bgColor: '#FFFBEB' },
+    { sectionKey: 'plan', labelKo: 'Plan (계획)', color: '#EF4444', bgColor: '#FEF2F2' },
+  ];
+
+  const templateName = detailData?.template?.name || 'SOAP';
+
+  // Calculate and update countdown every second
+  useEffect(() => {
+    if (!detailData) return;
+
+    const calculateRemaining = () => {
+      return getSecondsUntilDeletion(detailData.createdAt, 24);
+    };
+
+    setRemainingSeconds(calculateRemaining());
+    const interval = setInterval(() => {
+      setRemainingSeconds(calculateRemaining());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [detailData]);
+
+  // Handle case when session is not found
+  if (!detailData) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" sx={{ color: 'text.secondary' }}>
+          세션을 찾을 수 없습니다
+        </Typography>
+        <Button onClick={() => router.push('/dashboard/history')} sx={{ mt: 2 }}>
+          목록으로 돌아가기
+        </Button>
+      </Box>
+    );
+  }
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -111,7 +111,9 @@ export default function HistoryDetailPage() {
   };
 
   const handleCopyAll = () => {
-    const fullText = soapSections.map(s => `[${s.fullLabel}]\n${soapData[s.key]}`).join('\n\n');
+    const fullText = templateSections
+      .map(s => `[${s.labelKo}]\n${chartData[s.sectionKey] || ''}`)
+      .join('\n\n');
     navigator.clipboard.writeText(fullText);
     setSnackbar({ open: true, message: '전체 차트가 복사되었습니다' });
   };
@@ -119,6 +121,27 @@ export default function HistoryDetailPage() {
   const handleSave = () => {
     setIsEditing(false);
     setSnackbar({ open: true, message: '차트가 저장되었습니다' });
+  };
+
+  // Get section label abbreviation for display
+  const getSectionLabel = (sectionKey) => {
+    const labelMap = {
+      subjective: 'S',
+      objective: 'O',
+      assessment: 'A',
+      plan: 'P',
+      endoscopy: '내시경',
+      audiometry: '청력',
+      chronicDisease: '만성',
+      labResults: '검사',
+      imaging: '영상',
+      rom: 'ROM',
+      lesionDescription: '병변',
+      dermoscopy: '피부경',
+      growth: '성장',
+      vaccination: '예방',
+    };
+    return labelMap[sectionKey] || sectionKey.charAt(0).toUpperCase();
   };
 
   return (
@@ -143,10 +166,10 @@ export default function HistoryDetailPage() {
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
               <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                {mockDetailData.diagnosis}
+                {detailData.diagnosis}
               </Typography>
               <Chip
-                label={mockDetailData.icdCode}
+                label={detailData.icdCode}
                 sx={{
                   fontFamily: 'monospace',
                   fontWeight: 700,
@@ -158,21 +181,26 @@ export default function HistoryDetailPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <Chip
                 icon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
-                label={mockDetailData.date}
+                label={detailData.date}
                 size="small"
                 variant="outlined"
               />
               <Chip
                 icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
-                label={mockDetailData.time}
+                label={detailData.time}
                 size="small"
                 variant="outlined"
               />
               <Chip
                 icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                label={`${mockDetailData.patientGender} / ${mockDetailData.patientAge}`}
+                label={`${detailData.patientGender} / ${detailData.patientAge}`}
                 size="small"
                 variant="outlined"
+              />
+              <Chip
+                label={templateName}
+                size="small"
+                sx={{ bgcolor: 'primary.50', color: 'primary.main', fontWeight: 600 }}
               />
             </Box>
           </Box>
@@ -208,17 +236,17 @@ export default function HistoryDetailPage() {
                   height: 56,
                   fontSize: '1.3rem',
                   fontWeight: 700,
-                  background: mockDetailData.patientGender === '여'
+                  background: detailData.patientGender === '여'
                     ? 'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)'
                     : 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
                 }}
               >
-                {mockDetailData.patientName?.charAt(0) || '환'}
+                {detailData.patientName?.charAt(0) || '환'}
               </Avatar>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>{mockDetailData.patientName || '환자'}</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>{detailData.patientName || '환자'}</Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {mockDetailData.patientAge} · {mockDetailData.patientGender} · {mockDetailData.chartNo}
+                  {detailData.patientAge} · {detailData.patientGender} · {detailData.chartNo}
                 </Typography>
               </Box>
             </Box>
@@ -229,7 +257,7 @@ export default function HistoryDetailPage() {
               </Typography>
               <Paper elevation={0} sx={{ p: 2, bgcolor: 'warning.50', borderRadius: 2, border: '1px solid', borderColor: 'warning.100' }}>
                 <Typography variant="body2" sx={{ color: 'text.primary', lineHeight: 1.6 }}>
-                  {mockDetailData.chiefComplaint || '기록된 주호소가 없습니다.'}
+                  {detailData.chiefComplaint || '기록된 주호소가 없습니다.'}
                 </Typography>
               </Paper>
             </Box>
@@ -243,10 +271,10 @@ export default function HistoryDetailPage() {
             </Typography>
             <Grid container spacing={2}>
               {[
-                { label: '혈압', value: `${mockDetailData.vitals?.systolic || '-'}/${mockDetailData.vitals?.diastolic || '-'}`, unit: 'mmHg', icon: MonitorHeartIcon, color: '#EF4444', normal: parseInt(mockDetailData.vitals?.systolic) <= 130 && parseInt(mockDetailData.vitals?.diastolic) <= 85 },
-                { label: '맥박', value: mockDetailData.vitals?.heartRate || '-', unit: 'bpm', icon: FavoriteIcon, color: '#EC4899', normal: parseInt(mockDetailData.vitals?.heartRate) >= 60 && parseInt(mockDetailData.vitals?.heartRate) <= 100 },
-                { label: '체온', value: mockDetailData.vitals?.temperature || '-', unit: '°C', icon: ThermostatIcon, color: '#F59E0B', normal: parseFloat(mockDetailData.vitals?.temperature) <= 37.5 },
-                { label: 'SpO2', value: mockDetailData.vitals?.spO2 || '-', unit: '%', icon: AirIcon, color: '#3B82F6', normal: parseInt(mockDetailData.vitals?.spO2) >= 95 },
+                { label: '혈압', value: `${detailData.vitals?.systolic || '-'}/${detailData.vitals?.diastolic || '-'}`, unit: 'mmHg', icon: MonitorHeartIcon, color: '#EF4444', normal: parseInt(detailData.vitals?.systolic) <= 130 && parseInt(detailData.vitals?.diastolic) <= 85 },
+                { label: '맥박', value: detailData.vitals?.heartRate || '-', unit: 'bpm', icon: FavoriteIcon, color: '#EC4899', normal: parseInt(detailData.vitals?.heartRate) >= 60 && parseInt(detailData.vitals?.heartRate) <= 100 },
+                { label: '체온', value: detailData.vitals?.temperature || '-', unit: '°C', icon: ThermostatIcon, color: '#F59E0B', normal: parseFloat(detailData.vitals?.temperature) <= 37.5 },
+                { label: 'SpO2', value: detailData.vitals?.spO2 || '-', unit: '%', icon: AirIcon, color: '#3B82F6', normal: parseInt(detailData.vitals?.spO2) >= 95 },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
@@ -301,22 +329,31 @@ export default function HistoryDetailPage() {
             <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                  녹음 내용
+                  진료 대화 기록
                 </Typography>
-                <Tooltip title="녹음 재생">
-                  <IconButton size="small">
-                    <PlayArrowIcon />
-                  </IconButton>
-                </Tooltip>
+                <Chip
+                  icon={<TimerIcon sx={{ fontSize: 14 }} />}
+                  label={`대화 기록 삭제: ${formatCountdown(remainingSeconds)}`}
+                  size="small"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    bgcolor: remainingSeconds <= 0 ? 'grey.200' : remainingSeconds < 3600 ? 'error.50' : 'warning.50',
+                    color: remainingSeconds <= 0 ? 'grey.500' : remainingSeconds < 3600 ? 'error.main' : 'warning.main',
+                    '& .MuiChip-icon': {
+                      color: remainingSeconds <= 0 ? 'grey.400' : remainingSeconds < 3600 ? 'error.main' : 'warning.main',
+                    },
+                  }}
+                />
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                녹음 시간: {mockDetailData.duration}
+                음성 파일은 텍스트 변환 후 즉시 삭제되었습니다
               </Typography>
             </Box>
 
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {mockDetailData.transcription.map((item, index) => (
+                {detailData.transcription.map((item, index) => (
                   <MotionBox
                     key={index}
                     initial={{ opacity: 0, x: -10 }}
@@ -370,7 +407,7 @@ export default function HistoryDetailPage() {
           </MotionPaper>
         </Grid>
 
-        {/* Right: SOAP Chart */}
+        {/* Right: Chart (Dynamic based on template) */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <MotionPaper
             initial={{ opacity: 0, y: 20 }}
@@ -391,24 +428,32 @@ export default function HistoryDetailPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
-                    SOAP 차트
+                    {templateName} 차트
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    {soapSections.map((s) => (
+                    {templateSections.slice(0, 6).map((s) => (
                       <Box
-                        key={s.key}
+                        key={s.sectionKey}
                         sx={{
-                          width: 22,
+                          minWidth: 22,
                           height: 22,
+                          px: 0.5,
                           borderRadius: 1,
-                          bgcolor: s.bgColor,
+                          bgcolor: s.bgColor || SectionColors[s.sectionKey]?.bgColor || '#F8FAFC',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: s.color, fontSize: '0.7rem' }}>
-                          {s.label}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 800,
+                            color: s.color || SectionColors[s.sectionKey]?.color || '#64748B',
+                            fontSize: '0.65rem',
+                          }}
+                        >
+                          {getSectionLabel(s.sectionKey)}
                         </Typography>
                       </Box>
                     ))}
@@ -427,74 +472,108 @@ export default function HistoryDetailPage() {
 
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {soapSections.map((section, index) => (
-                  <MotionBox
-                    key={section.key}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
-                  >
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      {/* Label */}
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 2,
-                          bgcolor: section.bgColor,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Typography variant="h6" sx={{ fontWeight: 800, color: section.color }}>
-                          {section.label}
-                        </Typography>
-                      </Box>
+                {templateSections.map((section, index) => {
+                  const SectionIcon = sectionIcons[section.sectionKey] || null;
+                  const sectionColor = section.color || SectionColors[section.sectionKey]?.color || '#64748B';
+                  const sectionBgColor = section.bgColor || SectionColors[section.sectionKey]?.bgColor || '#F8FAFC';
 
-                      {/* Content */}
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: section.color }}>
-                            {section.fullLabel}
-                          </Typography>
-                          <Tooltip title="복사">
-                            <IconButton size="small" onClick={() => handleCopy(soapData[section.key])}>
-                              <ContentCopyIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                        {isEditing ? (
-                          <TextField
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            value={soapData[section.key]}
-                            onChange={(e) => setSoapData((prev) => ({ ...prev, [section.key]: e.target.value }))}
-                            size="small"
-                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'grey.50' } }}
-                          />
-                        ) : (
-                          <Paper
-                            elevation={0}
-                            sx={{
-                              p: 1.5,
-                              bgcolor: 'grey.50',
-                              borderRadius: 2,
-                              border: '1px solid',
-                              borderColor: 'grey.200',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-line', lineHeight: 1.7, fontSize: '0.85rem' }}>
-                              {soapData[section.key]}
+                  return (
+                    <MotionBox
+                      key={section.sectionKey}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+                    >
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        {/* Label */}
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 2,
+                            bgcolor: sectionBgColor,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {SectionIcon ? (
+                            <SectionIcon sx={{ fontSize: 20, color: sectionColor }} />
+                          ) : (
+                            <Typography variant="h6" sx={{ fontWeight: 800, color: sectionColor }}>
+                              {getSectionLabel(section.sectionKey)}
                             </Typography>
-                          </Paper>
-                        )}
+                          )}
+                        </Box>
+
+                        {/* Content */}
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: sectionColor }}>
+                                {section.labelKo}
+                              </Typography>
+                              {!section.isRequired && (
+                                <Chip
+                                  label="선택"
+                                  size="small"
+                                  sx={{
+                                    fontSize: '0.6rem',
+                                    height: 18,
+                                    bgcolor: 'grey.100',
+                                    color: 'grey.600',
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            <Tooltip title="복사">
+                              <IconButton size="small" onClick={() => handleCopy(chartData[section.sectionKey] || '')}>
+                                <ContentCopyIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          {isEditing ? (
+                            <TextField
+                              fullWidth
+                              multiline
+                              minRows={2}
+                              value={chartData[section.sectionKey] || ''}
+                              onChange={(e) => setChartData((prev) => ({ ...prev, [section.sectionKey]: e.target.value }))}
+                              size="small"
+                              placeholder={`${section.labelKo} 내용을 입력하세요`}
+                              sx={{ '& .MuiOutlinedInput-root': { bgcolor: sectionBgColor } }}
+                            />
+                          ) : (
+                            <Paper
+                              elevation={0}
+                              sx={{
+                                p: 1.5,
+                                bgcolor: chartData[section.sectionKey] ? 'grey.50' : sectionBgColor,
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'grey.200',
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  whiteSpace: 'pre-line',
+                                  lineHeight: 1.7,
+                                  fontSize: '0.85rem',
+                                  color: chartData[section.sectionKey] ? 'text.primary' : 'grey.400',
+                                  fontStyle: chartData[section.sectionKey] ? 'normal' : 'italic',
+                                }}
+                              >
+                                {chartData[section.sectionKey] || '내용 없음'}
+                              </Typography>
+                            </Paper>
+                          )}
+                        </Box>
                       </Box>
-                    </Box>
-                  </MotionBox>
-                ))}
+                    </MotionBox>
+                  );
+                })}
               </Box>
             </Box>
           </MotionPaper>

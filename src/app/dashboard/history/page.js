@@ -46,6 +46,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import MicIcon from '@mui/icons-material/Mic';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonIcon from '@mui/icons-material/Person';
+import TimerIcon from '@mui/icons-material/Timer';
 import ImageIcon from '@mui/icons-material/Image';
 import FolderIcon from '@mui/icons-material/Folder';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -58,45 +59,17 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import { useAuth } from '@/lib/AuthContext';
+import { getHistoryList } from '@/lib/services';
+import { formatCountdown, getSecondsUntilDeletion, groupBy } from '@/lib/helpers';
+import { patientAttachments } from '@/lib/mockDatabase';
 
 const MotionPaper = motion.create(Paper);
 const MotionCard = motion.create(Card);
 const MotionBox = motion.create(Box);
 
-// Mock history data
-const mockHistoryData = [
-  { id: '1', patientId: 1, patientName: '김영희', date: '2024-01-29', time: '14:30', duration: '5:23', diagnosis: '급성 편도염', icdCode: 'J03.9', patientAge: '45세', patientGender: '여' },
-  { id: '2', patientId: 2, patientName: '박철수', date: '2024-01-29', time: '11:15', duration: '8:45', diagnosis: '급성 기관지염', icdCode: 'J20.9', patientAge: '62세', patientGender: '남' },
-  { id: '3', patientId: 4, patientName: '정대현', date: '2024-01-28', time: '16:00', duration: '6:12', diagnosis: '본태성 고혈압', icdCode: 'I10', patientAge: '58세', patientGender: '남' },
-  { id: '4', patientId: 3, patientName: '이민정', date: '2024-01-28', time: '10:30', duration: '4:56', diagnosis: '알레르기성 비염', icdCode: 'J30.4', patientAge: '33세', patientGender: '여' },
-  { id: '5', patientId: 6, patientName: '강민호', date: '2024-01-27', time: '15:45', duration: '7:30', diagnosis: '급성 위장염', icdCode: 'K52.9', patientAge: '51세', patientGender: '남' },
-  { id: '6', patientId: 7, patientName: '윤서연', date: '2024-01-27', time: '09:00', duration: '5:10', diagnosis: '편두통', icdCode: 'G43.9', patientAge: '39세', patientGender: '여' },
-  { id: '7', patientId: 2, patientName: '박철수', date: '2024-01-26', time: '14:00', duration: '6:45', diagnosis: '제2형 당뇨병', icdCode: 'E11', patientAge: '62세', patientGender: '남' },
-  { id: '8', patientId: 1, patientName: '김영희', date: '2024-01-26', time: '11:30', duration: '4:20', diagnosis: '급성 결막염', icdCode: 'H10.3', patientAge: '45세', patientGender: '여' },
-  { id: '9', patientId: 1, patientName: '김영희', date: '2024-01-25', time: '10:00', duration: '5:15', diagnosis: '고혈압', icdCode: 'I10', patientAge: '45세', patientGender: '여' },
-  { id: '10', patientId: 4, patientName: '정대현', date: '2024-01-24', time: '15:30', duration: '7:00', diagnosis: '관절염', icdCode: 'M13.9', patientAge: '58세', patientGender: '남' },
-];
-
-// Mock patient attachments data
-const mockPatientAttachments = {
-  1: [ // 김영희
-    { id: 'a1', type: 'xray', name: '흉부 X-ray', date: '2024-01-29', size: '2.4 MB', thumbnail: '/attachments/xray-placeholder.jpg' },
-    { id: 'a2', type: 'lab', name: '혈액검사 결과', date: '2024-01-28', size: '156 KB', thumbnail: null },
-    { id: 'a3', type: 'ct', name: '복부 CT', date: '2024-01-25', size: '45.2 MB', thumbnail: '/attachments/ct-placeholder.jpg' },
-    { id: 'a4', type: 'ecg', name: '심전도 기록', date: '2024-01-20', size: '890 KB', thumbnail: null },
-    { id: 'a5', type: 'document', name: '진단서', date: '2024-01-15', size: '234 KB', thumbnail: null },
-  ],
-  2: [ // 박철수
-    { id: 'b1', type: 'xray', name: '무릎 X-ray (좌)', date: '2024-01-29', size: '1.8 MB', thumbnail: '/attachments/xray-placeholder.jpg' },
-    { id: 'b2', type: 'xray', name: '무릎 X-ray (우)', date: '2024-01-29', size: '1.9 MB', thumbnail: '/attachments/xray-placeholder.jpg' },
-    { id: 'b3', type: 'lab', name: '당화혈색소 검사', date: '2024-01-26', size: '98 KB', thumbnail: null },
-  ],
-  4: [ // 정대현
-    { id: 'd1', type: 'mri', name: '척추 MRI', date: '2024-01-28', size: '89.5 MB', thumbnail: '/attachments/mri-placeholder.jpg' },
-    { id: 'd2', type: 'xray', name: '척추 X-ray', date: '2024-01-24', size: '2.1 MB', thumbnail: '/attachments/xray-placeholder.jpg' },
-    { id: 'd3', type: 'lab', name: '혈액검사 결과', date: '2024-01-20', size: '145 KB', thumbnail: null },
-  ],
-};
+// Get data from services
+const historyData = getHistoryList();
+const patientAttachmentsGrouped = groupBy(patientAttachments, 'patientId');
 
 const attachmentTypeConfig = {
   xray: { icon: ImageIcon, color: '#4B9CD3', label: 'X-ray' },
@@ -124,6 +97,15 @@ export default function HistoryPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [previewZoom, setPreviewZoom] = useState(1);
+  const [, setTick] = useState(0); // For countdown refresh
+
+  // Update countdown every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle attachment preview
   const handleOpenPreview = (file, allFiles) => {
@@ -198,7 +180,7 @@ export default function HistoryPage() {
     setSelectedId(null);
   };
 
-  const filteredData = mockHistoryData.filter((item) => {
+  const filteredData = historyData.filter((item) => {
     // Filter by patient if patientId is provided
     if (patientIdParam && item.patientId !== parseInt(patientIdParam)) {
       return false;
@@ -373,8 +355,8 @@ export default function HistoryPage() {
       </Grid>
 
       {/* Patient Attachments Section - Only shown when viewing a specific patient */}
-      {patientIdParam && mockPatientAttachments[parseInt(patientIdParam)] && (() => {
-        const attachments = mockPatientAttachments[parseInt(patientIdParam)];
+      {patientIdParam && patientAttachmentsGrouped[parseInt(patientIdParam)] && (() => {
+        const attachments = patientAttachmentsGrouped[parseInt(patientIdParam)];
         const counts = getAttachmentCounts(attachments);
         const filteredAttachments = getFilteredAttachments(attachments);
 
@@ -643,7 +625,7 @@ export default function HistoryPage() {
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>환자</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>진단명</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>ICD 코드</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>녹음 시간</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>대화 기록 삭제</TableCell>
                 <TableCell align="right"></TableCell>
               </TableRow>
             </TableHead>
@@ -710,11 +692,27 @@ export default function HistoryPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={row.duration}
-                        size="small"
-                        sx={{ fontFamily: 'monospace', fontWeight: 600, bgcolor: 'grey.100' }}
-                      />
+                      {(() => {
+                        const remainingSeconds = getSecondsUntilDeletion(row.createdAt);
+                        const isExpired = remainingSeconds <= 0;
+                        const isUrgent = remainingSeconds > 0 && remainingSeconds < 3600; // less than 1 hour
+                        return (
+                          <Chip
+                            icon={<TimerIcon sx={{ fontSize: 14 }} />}
+                            label={formatCountdown(remainingSeconds)}
+                            size="small"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                              bgcolor: isExpired ? 'grey.200' : isUrgent ? 'error.50' : 'warning.50',
+                              color: isExpired ? 'grey.500' : isUrgent ? 'error.main' : 'warning.main',
+                              '& .MuiChip-icon': {
+                                color: isExpired ? 'grey.400' : isUrgent ? 'error.main' : 'warning.main',
+                              },
+                            }}
+                          />
+                        );
+                      })()}
                     </TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, row.id)}>

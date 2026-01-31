@@ -37,28 +37,16 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useAuth } from '@/lib/AuthContext';
+import { getTodayRecords, getDashboardStats } from '@/lib/services';
 
 const MotionCard = motion.create(Card);
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 
-// Mock data
-const todayRecords = [
-  { id: '1', time: '14:30', diagnosis: '급성 편도염', patient: '김영희', patientInfo: '여/32세', status: 'completed', duration: '5:23' },
-  { id: '2', time: '13:15', diagnosis: '급성 기관지염', patient: '박철수', patientInfo: '남/45세', status: 'completed', duration: '8:12' },
-  { id: '3', time: '11:00', diagnosis: '알레르기성 비염', patient: '이민정', patientInfo: '여/28세', status: 'completed', duration: '4:56' },
-  { id: '4', time: '09:30', diagnosis: '고혈압 추적', patient: '정대현', patientInfo: '남/58세', status: 'completed', duration: '6:30' },
-];
-
-const weeklyStats = [
-  { day: '월', count: 12 },
-  { day: '화', count: 15 },
-  { day: '수', count: 8 },
-  { day: '목', count: 18 },
-  { day: '금', count: 14 },
-  { day: '토', count: 6 },
-  { day: '일', count: 0 },
-];
+// Get data from services
+const todayRecords = getTodayRecords();
+const dashboardStats = getDashboardStats();
+const weeklyStats = dashboardStats.weeklyData;
 
 // Clean Card Component - matching history page style
 const CleanCard = ({ children, sx, ...props }) => (
