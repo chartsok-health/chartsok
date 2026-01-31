@@ -359,7 +359,7 @@ export default function HistoryPage() {
 
       {/* Empty State - Show when no data at all */}
       {!loading && historyData.length === 0 && (
-        <MotionPaper
+        <MotionCard
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
@@ -368,6 +368,7 @@ export default function HistoryPage() {
             borderRadius: 4,
             border: '1px solid',
             borderColor: 'grey.200',
+            bgcolor: 'white',
             overflow: 'hidden',
             textAlign: 'center',
             py: 8,
@@ -411,7 +412,7 @@ export default function HistoryPage() {
           >
             새 진료 시작
           </Button>
-        </MotionPaper>
+        </MotionCard>
       )}
 
       {/* Main Table Card - Only show when there's data */}

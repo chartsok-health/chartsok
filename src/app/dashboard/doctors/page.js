@@ -48,7 +48,6 @@ import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
-const MotionPaper = motion.create(Paper);
 
 const specialties = [
   '내과',
@@ -825,39 +824,60 @@ export default function DoctorsPage() {
           </AnimatePresence>
         </Grid>
       ) : (
-        <MotionPaper
+        <MotionCard
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
           elevation={0}
           sx={{
-            p: 6,
             borderRadius: 4,
             border: '1px solid',
             borderColor: 'grey.200',
-            bgcolor: 'grey.50',
+            bgcolor: 'white',
+            overflow: 'hidden',
             textAlign: 'center',
+            py: 8,
+            px: 4,
           }}
         >
-          <PersonAddIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>
+          <Box
+            sx={{
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              bgcolor: 'primary.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 3,
+            }}
+          >
+            <PersonAddIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
             등록된 의료진이 없습니다
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: 400, mx: 'auto' }}>
             새로운 의료진을 등록하거나 초대하세요
           </Typography>
           <Button
             variant="contained"
+            size="large"
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog('add')}
             sx={{
-              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              borderRadius: 3,
+              fontWeight: 700,
               background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+              boxShadow: '0 4px 14px rgba(75, 156, 211, 0.4)',
             }}
           >
             의료진 등록하기
           </Button>
-        </MotionPaper>
+        </MotionCard>
       )}
 
       {/* Pagination */}

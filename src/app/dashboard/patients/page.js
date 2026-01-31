@@ -61,7 +61,7 @@ const CleanCard = ({ children, sx, ...props }) => (
       background: 'white',
       border: '1px solid',
       borderColor: 'grey.200',
-      borderRadius: 3,
+      borderRadius: 4,
       overflow: 'hidden',
       ...sx,
     }}
@@ -399,7 +399,22 @@ export default function PatientsPage() {
 
       {/* Empty State - Show when no patients */}
       {patients.length === 0 && (
-        <CleanCard sx={{ textAlign: 'center', py: 8, px: 4 }}>
+        <MotionCard
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          elevation={0}
+          sx={{
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: 'grey.200',
+            bgcolor: 'white',
+            overflow: 'hidden',
+            textAlign: 'center',
+            py: 8,
+            px: 4,
+          }}
+        >
           <Box
             sx={{
               width: 100,
@@ -437,7 +452,7 @@ export default function PatientsPage() {
           >
             새 환자 등록
           </Button>
-        </CleanCard>
+        </MotionCard>
       )}
 
       {/* Search and Filters - Only show when there are patients */}
