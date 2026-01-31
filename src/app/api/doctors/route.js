@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { userService, userHospitalService, patientService } from '@/lib/firestore';
+import { userService, userHospitalService } from '@/lib/firestore';
 
 // Helper to convert Firestore Timestamp or string to date string
 const formatDateString = (dateValue) => {
@@ -36,9 +36,6 @@ export async function GET(request) {
     if (userHospitals.length === 0 && userId) {
       const currentUser = await userService.getById(userId);
       if (currentUser) {
-        // Get patient count for this user
-        const patients = await patientService.getByHospitalId(hospitalId, { limitCount: 1000 });
-
         return NextResponse.json({
           doctors: [{
             id: currentUser.id,
@@ -48,9 +45,9 @@ export async function GET(request) {
             email: currentUser.email || '',
             phone: currentUser.phone || '',
             licenseNo: currentUser.licenseNo || '',
+            address: currentUser.address || '',
             joinDate: formatDateString(currentUser.createdAt),
             status: 'active',
-            patients: patients.length,
             avatar: currentUser.profileImage || null,
           }],
           total: 1,
@@ -63,10 +60,6 @@ export async function GET(request) {
       const user = await userService.getById(uh.userId);
       if (!user) return null;
 
-      // Get patient count - simplified query
-      const patients = await patientService.getAll({ limitCount: 1000 });
-      const patientCount = patients.filter(p => p.hospitalId === hospitalId).length;
-
       return {
         id: user.id,
         name: user.displayName || '이름 없음',
@@ -75,9 +68,9 @@ export async function GET(request) {
         email: user.email || '',
         phone: user.phone || '',
         licenseNo: user.licenseNo || '',
+        address: user.address || '',
         joinDate: formatDateString(user.createdAt),
-        status: 'active',
-        patients: patientCount,
+        status: uh.status || 'active',
         avatar: user.profileImage || null,
       };
     });
@@ -104,11 +97,11 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { hospitalId, name, specialty, email, phone, licenseNo, role } = body;
+    const { hospitalId, name, specialty, email, phone, licenseNo, role, address, joinDate } = body;
 
-    if (!name || !email) {
+    if (!name || !email || !specialty || !phone || !licenseNo || !address) {
       return NextResponse.json(
-        { error: 'name and email are required' },
+        { error: '모든 필드를 입력해주세요' },
         { status: 400 }
       );
     }
@@ -126,17 +119,20 @@ export async function POST(request) {
         specialty: specialty || '내과',
         licenseNo: licenseNo || null,
         phone: phone || null,
+        address: address || null,
         role: 'doctor',
         profileImage: null,
       });
     }
 
     // Associate user with hospital
+    const effectiveJoinDate = joinDate || new Date().toISOString().split('T')[0];
     await userHospitalService.associateUser(
       user.id,
       effectiveHospitalId,
       role || 'doctor',
-      false
+      false,
+      { joinDate: effectiveJoinDate, status: 'active' }
     );
 
     return NextResponse.json({
@@ -148,9 +144,9 @@ export async function POST(request) {
         email: user.email,
         phone: user.phone,
         licenseNo: user.licenseNo,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'pending',
-        patients: 0,
+        address: user.address || '',
+        joinDate: effectiveJoinDate,
+        status: 'active',
         avatar: null,
       },
       message: 'Doctor added successfully',
@@ -171,7 +167,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, name, specialty, phone, licenseNo, role, hospitalId } = body;
+    const { id, name, specialty, phone, licenseNo, role, hospitalId, address, joinDate } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -180,20 +176,28 @@ export async function PUT(request) {
       );
     }
 
+    const effectiveHospitalId = hospitalId || 'default';
+
     // Update user profile
     const updateData = {};
     if (name !== undefined) updateData.displayName = name;
     if (specialty !== undefined) updateData.specialty = specialty;
     if (phone !== undefined) updateData.phone = phone;
     if (licenseNo !== undefined) updateData.licenseNo = licenseNo;
+    if (address !== undefined) updateData.address = address;
 
     if (Object.keys(updateData).length > 0) {
       await userService.update(id, updateData);
     }
 
     // Update role in hospital if provided
-    if (role && hospitalId) {
-      await userHospitalService.updateRole(id, hospitalId, role);
+    if (role) {
+      await userHospitalService.updateRole(id, effectiveHospitalId, role);
+    }
+
+    // Update join date if provided
+    if (joinDate) {
+      await userHospitalService.updateJoinDate(id, effectiveHospitalId, joinDate);
     }
 
     const updated = await userService.getById(id);
@@ -205,6 +209,9 @@ export async function PUT(request) {
         specialty: updated.specialty,
         phone: updated.phone,
         licenseNo: updated.licenseNo,
+        address: updated.address || '',
+        role,
+        joinDate,
       },
       message: 'Doctor updated successfully',
     });
@@ -212,6 +219,47 @@ export async function PUT(request) {
     console.error('Error updating doctor:', error);
     return NextResponse.json(
       { error: 'Failed to update doctor' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/doctors
+ * Update doctor status (archive/unarchive)
+ */
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+    const { id, hospitalId, status } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'doctor id is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!status || !['active', 'archived'].includes(status)) {
+      return NextResponse.json(
+        { error: 'Valid status (active/archived) is required' },
+        { status: 400 }
+      );
+    }
+
+    const effectiveHospitalId = hospitalId || 'default';
+
+    // Update status in userHospital relationship
+    await userHospitalService.updateStatus(id, effectiveHospitalId, status);
+
+    return NextResponse.json({
+      message: status === 'archived' ? 'Doctor archived successfully' : 'Doctor restored successfully',
+      status,
+    });
+  } catch (error) {
+    console.error('Error updating doctor status:', error);
+    return NextResponse.json(
+      { error: 'Failed to update doctor status' },
       { status: 500 }
     );
   }

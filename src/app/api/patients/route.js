@@ -73,11 +73,11 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { userId, hospitalId, name, birthDate, gender, phone, allergies, chartNo, address, notes, status } = body;
+    const { userId, hospitalId, name, birthDate, gender, phone, chartNo, address, notes, status } = body;
 
-    if (!name) {
+    if (!name || !birthDate || !phone || !address) {
       return NextResponse.json(
-        { error: 'name is required' },
+        { error: '모든 필드를 입력해주세요' },
         { status: 400 }
       );
     }
@@ -98,7 +98,6 @@ export async function POST(request) {
       birthDate: birthDate || null,
       gender: gender || null,
       phone: phone || null,
-      allergies: allergies || null,
       chartNo: chartNo || null,
       address: address || null,
       notes: notes || null,

@@ -94,7 +94,6 @@ export async function GET(request, { params }) {
       patientAge: patient?.age || '',
       patientGender: patient?.gender || '',
       chartNo: patient?.chartNo || '',
-      allergies: patient?.allergies || null,
       chiefComplaint,
       vitals: vitals ? {
         systolic: vitals.systolic,

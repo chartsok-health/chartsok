@@ -63,7 +63,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, birthDate, gender, phone, allergies, address, notes } = body;
+    const { name, birthDate, gender, phone, address, notes } = body;
 
     const existing = await patientService.getById(id);
     if (!existing) {
@@ -78,7 +78,6 @@ export async function PUT(request, { params }) {
     if (birthDate !== undefined) updateData.birthDate = birthDate;
     if (gender !== undefined) updateData.gender = gender;
     if (phone !== undefined) updateData.phone = phone;
-    if (allergies !== undefined) updateData.allergies = allergies;
     if (address !== undefined) updateData.address = address;
     if (notes !== undefined) updateData.notes = notes;
 

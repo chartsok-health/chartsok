@@ -16,6 +16,8 @@ import {
   CardContent,
   Pagination,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
@@ -27,6 +29,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
+import DeleteIcon from '@mui/icons-material/Delete';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -80,6 +83,7 @@ export default function PatientsPage() {
 
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'archived' | 'all'
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const rowsPerPage = 6;
 
   // Fetch patients on mount
@@ -246,9 +250,33 @@ export default function PatientsPage() {
         setPatients(patients.map((p) =>
           p.id === id ? { ...p, status: newStatus } : p
         ));
+        setSnackbar({
+          open: true,
+          message: isArchiving ? '환자가 보관되었습니다' : '환자가 복원되었습니다',
+          severity: 'success',
+        });
       } catch (error) {
         console.error('Error updating patient status:', error);
-        alert('환자 상태 변경에 실패했습니다.');
+        setSnackbar({ open: true, message: '환자 상태 변경에 실패했습니다', severity: 'error' });
+      }
+    }
+  };
+
+  const handleDeletePatient = async (id) => {
+    if (confirm('이 환자를 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      try {
+        const response = await fetch(`/api/patients/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) throw new Error('Failed to delete patient');
+
+        // Remove from local state
+        setPatients(patients.filter((p) => p.id !== id));
+        setSnackbar({ open: true, message: '환자가 삭제되었습니다', severity: 'info' });
+      } catch (error) {
+        console.error('Error deleting patient:', error);
+        setSnackbar({ open: true, message: '환자 삭제에 실패했습니다', severity: 'error' });
       }
     }
   };
@@ -577,21 +605,6 @@ export default function PatientsPage() {
                         최근 방문: {patient.lastVisit}
                       </Typography>
                     </Box>
-                    {patient.allergies && (
-                      <Chip
-                        label={`알레르기: ${patient.allergies}`}
-                        size="small"
-                        sx={{
-                          height: 22,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          bgcolor: '#FEF2F2',
-                          color: '#DC2626',
-                          border: '1px solid #FECACA',
-                          '& .MuiChip-label': { px: 1 },
-                        }}
-                      />
-                    )}
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -688,6 +701,26 @@ export default function PatientsPage() {
                         {patient.status === 'active' ? <ArchiveIcon fontSize="small" /> : <UnarchiveIcon fontSize="small" />}
                       </IconButton>
                     </Tooltip>
+                    {patient.status === 'archived' && (
+                      <Tooltip title="삭제">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePatient(patient.id);
+                          }}
+                          sx={{
+                            bgcolor: 'error.50',
+                            color: 'error.main',
+                            '&:hover': {
+                              bgcolor: 'error.100',
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 </Box>
               </MotionCard>
@@ -718,6 +751,18 @@ export default function PatientsPage() {
         onClose={handleCloseDialog}
         onSave={handleSavePatient}
       />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

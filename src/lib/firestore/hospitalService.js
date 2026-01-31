@@ -72,7 +72,7 @@ class UserHospitalService extends FirestoreService {
   /**
    * Associate user with hospital
    */
-  async associateUser(userId, hospitalId, role = 'doctor', isPrimary = false) {
+  async associateUser(userId, hospitalId, role = 'doctor', isPrimary = false, options = {}) {
     // If setting as primary, unset other primaries first
     if (isPrimary) {
       const existing = await this.getByUserId(userId);
@@ -92,6 +92,8 @@ class UserHospitalService extends FirestoreService {
       hospitalId,
       role,
       isPrimary,
+      status: options.status || 'active',
+      joinDate: options.joinDate || new Date().toISOString().split('T')[0],
     });
   }
 
@@ -122,6 +124,38 @@ class UserHospitalService extends FirestoreService {
 
     if (relations.length > 0) {
       return this.update(relations[0].id, { role });
+    }
+
+    return null;
+  }
+
+  /**
+   * Update user's status in hospital (active/archived)
+   */
+  async updateStatus(userId, hospitalId, status) {
+    const relations = await this.query([
+      { field: 'userId', operator: '==', value: userId },
+      { field: 'hospitalId', operator: '==', value: hospitalId },
+    ]);
+
+    if (relations.length > 0) {
+      return this.update(relations[0].id, { status });
+    }
+
+    return null;
+  }
+
+  /**
+   * Update user's join date in hospital
+   */
+  async updateJoinDate(userId, hospitalId, joinDate) {
+    const relations = await this.query([
+      { field: 'userId', operator: '==', value: userId },
+      { field: 'hospitalId', operator: '==', value: hospitalId },
+    ]);
+
+    if (relations.length > 0) {
+      return this.update(relations[0].id, { joinDate });
     }
 
     return null;

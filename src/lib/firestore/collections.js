@@ -111,7 +111,6 @@ export const Schemas = {
     phone: 'string|null',
     address: 'string|null',
     bloodType: 'string|null',
-    allergies: 'string|null',
     createdAt: 'timestamp',
     updatedAt: 'timestamp',
   },

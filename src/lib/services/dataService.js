@@ -337,7 +337,6 @@ export function getSessionDetailData(sessionId) {
     patientAge: data.patient?.age || '',
     patientGender: data.patient?.gender || '',
     chartNo: data.patient?.chartNo || '',
-    allergies: data.patient?.allergies || null,
     chiefComplaint,
     vitals: data.vitals ? {
       systolic: data.vitals.systolic,

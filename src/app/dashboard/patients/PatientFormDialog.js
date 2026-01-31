@@ -13,6 +13,8 @@ import {
   Paper,
   Typography,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 // Format Korean phone number (010-1234-5678) - only on blur
@@ -39,12 +41,12 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
   const birthDateRef = useRef(null);
   const phoneRef = useRef(null);
   const addressRef = useRef(null);
-  const allergiesRef = useRef(null);
   const notesRef = useRef(null);
 
   const [saving, setSaving] = useState(false);
   // Only use state for gender since it's a select
   const [gender, setGender] = useState('남');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   // Reset form when dialog opens with new data
   useEffect(() => {
@@ -57,7 +59,6 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           if (birthDateRef.current) birthDateRef.current.value = patient.birthDate || '';
           if (phoneRef.current) phoneRef.current.value = patient.phone || '';
           if (addressRef.current) addressRef.current.value = patient.address || '';
-          if (allergiesRef.current) allergiesRef.current.value = patient.allergies || '';
           if (notesRef.current) notesRef.current.value = patient.notes || '';
         } else {
           if (nameRef.current) nameRef.current.value = '';
@@ -65,28 +66,38 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           if (birthDateRef.current) birthDateRef.current.value = '';
           if (phoneRef.current) phoneRef.current.value = '';
           if (addressRef.current) addressRef.current.value = '';
-          if (allergiesRef.current) allergiesRef.current.value = '';
           if (notesRef.current) notesRef.current.value = '';
         }
       }, 0);
     }
   }, [open, patient, mode]);
 
-  const handlePhoneBlur = () => {
+  const handlePhoneChange = (e) => {
     if (phoneRef.current) {
-      phoneRef.current.value = formatPhoneNumber(phoneRef.current.value);
+      phoneRef.current.value = formatPhoneNumber(e.target.value);
     }
   };
 
   const handleSave = async () => {
+    const name = nameRef.current?.value || '';
+    const birthDate = birthDateRef.current?.value || '';
+    const phone = phoneRef.current?.value || '';
+    const address = addressRef.current?.value || '';
+    const notes = notesRef.current?.value || '';
+
+    // Validate required fields
+    if (!name || !birthDate || !phone || !address) {
+      setSnackbar({ open: true, message: '모든 필드를 입력해주세요' });
+      return;
+    }
+
     const formData = {
-      name: nameRef.current?.value || '',
-      gender: gender,
-      birthDate: birthDateRef.current?.value || '',
-      phone: phoneRef.current?.value || '',
-      address: addressRef.current?.value || '',
-      allergies: allergiesRef.current?.value || '',
-      notes: notesRef.current?.value || '',
+      name,
+      gender,
+      birthDate,
+      phone,
+      address,
+      notes,
     };
 
     setSaving(true);
@@ -121,6 +132,7 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
+              required
               label="이름"
               inputRef={nameRef}
               defaultValue=""
@@ -130,6 +142,7 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
+              required
               select
               label="성별"
               value={gender}
@@ -143,6 +156,7 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
+              required
               label="생년월일"
               type="date"
               inputRef={birthDateRef}
@@ -154,11 +168,12 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
+              required
               label="전화번호"
               inputRef={phoneRef}
               defaultValue=""
               placeholder="010-0000-0000"
-              onBlur={handlePhoneBlur}
+              onChange={handlePhoneChange}
               disabled={isDisabled}
               inputProps={{ maxLength: 13 }}
             />
@@ -166,19 +181,10 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
+              required
               label="주소"
               inputRef={addressRef}
               defaultValue=""
-              disabled={isDisabled}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="알레르기"
-              inputRef={allergiesRef}
-              defaultValue=""
-              placeholder="예: 페니실린, 아스피린"
               disabled={isDisabled}
             />
           </Grid>
@@ -207,26 +213,6 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>{patient.visitCount}회</Typography>
                 </Paper>
               </Grid>
-              {patient.allergies && (
-                <Grid size={{ xs: 12 }}>
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: '#FEF2F2',
-                      borderColor: '#FECACA',
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: '#DC2626', fontWeight: 600 }}>
-                      알레르기 주의
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: '#DC2626', fontWeight: 700 }}>
-                      {patient.allergies}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              )}
             </>
           )}
         </Grid>
@@ -249,6 +235,17 @@ function PatientFormDialog({ open, mode, patient, onClose, onSave }) {
           </Button>
         )}
       </DialogActions>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity="warning" onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 }
