@@ -55,7 +55,7 @@ export default function Footer() {
         { label: t('footer.about'), href: '/about', isSection: false },
         { label: t('footer.careers'), href: '/careers', isSection: false },
         { label: t('footer.blog'), href: '/blog', isSection: false },
-        { label: t('footer.contact'), href: '#contact', isSection: true },
+        { label: t('footer.contact'), href: '/contact', isSection: false },
       ],
     },
     {

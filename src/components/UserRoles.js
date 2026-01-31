@@ -68,9 +68,13 @@ export default function UserRoles() {
         {/* Role Cards */}
         <Grid container spacing={3}>
           {roles.map((role, index) => {
-            const roleData = t(`roles.${role}`);
+            const roleData = t(`roles.${role}`) || {};
             const IconComponent = roleIcons[role];
             const color = roleColors[role];
+            const features = roleData.features || [];
+
+            // Skip rendering if roleData is not properly loaded
+            if (!roleData.title) return null;
 
             return (
               <Grid size={{ xs: 12, md: 4 }} key={role}>
@@ -127,16 +131,18 @@ export default function UserRoles() {
                     >
                       {roleData.title}
                     </Typography>
-                    <Chip
-                      label={roleData.tagline}
-                      size="small"
-                      sx={{
-                        bgcolor: `${color}15`,
-                        color: color,
-                        fontWeight: 500,
-                        mb: 2,
-                      }}
-                    />
+                    {roleData.tagline && (
+                      <Chip
+                        label={roleData.tagline}
+                        size="small"
+                        sx={{
+                          bgcolor: `${color}15`,
+                          color: color,
+                          fontWeight: 500,
+                          mb: 2,
+                        }}
+                      />
+                    )}
 
                     {/* Description */}
                     <Typography
@@ -151,27 +157,29 @@ export default function UserRoles() {
                     </Typography>
 
                     {/* Features List */}
-                    <List disablePadding>
-                      {roleData.features.map((feature, i) => (
-                        <ListItem key={i} disableGutters sx={{ py: 0.5 }}>
-                          <ListItemIcon sx={{ minWidth: 28 }}>
-                            <CheckCircleIcon
-                              sx={{
-                                fontSize: 18,
-                                color: color,
+                    {features.length > 0 && (
+                      <List disablePadding>
+                        {features.map((feature, i) => (
+                          <ListItem key={i} disableGutters sx={{ py: 0.5 }}>
+                            <ListItemIcon sx={{ minWidth: 28 }}>
+                              <CheckCircleIcon
+                                sx={{
+                                  fontSize: 18,
+                                  color: color,
+                                }}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={feature}
+                              primaryTypographyProps={{
+                                variant: 'body2',
+                                sx: { color: 'text.secondary' },
                               }}
                             />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={feature}
-                            primaryTypographyProps={{
-                              variant: 'body2',
-                              sx: { color: 'text.secondary' },
-                            }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
+                          </ListItem>
+                        ))}
+                      </List>
+                    )}
                   </CardContent>
                 </MotionCard>
               </Grid>

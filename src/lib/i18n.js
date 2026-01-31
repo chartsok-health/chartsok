@@ -35,14 +35,14 @@ const translations = {
         { icon: 'template', text: '전문과별 맞춤 템플릿' },
       ],
     },
-    // Stats Section - Balanced outcomes + differentiators
+    // Stats Section - Doctor protection + efficiency
     stats: {
-      title: '차트 작성, 이렇게 달라집니다',
+      title: '진료에만 집중하세요',
       items: [
         { value: '70', suffix: '%', label: '차트 작성 시간 절감' },
-        { value: '95', suffix: '%+', label: '음성 인식 정확도' },
-        { value: '0', suffix: '건', label: '음성 파일 서버 보관' },
-        { value: '6', suffix: '개', label: '전문과 맞춤 템플릿' },
+        { value: '100', suffix: '%', label: '진료 내용 기록 보존' },
+        { value: '95', suffix: '%+', label: '의학 용어 인식률' },
+        { value: '24', suffix: 'h', label: '내 서버에서 음성 삭제' },
       ],
     },
     // Features Section - Focused on the 3 differentiators
@@ -70,10 +70,10 @@ const translations = {
           features: ['EMR 필드 매핑 지원', 'SOAP / 자유 형식 선택', '원클릭 클립보드 복사', '필드별 개별 복사 가능'],
         },
         {
-          title: '전문과별 맞춤 템플릿',
-          description: '내과, 이비인후과, 정형외과 등 전문과별로 최적화된 템플릿을 제공합니다. 나만의 템플릿도 만들 수 있습니다.',
+          title: '나만의 맞춤 템플릿',
+          description: '선생님의 진료 스타일과 차트 작성 방식에 맞춘 개인화된 템플릿을 만드세요. 전문과별 기본 템플릿도 제공됩니다.',
           icon: 'template',
-          features: ['전문과 기본 템플릿 제공', '섹션 자유 구성', '자주 쓰는 문구 저장', '템플릿 복제 및 수정'],
+          features: ['개인 진료 스타일 반영', '차트 형식 자유 설정', '자주 쓰는 문구 저장', '전문과별 기본 템플릿'],
         },
         {
           title: '실시간 녹음 및 변환',
@@ -119,63 +119,77 @@ const translations = {
     },
     // Custom Templates Section
     customTemplates: {
-      badge: '맞춤 템플릿',
-      title: 'EMR에 맞는 차트 출력',
-      subtitle: '사용하시는 EMR의 입력 필드에 맞춰 차트를 구성하세요',
-      description: 'SOAP 형식 외에도 EMR 필드에 맞는 구조화된 출력을 설정할 수 있습니다. 한 번 설정하면 매번 같은 형식으로 차트가 생성됩니다.',
-      cta: '템플릿 설정하기',
+      badge: '개인화 템플릿',
+      title: '선생님만의 차트 스타일',
+      subtitle: '진료 스타일과 차트 작성 방식에 맞춘 개인화된 템플릿',
+      description: '선생님이 평소 작성하시는 차트 형식 그대로 AI가 생성합니다. SOAP, 서술형, EMR 필드 형식 등 원하는 스타일로 설정하세요.',
+      cta: '나만의 템플릿 만들기',
       features: [
         {
           icon: 'layout',
-          title: 'EMR 필드 매핑',
-          description: '주호소, 현병력, 과거력, 신체검진 등 EMR 입력 필드에 맞춰 출력 섹션을 구성합니다.',
+          title: '진료 스타일 반영',
+          description: '선생님의 진료 패턴과 차트 작성 습관을 반영한 맞춤형 템플릿을 만들 수 있습니다.',
         },
         {
           icon: 'ai',
-          title: '출력 형식 지정',
-          description: '각 섹션별로 문장형, 요약형, 리스트형 등 원하는 출력 형식을 지정할 수 있습니다.',
+          title: '차트 형식 자유 설정',
+          description: '문장형, 요약형, 리스트형 등 선생님이 선호하는 형식으로 각 섹션을 구성하세요.',
         },
         {
           icon: 'star',
-          title: '기본 템플릿 설정',
-          description: '자주 사용하는 템플릿을 기본값으로 설정하면 진료 시작 시 자동으로 적용됩니다.',
+          title: '자주 쓰는 문구 저장',
+          description: '반복 사용하는 문구와 표현을 저장해두면 차트 생성 시 자동으로 반영됩니다.',
         },
         {
           icon: 'copy',
-          title: '필드별 복사',
-          description: '전체 차트 복사 외에 개별 필드만 선택해서 클립보드에 복사할 수 있습니다.',
+          title: 'EMR 필드 매핑',
+          description: '사용하시는 EMR의 입력 필드에 맞춰 차트 출력 구조를 설정할 수 있습니다.',
         },
       ],
       example: {
         title: '출력 예시',
         before: 'SOAP 형식',
-        after: 'EMR 필드 형식',
+        after: '나만의 형식',
       },
     },
-    // How It Works Section - Simplified to 3 steps
+    // How It Works Section - 5 steps matching record page workflow
     howItWorks: {
       title: '간단한 사용 방법',
-      subtitle: '녹음하고, 확인하고, 복사하세요',
+      subtitle: '5단계 스마트 워크플로우',
       steps: [
         {
           step: '01',
-          title: '진료 녹음',
-          description: '녹음 버튼을 누르고 평소처럼 진료하세요.',
-          detail: '진료 중 대화가 실시간으로 텍스트로 변환됩니다. 녹음이 끝나면 차트 초안이 자동 생성됩니다.',
-          icon: 'mic',
+          title: '환자 선택',
+          description: '진료할 환자를 선택하거나 새 환자를 등록하세요.',
+          detail: '최근 환자 목록에서 빠르게 선택하거나 이름으로 검색할 수 있습니다.',
+          icon: 'patient',
         },
         {
           step: '02',
-          title: '차트 확인',
-          description: '생성된 차트를 검토하고 필요시 수정하세요.',
-          detail: '의사/환자 발화가 자동 구분되어 SOAP 또는 설정한 형식으로 정리됩니다.',
-          icon: 'edit',
+          title: '사전 정보',
+          description: '바이탈, 주호소, 나만의 템플릿을 선택합니다.',
+          detail: '선생님의 진료 스타일과 차트 작성 방식에 맞춘 개인화된 템플릿으로 차트를 생성합니다.',
+          icon: 'vitals',
         },
         {
           step: '03',
-          title: 'EMR 입력',
-          description: '클립보드 복사로 EMR에 바로 붙여넣기하세요.',
-          detail: '전체 차트 또는 개별 필드를 선택해서 복사할 수 있습니다. API 연동은 추후 지원 예정입니다.',
+          title: '진료 녹음',
+          description: '녹음 버튼을 누르고 평소처럼 진료하세요.',
+          detail: '대화가 실시간으로 텍스트로 변환됩니다. 녹음 중 일시정지도 가능합니다.',
+          icon: 'mic',
+        },
+        {
+          step: '04',
+          title: 'AI 분석',
+          description: 'AI가 의사/환자 발화를 자동 구분합니다.',
+          detail: '화자 분리, 텍스트 변환, 대화 구조 분석이 자동으로 이루어집니다.',
+          icon: 'chart',
+        },
+        {
+          step: '05',
+          title: 'EMR 연동',
+          description: '완성된 차트를 EMR로 전송합니다.',
+          detail: '현재는 클립보드 복사로 붙여넣기. API 자동 연동 곧 출시!',
           icon: 'clipboard',
         },
       ],
@@ -466,14 +480,14 @@ const translations = {
         { icon: 'template', text: 'Specialty Templates' },
       ],
     },
-    // Stats Section - Balanced outcomes + differentiators
+    // Stats Section - Doctor protection + efficiency
     stats: {
-      title: 'How Charting Changes',
+      title: 'Focus on Patient Care',
       items: [
         { value: '70', suffix: '%', label: 'Less Time on Charts' },
-        { value: '95', suffix: '%+', label: 'Transcription Accuracy' },
-        { value: '0', suffix: '', label: 'Audio Files Stored' },
-        { value: '6', suffix: '', label: 'Specialty Templates' },
+        { value: '100', suffix: '%', label: 'Consultation Records Preserved' },
+        { value: '95', suffix: '%+', label: 'Medical Term Accuracy' },
+        { value: '24', suffix: 'h', label: 'Audio Deleted from Server' },
       ],
     },
     // Features Section
@@ -501,10 +515,10 @@ const translations = {
           features: ['EMR field mapping', 'SOAP / custom formats', 'One-click clipboard copy', 'Copy individual fields'],
         },
         {
-          title: 'Specialty Templates',
-          description: 'Pre-configured templates for Internal Medicine, ENT, Orthopedics, and more. Create your own custom templates too.',
+          title: 'Your Personalized Templates',
+          description: 'Create templates that match your consultation style and documentation preferences. Specialty defaults also available.',
           icon: 'template',
-          features: ['Specialty-specific defaults', 'Flexible section layout', 'Save common phrases', 'Duplicate & modify'],
+          features: ['Match your clinical style', 'Custom chart formats', 'Save common phrases', 'Specialty defaults included'],
         },
         {
           title: 'Real-time Recording',
@@ -583,30 +597,44 @@ const translations = {
         after: 'EMR Field Format',
       },
     },
-    // How It Works Section
+    // How It Works Section - 5 steps matching record page workflow
     howItWorks: {
       title: 'Simple to Use',
-      subtitle: 'Record, review, copy',
+      subtitle: '5-Step Smart Workflow',
       steps: [
         {
           step: '01',
-          title: 'Record',
-          description: 'Press record and conduct your consultation as usual.',
-          detail: 'Conversation is transcribed in real-time. Chart draft is generated when recording ends.',
-          icon: 'mic',
+          title: 'Select Patient',
+          description: 'Choose a patient or register a new one.',
+          detail: 'Quickly select from recent patients or search by name.',
+          icon: 'patient',
         },
         {
           step: '02',
-          title: 'Review',
-          description: 'Review the generated chart and edit if needed.',
-          detail: 'Doctor/patient speech is automatically identified and organized into your selected format.',
-          icon: 'edit',
+          title: 'Pre-Consult Info',
+          description: 'Enter vitals, chief complaint, and your personalized template.',
+          detail: 'Charts are generated to match your consultation style and preferred documentation format.',
+          icon: 'vitals',
         },
         {
           step: '03',
-          title: 'Copy to EMR',
-          description: 'Copy to clipboard and paste into your EMR.',
-          detail: 'Copy the entire chart or individual fields. API integration coming soon.',
+          title: 'Record Consultation',
+          description: 'Press record and consult as usual.',
+          detail: 'Conversation is transcribed in real-time. Pause and resume anytime.',
+          icon: 'mic',
+        },
+        {
+          step: '04',
+          title: 'AI Analysis',
+          description: 'AI automatically separates doctor/patient speech.',
+          detail: 'Speaker separation, transcription, and conversation analysis happen automatically.',
+          icon: 'chart',
+        },
+        {
+          step: '05',
+          title: 'EMR Integration',
+          description: 'Send completed chart to your EMR.',
+          detail: 'Currently via clipboard copy-paste. API auto-integration coming soon!',
           icon: 'clipboard',
         },
       ],

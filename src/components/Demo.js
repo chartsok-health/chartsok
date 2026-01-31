@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Box, Container, Typography, Paper, Stack, Button, TextField, Chip, Grid, Avatar, LinearProgress } from '@mui/material';
+import { useState, useEffect, useRef } from 'react';
+import { Box, Container, Typography, Paper, Stack, Button, TextField, Chip, Grid, Avatar, LinearProgress, IconButton } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
@@ -16,17 +16,28 @@ import StopIcon from '@mui/icons-material/Stop';
 import DescriptionIcon from '@mui/icons-material/Description';
 import StarIcon from '@mui/icons-material/Star';
 import CelebrationIcon from '@mui/icons-material/Celebration';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import ReplayIcon from '@mui/icons-material/Replay';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import BatteryFullIcon from '@mui/icons-material/BatteryFull';
+import WifiIcon from '@mui/icons-material/Wifi';
+import LoginIcon from '@mui/icons-material/Login';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 
 const tabs = [
-  { id: 'patient', icon: PersonSearchIcon, color: '#4B9CD3' },
-  { id: 'vitals', icon: MonitorHeartIcon, color: '#10B981' },
-  { id: 'recording', icon: MicIcon, color: '#EF4444' },
-  { id: 'soap', icon: AutoAwesomeIcon, color: '#8B5CF6' },
-  { id: 'emr', icon: SendIcon, color: '#EC4899' },
+  { id: 'patient', icon: PersonSearchIcon, color: '#4B9CD3', label: '환자선택' },
+  { id: 'vitals', icon: MonitorHeartIcon, color: '#10B981', label: '사전정보' },
+  { id: 'recording', icon: MicIcon, color: '#EF4444', label: '녹음' },
+  { id: 'soap', icon: AutoAwesomeIcon, color: '#8B5CF6', label: 'AI분석' },
+  { id: 'emr', icon: SendIcon, color: '#EC4899', label: 'EMR' },
 ];
 
 const samplePatients = [
@@ -46,6 +57,8 @@ const transcriptLines = [
 
 export default function Demo() {
   const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('patient');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('soap');
@@ -57,8 +70,16 @@ export default function Demo() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [isSent, setIsSent] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const autoPlayRef = useRef(null);
 
   const demo = t('demo');
+  const isLoggedIn = !!user;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Recording timer
   useEffect(() => {
@@ -71,7 +92,7 @@ export default function Demo() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  // Typing animation for transcript
+  // Typing animation for transcript - slower for readability
   useEffect(() => {
     if (!isRecording || currentLineIndex >= transcriptLines.length) return;
 
@@ -81,13 +102,13 @@ export default function Demo() {
     if (displayedText.length < fullText.length) {
       const timeout = setTimeout(() => {
         setDisplayedText(fullText.slice(0, displayedText.length + 1));
-      }, 30);
+      }, 50); // Slower typing (was 30ms)
       return () => clearTimeout(timeout);
     } else {
       const timeout = setTimeout(() => {
         setCurrentLineIndex((prev) => prev + 1);
         setDisplayedText('');
-      }, 800);
+      }, 1200); // Longer pause between lines (was 800ms)
       return () => clearTimeout(timeout);
     }
   }, [isRecording, currentLineIndex, displayedText]);
@@ -109,6 +130,71 @@ export default function Demo() {
       return () => clearInterval(interval);
     }
   }, [isProcessing]);
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (!isAutoPlaying) {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+      return;
+    }
+
+    const runAutoPlay = async () => {
+      // Step 1: Select patient
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 1000));
+      if (!isAutoPlaying) return;
+      setSelectedPatient(samplePatients[0]);
+
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 1000));
+      if (!isAutoPlaying) return;
+      setActiveTab('vitals');
+
+      // Step 2: Vitals - see vitals and template
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 2200));
+      if (!isAutoPlaying) return;
+      setActiveTab('recording');
+
+      // Step 3: Recording
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 800));
+      if (!isAutoPlaying) return;
+      setIsRecording(true);
+      setRecordingTime(0);
+      setCurrentLineIndex(0);
+      setDisplayedText('');
+
+      // Let recording run
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 10000));
+      if (!isAutoPlaying) return;
+      setIsRecording(false);
+      setIsProcessing(true);
+      setProcessingProgress(0);
+
+      // Wait for processing
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 3000));
+      if (!isAutoPlaying) return;
+
+      // Step 4: SOAP review
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 3000));
+      if (!isAutoPlaying) return;
+      setActiveTab('emr');
+
+      // Step 5: Send to EMR
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 1500));
+      if (!isAutoPlaying) return;
+      setIsSent(true);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+
+      // Reset and stop auto-play
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 4000));
+      setIsAutoPlaying(false);
+    };
+
+    runAutoPlay();
+
+    return () => {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+    };
+  }, [isAutoPlaying]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -146,6 +232,17 @@ export default function Demo() {
     setIsProcessing(false);
     setProcessingProgress(0);
     setIsSent(false);
+    setIsAutoPlaying(false);
+  };
+
+  const toggleAutoPlay = () => {
+    if (isAutoPlaying) {
+      setIsAutoPlaying(false);
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+    } else {
+      resetDemo();
+      setTimeout(() => setIsAutoPlaying(true), 100);
+    }
   };
 
   const renderContent = () => {
@@ -159,33 +256,30 @@ export default function Demo() {
             transition={{ duration: 0.3 }}
           >
             {/* Search Bar */}
-            <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField
-                placeholder={demo.patientSelect?.searchPlaceholder}
+                placeholder={demo.patientSelect?.searchPlaceholder || '환자 검색...'}
                 size="small"
                 fullWidth
                 InputProps={{
-                  startAdornment: <SearchIcon sx={{ color: 'text.disabled', mr: 1, fontSize: 20 }} />,
+                  startAdornment: <SearchIcon sx={{ color: 'text.disabled', mr: 1, fontSize: 18 }} />,
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     bgcolor: 'grey.50',
                     borderRadius: 2,
+                    fontSize: '0.85rem',
                   },
                 }}
               />
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                sx={{ whiteSpace: 'nowrap', borderRadius: 2, px: 2 }}
-              >
-                {demo.patientSelect?.newPatient}
-              </Button>
+              <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 2, '&:hover': { bgcolor: 'primary.dark' } }}>
+                <AddIcon fontSize="small" />
+              </IconButton>
             </Box>
 
             {/* Recent Patients */}
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, display: 'block' }}>
-              {demo.patientSelect?.recentPatients}
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, display: 'block', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+              {demo.patientSelect?.recentPatients || '최근 환자'}
             </Typography>
             <Stack spacing={1}>
               {samplePatients.map((patient, index) => (
@@ -199,10 +293,10 @@ export default function Demo() {
                     elevation={0}
                     onClick={() => {
                       setSelectedPatient(patient);
-                      setTimeout(() => setActiveTab('vitals'), 400);
+                      if (!isAutoPlaying) setTimeout(() => setActiveTab('vitals'), 400);
                     }}
                     sx={{
-                      p: 2,
+                      p: { xs: 1.5, md: 2 },
                       cursor: 'pointer',
                       border: '2px solid',
                       borderColor: selectedPatient?.id === patient.id ? 'primary.main' : 'grey.100',
@@ -217,27 +311,27 @@ export default function Demo() {
                     }}
                   >
                     <Stack direction="row" alignItems="center" spacing={2}>
-                      <Avatar sx={{ bgcolor: 'primary.main', width: 44, height: 44 }}>
-                        <PersonIcon sx={{ fontSize: 22 }} />
+                      <Avatar sx={{ bgcolor: patient.gender === 'F' ? '#EC4899' : '#4B9CD3', width: { xs: 40, md: 44 }, height: { xs: 40, md: 44 } }}>
+                        <PersonIcon sx={{ fontSize: { xs: 20, md: 22 } }} />
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', md: '1rem' } }}>
                             {patient.name}
                           </Typography>
                           <Chip
                             label={patient.complaint}
                             size="small"
                             sx={{
-                              height: 20,
-                              fontSize: '0.65rem',
+                              height: 22,
+                              fontSize: { xs: '0.7rem', md: '0.75rem' },
                               bgcolor: 'warning.50',
                               color: 'warning.main',
                             }}
                           />
                         </Stack>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {patient.age}세 · {patient.gender === 'M' ? '남' : '여'} · 최근 방문: {patient.lastVisit}
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', md: '0.85rem' } }}>
+                          {patient.age}세 · {patient.gender === 'M' ? '남' : '여'} · {patient.lastVisit}
                         </Typography>
                       </Box>
                       {selectedPatient?.id === patient.id && (
@@ -265,29 +359,30 @@ export default function Demo() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Selected Patient Info */}
+            {/* Selected Patient */}
             {selectedPatient && (
-              <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.50', borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    <PersonIcon />
+              <Box sx={{ mb: 2, p: 1.5, bgcolor: 'primary.50', borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                    <PersonIcon sx={{ fontSize: 16 }} />
                   </Avatar>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{selectedPatient.name}</Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {selectedPatient.age}세 · {selectedPatient.gender === 'M' ? '남' : '여'}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{selectedPatient.name}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                      {selectedPatient.age}세 · {selectedPatient.complaint}
                     </Typography>
                   </Box>
                 </Stack>
               </Box>
             )}
 
-            <Grid container spacing={2}>
+            {/* Vitals Grid */}
+            <Grid container spacing={{ xs: 1.5, md: 2 }}>
               {[
-                { label: demo.vitalsInput?.bp, value: '120/80', unit: 'mmHg', color: '#EF4444' },
-                { label: demo.vitalsInput?.hr, value: '72', unit: 'bpm', color: '#F59E0B' },
-                { label: demo.vitalsInput?.bt, value: '36.5', unit: '°C', color: '#10B981' },
-                { label: demo.vitalsInput?.spo2, value: '98', unit: '%', color: '#4B9CD3' },
+                { label: 'BP', value: '120/80', unit: 'mmHg', color: '#EF4444' },
+                { label: 'HR', value: '72', unit: 'bpm', color: '#F59E0B' },
+                { label: 'BT', value: '36.5', unit: '°C', color: '#10B981' },
+                { label: 'SpO2', value: '98', unit: '%', color: '#4B9CD3' },
               ].map((vital, i) => (
                 <Grid size={{ xs: 6 }} key={i}>
                   <MotionBox
@@ -295,21 +390,21 @@ export default function Demo() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: i * 0.1 }}
                     sx={{
-                      p: 2,
-                      bgcolor: 'grey.50',
+                      p: { xs: 1.5, md: 2 },
+                      bgcolor: `${vital.color}08`,
                       borderRadius: 2,
                       textAlign: 'center',
                       border: '1px solid',
-                      borderColor: 'grey.100',
+                      borderColor: `${vital.color}20`,
                     }}
                   >
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                       {vital.label}
                     </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: vital.color, my: 0.5 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: vital.color, fontSize: { xs: '1.25rem', md: '1.4rem' } }}>
                       {vital.value}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: { xs: '0.7rem', md: '0.8rem' } }}>
                       {vital.unit}
                     </Typography>
                   </MotionBox>
@@ -317,54 +412,37 @@ export default function Demo() {
               ))}
             </Grid>
 
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, display: 'block' }}>
-                {demo.vitalsInput?.chiefComplaint}
+            {/* Template */}
+            <Box sx={{ mt: 2.5 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, display: 'block', fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                템플릿
               </Typography>
-              <TextField
-                multiline
-                rows={2}
-                fullWidth
-                defaultValue={selectedPatient?.complaint || '3일 전부터 두통'}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Template Selection */}
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, display: 'block' }}>
-                차트 템플릿
-              </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1.5}>
                 {[
-                  { id: 'soap', name: 'SOAP 노트', icon: DescriptionIcon },
+                  { id: 'soap', name: 'SOAP', icon: DescriptionIcon },
                   { id: 'custom', name: '나만의 템플릿', icon: StarIcon },
                 ].map((template) => (
-                  <MotionBox key={template.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Paper
-                      elevation={0}
-                      onClick={() => setSelectedTemplate(template.id)}
-                      sx={{
-                        p: 1.5,
-                        cursor: 'pointer',
-                        border: '2px solid',
-                        borderColor: selectedTemplate === template.id ? 'primary.main' : 'grey.200',
-                        borderRadius: 2,
-                        bgcolor: selectedTemplate === template.id ? 'primary.50' : 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <template.icon sx={{ fontSize: 18, color: selectedTemplate === template.id ? 'primary.main' : 'grey.500' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>{template.name}</Typography>
-                    </Paper>
-                  </MotionBox>
+                  <Paper
+                    key={template.id}
+                    elevation={0}
+                    onClick={() => setSelectedTemplate(template.id)}
+                    sx={{
+                      p: { xs: 1.25, md: 1.5 },
+                      cursor: 'pointer',
+                      border: '2px solid',
+                      borderColor: selectedTemplate === template.id ? 'primary.main' : 'grey.200',
+                      borderRadius: 2,
+                      bgcolor: selectedTemplate === template.id ? 'primary.50' : 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      flex: 1,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <template.icon sx={{ fontSize: { xs: 16, md: 18 }, color: selectedTemplate === template.id ? 'primary.main' : 'grey.500' }} />
+                    <Typography variant="caption" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', md: '0.9rem' } }}>{template.name}</Typography>
+                  </Paper>
                 ))}
               </Stack>
             </Box>
@@ -372,10 +450,11 @@ export default function Demo() {
             <Button
               variant="contained"
               fullWidth
+              startIcon={<MicIcon />}
               onClick={() => setActiveTab('recording')}
-              sx={{ mt: 3, py: 1.5, borderRadius: 2 }}
+              sx={{ mt: 2.5, py: { xs: 1.5, md: 1.75 }, borderRadius: 2.5, fontSize: { xs: '0.95rem', md: '1rem' } }}
             >
-              진료 녹음 시작
+              녹음 시작
             </Button>
           </MotionBox>
         );
@@ -389,49 +468,61 @@ export default function Demo() {
             transition={{ duration: 0.3 }}
           >
             {/* Recording Status */}
-            <Stack direction="row" justifyContent="center" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+            <Stack direction="row" justifyContent="center" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
               {isRecording && (
                 <MotionBox
-                  animate={{ scale: [1, 1.2, 1] }}
+                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
                   sx={{
-                    width: 12,
-                    height: 12,
+                    width: 10,
+                    height: 10,
                     borderRadius: '50%',
                     bgcolor: '#EF4444',
                   }}
                 />
               )}
               <Chip
-                label={isRecording ? `녹음 중 · ${formatTime(recordingTime)}` : '준비됨'}
+                label={isRecording ? `REC · ${formatTime(recordingTime)}` : '준비됨'}
+                size="small"
                 sx={{
                   bgcolor: isRecording ? '#FEE2E2' : 'grey.100',
                   color: isRecording ? '#DC2626' : 'text.secondary',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  px: 1,
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  fontFamily: 'monospace',
                 }}
               />
             </Stack>
 
-            {/* Waveform */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, height: 80, mb: 3 }}>
-              {Array.from({ length: 40 }).map((_, i) => (
+            {/* Audio Waveform Visualization */}
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '2px',
+              height: 60,
+              mb: 2,
+              bgcolor: isRecording ? '#FEF2F2' : 'grey.50',
+              borderRadius: 2,
+              px: 2,
+            }}>
+              {isMounted && Array.from({ length: 50 }).map((_, i) => (
                 <MotionBox
                   key={i}
                   animate={isRecording ? {
-                    height: [10, 20 + Math.sin(i * 0.5) * 30 + Math.random() * 20, 10],
-                  } : { height: 10 }}
+                    height: [8, 15 + Math.sin(i * 0.3) * 20 + Math.random() * 15, 8],
+                  } : { height: 8 }}
                   transition={{
-                    duration: 0.3 + Math.random() * 0.2,
+                    duration: 0.2 + Math.random() * 0.2,
                     repeat: isRecording ? Infinity : 0,
                     ease: 'easeInOut',
+                    delay: i * 0.02,
                   }}
                   sx={{
-                    width: 4,
+                    width: 3,
                     bgcolor: isRecording ? '#EF4444' : 'grey.300',
-                    borderRadius: 2,
-                    opacity: isRecording ? 0.8 : 0.4,
+                    borderRadius: 1,
+                    opacity: isRecording ? 0.9 : 0.4,
                   }}
                 />
               ))}
@@ -440,41 +531,60 @@ export default function Demo() {
             {/* Live Transcript */}
             <Box
               sx={{
-                bgcolor: 'grey.900',
+                bgcolor: '#1a1a2e',
                 borderRadius: 2,
-                p: 2.5,
-                minHeight: 180,
-                maxHeight: 180,
+                p: 2,
+                minHeight: 140,
+                maxHeight: 140,
                 overflow: 'auto',
-                mb: 3,
+                mb: 2,
+                position: 'relative',
               }}
             >
-              <Typography variant="caption" sx={{ color: 'grey.500', display: 'block', mb: 1.5 }}>
-                실시간 자막
+              {/* Terminal Header */}
+              <Box sx={{ position: 'absolute', top: 8, left: 12, display: 'flex', gap: 0.5 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#ff5f56' }} />
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#ffbd2e' }} />
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#27ca3f' }} />
+              </Box>
+
+              <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 1, mt: 1, fontSize: '0.65rem' }}>
+                실시간 텍스트 변환
               </Typography>
-              <Stack spacing={1.5}>
+              <Stack spacing={1}>
                 {transcriptLines.slice(0, currentLineIndex).map((line, idx) => (
                   <MotionBox
                     key={idx}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <Typography variant="body2" sx={{ color: line.speaker === '의사' ? '#4B9CD3' : '#10B981' }}>
-                      <strong>{line.speaker}:</strong>{' '}
-                      <span style={{ color: '#E5E7EB' }}>{line.text}</span>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.5 }}>
+                      <Box component="span" sx={{
+                        color: line.speaker === '의사' ? '#4B9CD3' : '#10B981',
+                        fontWeight: 600,
+                      }}>
+                        [{line.speaker}]
+                      </Box>{' '}
+                      <Box component="span" sx={{ color: '#E5E7EB' }}>{line.text}</Box>
                     </Typography>
                   </MotionBox>
                 ))}
                 {isRecording && displayedText && (
-                  <Typography variant="body2" sx={{ color: transcriptLines[currentLineIndex]?.speaker === '의사' ? '#4B9CD3' : '#10B981' }}>
-                    {displayedText}
+                  <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.5 }}>
+                    <Box component="span" sx={{
+                      color: transcriptLines[currentLineIndex]?.speaker === '의사' ? '#4B9CD3' : '#10B981',
+                      fontWeight: 600,
+                    }}>
+                      [{transcriptLines[currentLineIndex]?.speaker}]
+                    </Box>{' '}
+                    <Box component="span" sx={{ color: '#E5E7EB' }}>{displayedText.split(': ')[1]}</Box>
                     <MotionBox
                       component="span"
-                      animate={{ opacity: [1, 0, 1] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      sx={{ ml: 0.5, color: 'white' }}
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      sx={{ ml: 0.5, color: '#4B9CD3' }}
                     >
-                      |
+                      █
                     </MotionBox>
                   </Typography>
                 )}
@@ -483,20 +593,16 @@ export default function Demo() {
 
             {/* Processing State */}
             {isProcessing ? (
-              <MotionBox
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                sx={{ textAlign: 'center' }}
-              >
-                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 2 }}>
+              <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 1.5 }}>
                   <MotionBox
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                   >
-                    <AutoAwesomeIcon sx={{ color: '#8B5CF6' }} />
+                    <AutoAwesomeIcon sx={{ color: '#8B5CF6', fontSize: 20 }} />
                   </MotionBox>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6' }}>
-                    AI가 대화를 분석하고 있습니다...
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#8B5CF6', fontSize: '0.8rem' }}>
+                    AI 분석 중...
                   </Typography>
                 </Stack>
                 <LinearProgress
@@ -504,30 +610,31 @@ export default function Demo() {
                   value={processingProgress}
                   sx={{
                     borderRadius: 2,
-                    height: 8,
+                    height: 6,
                     bgcolor: '#8B5CF620',
                     '& .MuiLinearProgress-bar': {
                       bgcolor: '#8B5CF6',
+                      borderRadius: 2,
                     },
                   }}
                 />
-                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
-                  화자 분석 중... {processingProgress}%
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block', textAlign: 'center', fontSize: '0.7rem' }}>
+                  화자 분리 · 텍스트 정제 · 차트 생성 {processingProgress}%
                 </Typography>
               </MotionBox>
             ) : (
-              <Stack direction="row" spacing={2} justifyContent="center">
+              <Stack direction="row" spacing={1.5} justifyContent="center">
                 {!isRecording ? (
                   <Button
                     variant="contained"
-                    size="large"
                     startIcon={<MicIcon />}
                     onClick={handleStartRecording}
                     sx={{
-                      px: 5,
-                      py: 1.75,
-                      borderRadius: 3,
+                      px: 4,
+                      py: 1.25,
+                      borderRadius: 2.5,
                       bgcolor: '#EF4444',
+                      fontSize: '0.85rem',
                       '&:hover': { bgcolor: '#DC2626' },
                     }}
                   >
@@ -536,18 +643,18 @@ export default function Demo() {
                 ) : (
                   <Button
                     variant="contained"
-                    size="large"
                     startIcon={<StopIcon />}
                     onClick={handleStopRecording}
                     sx={{
-                      px: 5,
-                      py: 1.75,
-                      borderRadius: 3,
+                      px: 4,
+                      py: 1.25,
+                      borderRadius: 2.5,
                       bgcolor: '#8B5CF6',
+                      fontSize: '0.85rem',
                       '&:hover': { bgcolor: '#7C3AED' },
                     }}
                   >
-                    녹음 종료 & AI 분석
+                    녹음 종료
                   </Button>
                 )}
               </Stack>
@@ -563,68 +670,71 @@ export default function Demo() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                {demo.soapPreview?.title}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                {demo.soapPreview?.title || 'SOAP 노트'}
               </Typography>
               <Chip
-                icon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
-                label="AI 생성 완료"
+                icon={<AutoAwesomeIcon sx={{ fontSize: 12 }} />}
+                label="AI 생성"
                 size="small"
-                sx={{ bgcolor: '#EDE9FE', color: '#7C3AED' }}
+                sx={{ bgcolor: '#EDE9FE', color: '#7C3AED', fontSize: '0.65rem', height: 22 }}
               />
             </Stack>
 
-            <Stack spacing={2}>
+            <Stack spacing={1}>
               {[
-                { label: 'S', title: 'Subjective', content: demo.soapPreview?.s, color: '#4B9CD3' },
-                { label: 'O', title: 'Objective', content: demo.soapPreview?.o, color: '#10B981' },
-                { label: 'A', title: 'Assessment', content: demo.soapPreview?.a, color: '#F59E0B' },
-                { label: 'P', title: 'Plan', content: demo.soapPreview?.p, color: '#8B5CF6' },
+                { label: 'S', title: 'Subjective', content: demo.soapPreview?.s || '3일 전부터 두통, 오후에 심화, 조이는 양상, 목 뻣뻣함', color: '#4B9CD3' },
+                { label: 'O', title: 'Objective', content: demo.soapPreview?.o || 'BP 120/80, HR 72, 경부 근육 긴장(+)', color: '#10B981' },
+                { label: 'A', title: 'Assessment', content: demo.soapPreview?.a || '긴장성 두통 (R51)', color: '#F59E0B' },
+                { label: 'P', title: 'Plan', content: demo.soapPreview?.p || 'NSAIDs 처방, 스트레칭 교육, 1주 후 f/u', color: '#8B5CF6' },
               ].map((item, index) => (
                 <MotionBox
                   key={item.label}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -15 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.15 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
                   sx={{
                     display: 'flex',
-                    gap: 1.5,
-                    p: 2,
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
-                    borderLeft: '4px solid',
+                    gap: 1,
+                    p: 1.25,
+                    bgcolor: `${item.color}08`,
+                    borderRadius: 1.5,
+                    borderLeft: '3px solid',
                     borderLeftColor: item.color,
                   }}
                 >
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 2,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 1,
                       bgcolor: item.color,
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 800,
-                      fontSize: '0.85rem',
+                      fontSize: '0.7rem',
                       flexShrink: 0,
                     }}
                   >
                     {item.label}
                   </Box>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: item.color, fontWeight: 700 }}>
+                    <Typography variant="caption" sx={{ color: item.color, fontWeight: 700, fontSize: '0.65rem' }}>
                       {item.title}
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: 'text.primary', fontSize: '0.85rem', lineHeight: 1.7, whiteSpace: 'pre-line', mt: 0.5 }}
+                      sx={{ color: 'text.primary', fontSize: '0.75rem', lineHeight: 1.5 }}
                     >
                       {item.content}
                     </Typography>
                   </Box>
+                  <IconButton size="small" sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}>
+                    <ContentCopyIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
                 </MotionBox>
               ))}
             </Stack>
@@ -634,9 +744,9 @@ export default function Demo() {
               fullWidth
               endIcon={<SendIcon />}
               onClick={() => setActiveTab('emr')}
-              sx={{ mt: 3, py: 1.5, borderRadius: 2 }}
+              sx={{ mt: 2, py: 1.25, borderRadius: 2, fontSize: '0.85rem' }}
             >
-              확인 후 EMR 전송
+              EMR로 전송
             </Button>
           </MotionBox>
         );
@@ -648,48 +758,49 @@ export default function Demo() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            sx={{ textAlign: 'center', py: 4 }}
+            sx={{ textAlign: 'center', py: 2 }}
           >
             {!isSent ? (
               <>
                 <MotionBox
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                   sx={{
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     borderRadius: '50%',
                     bgcolor: '#EC489915',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
-                    mb: 3,
+                    mb: 2,
                   }}
                 >
-                  <SendIcon sx={{ fontSize: 44, color: '#EC4899' }} />
+                  <SendIcon sx={{ fontSize: 36, color: '#EC4899' }} />
                 </MotionBox>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
-                  {demo.emrSync?.status}
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main', mb: 0.5, fontSize: '0.95rem' }}>
+                  EMR 전송 준비 완료
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
-                  차트를 EMR에 전송합니다
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontSize: '0.8rem' }}>
+                  클립보드에 복사하여 붙여넣기
                 </Typography>
-                <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <MotionBox whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     variant="contained"
                     size="large"
-                    endIcon={<SendIcon />}
+                    startIcon={<ContentCopyIcon />}
                     onClick={handleSendToEMR}
                     sx={{
-                      px: 6,
-                      py: 1.75,
-                      borderRadius: 3,
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 2.5,
                       bgcolor: '#EC4899',
+                      fontSize: '0.9rem',
                       '&:hover': { bgcolor: '#DB2777' },
                     }}
                   >
-                    {demo.emrSync?.button}
+                    클립보드 복사
                   </Button>
                 </MotionBox>
               </>
@@ -699,20 +810,21 @@ export default function Demo() {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 200 }}
               >
-                {/* Confetti Effect */}
+                {/* Confetti */}
                 {showConfetti && (
                   <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                    {Array.from({ length: 20 }).map((_, i) => (
+                    {Array.from({ length: 30 }).map((_, i) => (
                       <MotionBox
                         key={i}
                         initial={{
                           y: -20,
-                          x: Math.random() * 400 - 200,
+                          x: Math.random() * 300 - 150,
                           rotate: 0,
+                          scale: Math.random() * 0.5 + 0.5,
                         }}
                         animate={{
-                          y: 500,
-                          rotate: Math.random() * 360,
+                          y: 400,
+                          rotate: Math.random() * 720 - 360,
                         }}
                         transition={{
                           duration: 2 + Math.random(),
@@ -720,8 +832,8 @@ export default function Demo() {
                         }}
                         sx={{
                           position: 'absolute',
-                          width: 10,
-                          height: 10,
+                          width: 8,
+                          height: 8,
                           borderRadius: Math.random() > 0.5 ? '50%' : 0,
                           bgcolor: ['#EC4899', '#8B5CF6', '#10B981', '#F59E0B', '#4B9CD3'][Math.floor(Math.random() * 5)],
                           left: '50%',
@@ -733,38 +845,39 @@ export default function Demo() {
 
                 <MotionBox
                   animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.4 }}
                   sx={{
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     borderRadius: '50%',
                     bgcolor: '#10B981',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
-                    mb: 3,
-                    boxShadow: '0 0 40px rgba(16, 185, 129, 0.4)',
+                    mb: 2,
+                    boxShadow: '0 0 30px rgba(16, 185, 129, 0.4)',
                   }}
                 >
-                  <CheckCircleIcon sx={{ fontSize: 50, color: 'white' }} />
+                  <CheckCircleIcon sx={{ fontSize: 40, color: 'white' }} />
                 </MotionBox>
-                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 1 }}>
-                  <CelebrationIcon sx={{ color: '#F59E0B' }} />
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#10B981' }}>
-                    {demo.emrSync?.success}
+                <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5} sx={{ mb: 0.5 }}>
+                  <CelebrationIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#10B981', fontSize: '1.1rem' }}>
+                    복사 완료!
                   </Typography>
-                  <CelebrationIcon sx={{ color: '#F59E0B' }} />
+                  <CelebrationIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
                 </Stack>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
-                  차트가 EMR에 성공적으로 저장되었습니다!
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontSize: '0.8rem' }}>
+                  EMR에 붙여넣기 하세요
                 </Typography>
                 <Button
                   variant="outlined"
+                  startIcon={<ReplayIcon />}
                   onClick={resetDemo}
-                  sx={{ borderRadius: 2, px: 4 }}
+                  sx={{ borderRadius: 2, px: 3, fontSize: '0.85rem' }}
                 >
-                  새 진료 시작하기
+                  다시 체험하기
                 </Button>
               </MotionBox>
             )}
@@ -781,186 +894,362 @@ export default function Demo() {
       id="demo"
       sx={{
         py: { xs: 10, md: 14 },
-        bgcolor: 'white',
+        background: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%)',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Container maxWidth="xl">
+      {/* Background Pattern */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.4,
+          backgroundImage: `radial-gradient(circle at 1px 1px, #4B9CD3 1px, transparent 0)`,
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      <Container maxWidth="xl" sx={{ position: 'relative' }}>
         {/* Section Header */}
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}
+          sx={{ textAlign: 'center', mb: { xs: 5, md: 6 } }}
         >
-          <Typography
-            variant="overline"
+          <Chip
+            label="INTERACTIVE DEMO"
             sx={{
-              color: 'primary.main',
-              mb: 1.5,
-              display: 'block',
-              letterSpacing: 2,
-              fontWeight: 600,
+              mb: 2,
+              bgcolor: 'primary.main',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              letterSpacing: 1,
             }}
-          >
-            INTERACTIVE DEMO
-          </Typography>
+          />
           <Typography
             variant="h2"
             sx={{
-              fontSize: { xs: '2rem', md: '2.75rem' },
-              fontWeight: 700,
+              fontSize: { xs: '1.75rem', md: '2.5rem' },
+              fontWeight: 800,
               color: 'secondary.main',
-              mb: 2,
+              mb: 1.5,
             }}
           >
-            {demo.title}
+            {demo.title || '직접 체험해보세요'}
           </Typography>
           <Typography
             variant="body1"
             sx={{
               color: 'text.secondary',
-              fontSize: { xs: '1rem', md: '1.125rem' },
+              fontSize: { xs: '0.95rem', md: '1.1rem' },
               maxWidth: 500,
               mx: 'auto',
             }}
           >
-            {demo.subtitle}
+            {demo.subtitle || '실제 워크플로우를 경험해보세요'}
           </Typography>
         </MotionBox>
 
-        {/* Demo Card */}
+        {/* Demo Device - Larger for better visibility */}
         <MotionBox
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          sx={{ maxWidth: 'md', mx: 'auto' }}
+          sx={{ maxWidth: { xs: 380, sm: 440, md: 500 }, mx: 'auto' }}
         >
-          <MotionPaper
-            elevation={0}
+          {/* Device Frame */}
+          <Box
             sx={{
-              borderRadius: 4,
-              overflow: 'hidden',
-              border: '1px solid',
-              borderColor: 'grey.200',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
               position: 'relative',
+              bgcolor: '#1F2937',
+              borderRadius: { xs: '36px', md: '44px' },
+              p: { xs: '14px', md: '18px' },
+              boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.25), 0 30px 60px -30px rgba(0, 0, 0, 0.3)',
             }}
           >
-            {/* Tab Navigation */}
+            {/* Device Notch */}
             <Box
               sx={{
-                px: { xs: 2, md: 4 },
-                py: { xs: 2, md: 2.5 },
-                bgcolor: 'grey.50',
-                borderBottom: '1px solid',
-                borderColor: 'grey.200',
+                position: 'absolute',
+                top: { xs: 12, md: 16 },
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 100,
+                height: 24,
+                bgcolor: '#1F2937',
+                borderRadius: '0 0 16px 16px',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
               }}
             >
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#374151' }} />
+            </Box>
+
+            {/* Screen */}
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: { xs: '24px', md: '28px' },
+                overflow: 'hidden',
+                bgcolor: 'white',
+              }}
+            >
+              {/* Status Bar */}
               <Box
                 sx={{
+                  px: 2,
+                  py: 0.75,
+                  bgcolor: 'grey.100',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 600, fontSize: '0.7rem' }}>
+                  9:41
+                </Typography>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <SignalCellularAltIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  <WifiIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  <BatteryFullIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                </Stack>
+              </Box>
+
+              {/* App Header */}
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'grey.100',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  position: 'relative',
                 }}
               >
-                {/* Progress Line */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: { xs: 18, md: 22 },
-                    left: '10%',
-                    right: '10%',
-                    height: 3,
-                    bgcolor: 'grey.200',
-                    zIndex: 0,
-                    borderRadius: 2,
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: { xs: 18, md: 22 },
-                    left: '10%',
-                    height: 3,
-                    bgcolor: 'primary.main',
-                    zIndex: 1,
-                    width: `${(tabs.findIndex(t => t.id === activeTab) / (tabs.length - 1)) * 80}%`,
-                    transition: 'width 0.4s ease',
-                    borderRadius: 2,
-                  }}
-                />
-
-                {tabs.map((tab, index) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  const isPast = tabs.findIndex(t => t.id === activeTab) > index;
-
-                  return (
-                    <Box
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        zIndex: 2,
-                        flex: 1,
-                      }}
-                    >
-                      <MotionBox
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        sx={{
-                          width: { xs: 36, md: 44 },
-                          height: { xs: 36, md: 44 },
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: isActive ? tab.color : isPast ? tab.color : 'white',
-                          border: '3px solid',
-                          borderColor: isActive || isPast ? tab.color : 'grey.300',
-                          transition: 'all 0.2s ease',
-                          boxShadow: isActive ? `0 0 0 4px ${tab.color}25` : 'none',
-                        }}
-                      >
-                        <Icon
-                          sx={{
-                            fontSize: { xs: 18, md: 22 },
-                            color: isActive || isPast ? 'white' : 'grey.400',
-                          }}
-                        />
-                      </MotionBox>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          mt: 1,
-                          fontWeight: isActive ? 700 : 500,
-                          fontSize: { xs: '0.6rem', md: '0.75rem' },
-                          color: isActive ? tab.color : isPast ? tab.color : 'text.secondary',
-                          textAlign: 'center',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {demo.tabs?.[tab.id]}
-                      </Typography>
-                    </Box>
-                  );
-                })}
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 1.5,
+                      bgcolor: '#4B9CD3',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.75rem', lineHeight: 1 }}>쏙</Typography>
+                  </Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                    chartsok
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5}>
+                  <IconButton
+                    size="small"
+                    onClick={toggleAutoPlay}
+                    sx={{
+                      bgcolor: isAutoPlaying ? '#EF4444' : 'primary.main',
+                      color: 'white',
+                      width: 28,
+                      height: 28,
+                      '&:hover': { bgcolor: isAutoPlaying ? '#DC2626' : 'primary.dark' },
+                    }}
+                  >
+                    {isAutoPlaying ? <PauseIcon sx={{ fontSize: 16 }} /> : <PlayArrowIcon sx={{ fontSize: 16 }} />}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={resetDemo}
+                    sx={{
+                      bgcolor: 'grey.200',
+                      width: 28,
+                      height: 28,
+                      '&:hover': { bgcolor: 'grey.300' },
+                    }}
+                  >
+                    <ReplayIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Stack>
               </Box>
-            </Box>
 
-            {/* Content Area */}
-            <Box sx={{ p: { xs: 2.5, sm: 3 }, minHeight: 420 }}>
-              <AnimatePresence mode="wait">
-                {renderContent()}
-              </AnimatePresence>
-            </Box>
-          </MotionPaper>
+              {/* Progress Steps */}
+              <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 1.5, md: 2 }, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ position: 'relative' }}>
+                  {/* Progress Line */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: { xs: 16, md: 18 },
+                      left: { xs: 28, md: 32 },
+                      right: { xs: 28, md: 32 },
+                      height: 3,
+                      bgcolor: 'grey.200',
+                      borderRadius: 2,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: { xs: 16, md: 18 },
+                      left: { xs: 28, md: 32 },
+                      height: 3,
+                      bgcolor: 'primary.main',
+                      width: `calc(${(tabs.findIndex(t => t.id === activeTab) / (tabs.length - 1)) * 100}% - 56px)`,
+                      transition: 'width 0.4s ease',
+                      borderRadius: 2,
+                    }}
+                  />
+
+                  {tabs.map((tab, index) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    const isPast = tabs.findIndex(t => t.id === activeTab) > index;
+
+                    return (
+                      <Box
+                        key={tab.id}
+                        onClick={() => !isAutoPlaying && setActiveTab(tab.id)}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          cursor: isAutoPlaying ? 'default' : 'pointer',
+                          zIndex: 2,
+                        }}
+                      >
+                        <MotionBox
+                          animate={isActive ? { scale: [1, 1.15, 1] } : {}}
+                          transition={{ duration: 0.3 }}
+                          sx={{
+                            width: { xs: 32, md: 36 },
+                            height: { xs: 32, md: 36 },
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: isActive || isPast ? tab.color : 'white',
+                            border: '2.5px solid',
+                            borderColor: isActive || isPast ? tab.color : 'grey.300',
+                            transition: 'all 0.2s ease',
+                            boxShadow: isActive ? `0 4px 12px ${tab.color}40` : 'none',
+                          }}
+                        >
+                          <Icon sx={{ fontSize: { xs: 16, md: 18 }, color: isActive || isPast ? 'white' : 'grey.400' }} />
+                        </MotionBox>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            mt: 0.75,
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: { xs: '0.65rem', md: '0.75rem' },
+                            color: isActive ? tab.color : 'text.secondary',
+                          }}
+                        >
+                          {tab.label}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Box>
+
+              {/* Content Area */}
+              <Box sx={{ p: { xs: 2, md: 2.5 }, minHeight: { xs: 400, md: 440 } }}>
+                <AnimatePresence mode="wait">
+                  {renderContent()}
+                </AnimatePresence>
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* Auto-play indicator */}
+          {isAutoPlaying && (
+            <MotionBox
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              sx={{ textAlign: 'center', mt: 3 }}
+            >
+              <Chip
+                icon={<PlayArrowIcon sx={{ fontSize: 14 }} />}
+                label="자동 재생 중..."
+                size="small"
+                sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}
+              />
+            </MotionBox>
+          )}
+        </MotionBox>
+
+        {/* Call to Action */}
+        <MotionBox
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          sx={{ textAlign: 'center', mt: 6 }}
+        >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, fontSize: '1rem' }}>
+            {isLoggedIn
+              ? '대시보드에서 실제 서비스를 이용해보세요'
+              : '실제 서비스에서 더 많은 기능을 경험해보세요'}
+          </Typography>
+          {isLoggedIn ? (
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<DashboardIcon />}
+              onClick={() => router.push('/dashboard')}
+              sx={{
+                borderRadius: 3,
+                px: 5,
+                py: 1.75,
+                fontSize: '1.05rem',
+                fontWeight: 600,
+              }}
+            >
+              대시보드 가기
+            </Button>
+          ) : (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" alignItems="center">
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => router.push('/auth/signup')}
+                sx={{
+                  borderRadius: 3,
+                  px: 5,
+                  py: 1.75,
+                  fontSize: '1.05rem',
+                  fontWeight: 600,
+                }}
+              >
+                무료로 시작하기
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<LoginIcon />}
+                onClick={() => router.push('/auth/login')}
+                sx={{
+                  borderRadius: 3,
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '0.95rem',
+                }}
+              >
+                로그인
+              </Button>
+            </Stack>
+          )}
         </MotionBox>
       </Container>
     </Box>

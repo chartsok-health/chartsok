@@ -8,21 +8,26 @@ import { useI18n } from '@/lib/i18n';
 const MotionBox = motion.create(Box);
 
 function AnimatedCounter({ value, suffix, duration = 2 }) {
+  const targetValue = parseInt(value, 10);
+  const [isMounted, setIsMounted] = useState(false);
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
   useEffect(() => {
-    if (!isInView) return;
+    setIsMounted(true);
+  }, []);
 
-    const target = parseInt(value, 10);
-    const increment = target / (duration * 60);
+  useEffect(() => {
+    if (!isMounted || !isInView) return;
+
+    const increment = targetValue / (duration * 60);
     let current = 0;
 
     const timer = setInterval(() => {
       current += increment;
-      if (current >= target) {
-        setCount(target);
+      if (current >= targetValue) {
+        setCount(targetValue);
         clearInterval(timer);
       } else {
         setCount(Math.floor(current));
@@ -30,12 +35,14 @@ function AnimatedCounter({ value, suffix, duration = 2 }) {
     }, 1000 / 60);
 
     return () => clearInterval(timer);
-  }, [isInView, value, duration]);
+  }, [isMounted, isInView, targetValue, duration]);
+
+  // Show target value during SSR and initial hydration to prevent mismatch
+  const displayValue = isMounted ? count : targetValue;
 
   return (
     <Box ref={ref} component="span">
-      {count}
-      {suffix}
+      {displayValue}{suffix}
     </Box>
   );
 }
