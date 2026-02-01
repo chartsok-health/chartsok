@@ -388,6 +388,25 @@ export default function RecordResultPage() {
         patientId: patientInfo?.id,
       });
 
+      // Extract diagnosis from assessment - handle both string and object cases
+      const assessmentValue = chartData.assessment;
+      let diagnosis = '';
+      if (typeof assessmentValue === 'string') {
+        diagnosis = assessmentValue.split('\n')[0] || '';
+      } else if (assessmentValue && typeof assessmentValue === 'object') {
+        // If it's an object, try to get a string representation
+        diagnosis = Object.values(assessmentValue).join(' ').split('\n')[0] || '';
+      }
+      if (!diagnosis && chartData.content) {
+        diagnosis = typeof chartData.content === 'string' ? chartData.content.split('\n')[0] : '';
+      }
+
+      // Convert all chartData values to strings before saving
+      const normalizedChartData = {};
+      for (const [key, value] of Object.entries(chartData)) {
+        normalizedChartData[key] = formatSectionContent(value);
+      }
+
       const response = await fetch('/api/charts', {
         method: 'POST',
         headers: {
@@ -395,8 +414,8 @@ export default function RecordResultPage() {
         },
         body: JSON.stringify({
           templateId: selectedTemplateId,
-          chartData: chartData,
-          diagnosis: chartData.assessment?.split('\n')[0] || chartData.content?.split('\n')[0] || '',
+          chartData: normalizedChartData,
+          diagnosis,
           // Add patient info
           patientId: patientInfo?.id || null,
           patientName: patientInfo?.name || null,
