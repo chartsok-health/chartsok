@@ -3,9 +3,9 @@ import {
   patientService,
   patientConsentService,
   patientAttachmentService,
-  recordingSessionService,
-  chartService,
 } from '@/lib/firestore';
+import { db } from '@/lib/firebase-db';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 /**
  * GET /api/patients/[id]
@@ -14,6 +14,9 @@ import {
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const hospitalId = searchParams.get('hospitalId');
+
     const patient = await patientService.getById(id);
 
     if (!patient) {
@@ -23,27 +26,69 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Get related data
-    const [consents, attachments, sessions] = await Promise.all([
+    // Get consents and attachments
+    const [consents, attachments] = await Promise.all([
       patientConsentService.getByPatientId(id),
       patientAttachmentService.getByPatientId(id),
-      recordingSessionService.getByPatientId(id),
     ]);
 
-    // Get charts for sessions
-    const charts = await Promise.all(
-      sessions.map(s => chartService.getBySessionId(s.id))
-    );
+    // Helper to format date in local timezone
+    const formatLocalDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // Get records from hospital's records collection
+    let records = [];
+    let visitCount = 0;
+    let lastVisit = null;
+
+    if (hospitalId) {
+      try {
+        const recordsRef = collection(db, 'hospitals', hospitalId, 'records');
+        const q = query(recordsRef, where('patientId', '==', id));
+        const recordsSnapshot = await getDocs(q);
+
+        records = recordsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          let createdAt = null;
+          if (data.createdAt) {
+            createdAt = typeof data.createdAt === 'string'
+              ? new Date(data.createdAt)
+              : data.createdAt.toDate?.() || new Date(data.createdAt);
+          }
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: createdAt ? createdAt.toISOString() : null,
+            date: createdAt ? formatLocalDate(createdAt) : null,
+          };
+        });
+
+        // Sort by createdAt descending
+        records.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+          return dateB - dateA;
+        });
+
+        visitCount = records.length;
+        lastVisit = records.length > 0 ? records[0].date : null;
+      } catch (recordsError) {
+        console.error('Error fetching patient records:', recordsError);
+      }
+    }
 
     return NextResponse.json({
       patient: {
         ...patient,
         consents,
         attachments,
-        sessions,
-        charts: charts.filter(Boolean),
-        visitCount: sessions.length,
-        lastVisit: sessions.length > 0 ? sessions[0].date : null,
+        records,
+        visitCount,
+        lastVisit,
       },
     });
   } catch (error) {

@@ -739,6 +739,7 @@ export default function RecordPage() {
     sessionStorage.setItem('userSettings', JSON.stringify(userSettings));
     sessionStorage.setItem('userData', JSON.stringify({
       userId: user?.uid || '',
+      doctorId: user?.uid || '', // Use user.uid as doctorId (logged-in doctor)
       hospitalId: userProfile?.hospitalId || '',
       hospitalName: userProfile?.hospitalName || '',
       doctorName: userProfile?.displayName || user?.displayName || '',

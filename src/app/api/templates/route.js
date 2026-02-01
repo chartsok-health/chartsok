@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { templateService, templateSectionService } from '@/lib/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-db';
 import { collection, getDocs } from 'firebase/firestore';
 
 // Default SOAP template as fallback

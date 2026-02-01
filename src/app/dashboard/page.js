@@ -55,7 +55,7 @@ const CleanCard = ({ children, sx, ...props }) => (
 );
 
 export default function DashboardPage() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [todayRecords, setTodayRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,12 +105,21 @@ export default function DashboardPage() {
 
   // Fetch dashboard stats from API
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
     async function fetchData() {
+      // Wait for userProfile to be available to get hospitalId
+      if (!userProfile?.hospitalId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
 
-        // Fetch comprehensive stats from dashboard stats API
-        const statsResponse = await fetch('/api/dashboard/stats');
+        // Fetch comprehensive stats from dashboard stats API with hospitalId
+        const statsResponse = await fetch(`/api/dashboard/stats?hospitalId=${userProfile.hospitalId}`);
         const statsData = await statsResponse.json();
 
         if (statsData) {
@@ -137,15 +146,22 @@ export default function DashboardPage() {
 
           // Set today's sessions for the list
           if (statsData.todaySessions && statsData.todaySessions.length > 0) {
-            const records = statsData.todaySessions.map((session) => ({
-              id: session.id,
-              time: session.time || '',
-              patient: session.patientName || '환자',
-              patientInfo: `${session.patientGender || ''}/${session.patientAge || ''}`,
-              diagnosis: session.diagnosis || '',
-              duration: session.durationFormatted || formatDuration(session.duration || 0),
-              status: session.status,
-            }));
+            const records = statsData.todaySessions.map((session) => {
+              // Only show gender/age if at least one exists
+              const gender = session.patientGender || '';
+              const age = session.patientAge || '';
+              const patientInfo = gender || age ? `${gender}${gender && age ? '/' : ''}${age}` : '';
+
+              return {
+                id: session.id,
+                time: session.time || '',
+                patient: session.patientName || '환자',
+                patientInfo,
+                diagnosis: session.diagnosis || '',
+                duration: session.durationFormatted || formatDuration(session.duration || 0),
+                status: session.status,
+              };
+            });
             setTodayRecords(records);
           }
         }
@@ -157,7 +173,7 @@ export default function DashboardPage() {
     }
 
     fetchData();
-  }, []);
+  }, [authLoading, userProfile?.hospitalId]);
 
   const greeting = displayName || userProfile?.doctorName || user?.displayName || '선생님';
 
@@ -652,7 +668,7 @@ export default function DashboardPage() {
                           sx={{
                             width: 32,
                             height: 32,
-                            bgcolor: record.patientInfo.includes('여') ? '#F472B6' : '#60A5FA',
+                            bgcolor: record.patientInfo?.includes('여') ? '#F472B6' : '#60A5FA',
                             fontSize: '0.8rem',
                             fontWeight: 600,
                           }}
@@ -663,9 +679,11 @@ export default function DashboardPage() {
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {record.patient}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {record.patientInfo}
-                          </Typography>
+                          {record.patientInfo && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              {record.patientInfo}
+                            </Typography>
+                          )}
                         </Box>
                       </Box>
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-db';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { chartService } from '@/lib/firestore';
 

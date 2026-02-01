@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase-db';
+import { collection, addDoc, getDocs, doc, updateDoc, query, where, increment } from 'firebase/firestore';
 import {
   chartService,
   chartContentService,
@@ -120,6 +120,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
+    console.log('POST /api/charts - Request body:', JSON.stringify(body, null, 2));
     const {
       sessionId,
       patientId,
@@ -131,6 +132,7 @@ export async function POST(request) {
       // Required for hospital-based storage
       hospitalId,
       userId,
+      doctorId,
       doctorName,
       transcription,
       recordingDuration,
@@ -160,6 +162,7 @@ export async function POST(request) {
       status: 'completed',
       hospitalId: hospitalId || null,
       userId: userId || null,
+      doctorId: doctorId || userId || null,
       doctorName: doctorName || '',
       transcription: transcription || [],
       recordingDuration: recordingDuration || '00:00',
@@ -180,6 +183,23 @@ export async function POST(request) {
         ...recordData,
       };
       console.log(`Record saved to hospitals/${hospitalId}/records/${docRef.id}`);
+
+      // Update patient's lastVisit and visitCount if patientId is provided
+      if (patientId) {
+        try {
+          // Patients are stored in the global 'patients' collection
+          const patientRef = doc(db, 'patients', patientId);
+          await updateDoc(patientRef, {
+            lastVisit: now,
+            visitCount: increment(1),
+            updatedAt: now,
+          });
+          console.log(`Updated lastVisit and visitCount for patient ${patientId}`);
+        } catch (patientUpdateError) {
+          console.error('Error updating patient lastVisit:', patientUpdateError);
+          // Don't fail the whole request if patient update fails
+        }
+      }
     } else {
       // Fallback to global charts collection (legacy)
       const chart = await chartService.createWithContents(
@@ -192,6 +212,7 @@ export async function POST(request) {
           status: 'completed',
           hospitalId: hospitalId || null,
           userId: userId || null,
+          doctorId: doctorId || userId || null,
           doctorName: doctorName || '',
           transcription: transcription || [],
           recordingDuration: recordingDuration || '00:00',
@@ -213,8 +234,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Error saving chart:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to save chart' },
+      { error: `Failed to save chart: ${error.message}` },
       { status: 500 }
     );
   }

@@ -50,8 +50,21 @@ const sectionIcons = {
   labResults: ScienceIcon,
 };
 
+// Helper function to safely convert any value to a displayable string
+const formatSectionContent = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    // Convert object to formatted string (key: value pairs)
+    return Object.entries(value)
+      .map(([key, val]) => `${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
+      .join('\n');
+  }
+  return String(value);
+};
+
 export default function RecordResultPage() {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,9 +74,31 @@ export default function RecordResultPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [error, setError] = useState(null);
 
+  // Default SOAP template for fallback
+  const defaultSoapTemplate = {
+    id: 'default-soap',
+    name: 'SOAP 기본',
+    description: '표준 SOAP 형식 차트 템플릿',
+    category: 'soap',
+    isDefault: true,
+    isSystem: true,
+    status: 'active',
+    content: `[Subjective]
+환자의 주호소 및 현병력을 기록합니다.
+
+[Objective]
+신체 검진 및 검사 소견을 기록합니다.
+
+[Assessment]
+진단 및 감별 진단을 기록합니다.
+
+[Plan]
+치료 계획 및 처방을 기록합니다.`,
+  };
+
   // Template states - initialize with default SOAP sections
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templates, setTemplates] = useState([defaultSoapTemplate]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('default-soap');
   const [templateSections, setTemplateSections] = useState(defaultSOAPSections);
 
   // Data from record page
@@ -73,19 +108,23 @@ export default function RecordResultPage() {
   const [userSettings, setUserSettings] = useState({ aiTone: '', keywords: [] });
   const [userData, setUserData] = useState({ userId: '', hospitalId: '', doctorName: '' });
 
-  // Fetch templates on mount
+  // Fetch templates on mount - pass userId for proper fallback with default SOAP
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
         const specialty = userProfile?.specialty || null;
-        const url = specialty
-          ? `/api/templates?specialty=${specialty}`
-          : '/api/templates';
+        const userId = userProfile?.uid || user?.uid || null;
 
+        // Build URL with userId for proper template loading (includes default SOAP)
+        const params = new URLSearchParams();
+        if (userId) params.append('userId', userId);
+        if (specialty) params.append('specialty', specialty);
+
+        const url = `/api/templates${params.toString() ? '?' + params.toString() : ''}`;
         const response = await fetch(url);
         const data = await response.json();
 
-        if (data.templates) {
+        if (data.templates && data.templates.length > 0) {
           setTemplates(data.templates);
           // Set default template based on specialty or first template
           const defaultTemplate = data.templates.find(t =>
@@ -107,14 +146,24 @@ export default function RecordResultPage() {
               setTemplateSections(defaultTemplate.sections);
             }
           }
+        } else {
+          // Fallback to default SOAP template if no templates returned
+          console.log('No templates from API, using default SOAP');
+          setTemplates([defaultSoapTemplate]);
+          setSelectedTemplateId('default-soap');
+          setTemplateSections(defaultSOAPSections);
         }
       } catch (err) {
         console.error('Error fetching templates:', err);
+        // Fallback to default SOAP template on error
+        setTemplates([defaultSoapTemplate]);
+        setSelectedTemplateId('default-soap');
+        setTemplateSections(defaultSOAPSections);
       }
     };
 
     fetchTemplates();
-  }, [userProfile?.specialty]);
+  }, [userProfile?.specialty, userProfile?.uid, user?.uid]);
 
   // Debug: Log chartData and templateSections changes
   useEffect(() => {
@@ -125,6 +174,8 @@ export default function RecordResultPage() {
   // Load all data from sessionStorage and generate chart
   useEffect(() => {
     const loadAndGenerate = async () => {
+      console.log('loadAndGenerate called with selectedTemplateId:', selectedTemplateId);
+
       try {
         // Load all stored data
         const storedTranscription = sessionStorage.getItem('transcription');
@@ -134,6 +185,12 @@ export default function RecordResultPage() {
         const storedTemplate = sessionStorage.getItem('selectedTemplate');
         const storedUserSettings = sessionStorage.getItem('userSettings');
         const storedUserData = sessionStorage.getItem('userData');
+
+        console.log('SessionStorage data:', {
+          hasTranscription: !!storedTranscription,
+          hasUserData: !!storedUserData,
+          hasTemplate: !!storedTemplate,
+        });
 
         // Parse and set all data
         if (storedPatientInfo) {
@@ -310,6 +367,27 @@ export default function RecordResultPage() {
 
   const handleSave = async () => {
     try {
+      // Validate chartData before saving
+      if (!chartData || Object.keys(chartData).length === 0) {
+        setSnackbar({ open: true, message: '저장할 차트 내용이 없습니다', severity: 'error' });
+        return false;
+      }
+
+      // Validate required IDs
+      if (!userData?.hospitalId) {
+        console.error('Missing hospitalId:', userData);
+        setSnackbar({ open: true, message: '병원 정보가 없습니다. 다시 녹음해 주세요.', severity: 'error' });
+        return false;
+      }
+
+      console.log('Saving chart with data:', {
+        chartData,
+        hospitalId: userData?.hospitalId,
+        userId: userData?.userId,
+        doctorId: userData?.doctorId,
+        patientId: patientInfo?.id,
+      });
+
       const response = await fetch('/api/charts', {
         method: 'POST',
         headers: {
@@ -323,9 +401,10 @@ export default function RecordResultPage() {
           patientId: patientInfo?.id || null,
           patientName: patientInfo?.name || null,
           patientChartNo: patientInfo?.chartNo || null,
-          // Add hospital and user info
+          // Add hospital and user info (required)
           hospitalId: userData?.hospitalId || null,
           userId: userData?.userId || null,
+          doctorId: userData?.doctorId || userData?.userId || null,
           doctorName: userData?.doctorName || '',
           // Include vitals and transcription
           vitals: vitalsInfo || null,
@@ -335,15 +414,20 @@ export default function RecordResultPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save chart');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Save failed:', errorData);
+        throw new Error(errorData.error || 'Failed to save chart');
       }
+
+      const result = await response.json();
+      console.log('Chart saved successfully:', result);
 
       setIsEditing(false);
       setSnackbar({ open: true, message: '차트가 저장되었습니다', severity: 'success' });
       return true;
     } catch (err) {
       console.error('Save error:', err);
-      setSnackbar({ open: true, message: '저장 중 오류가 발생했습니다', severity: 'error' });
+      setSnackbar({ open: true, message: `저장 중 오류가 발생했습니다: ${err.message}`, severity: 'error' });
       return false;
     }
   };
@@ -623,7 +707,7 @@ export default function RecordResultPage() {
                             <Tooltip title="복사">
                               <IconButton
                                 size="small"
-                                onClick={() => handleCopy(chartData[section.sectionKey] || '')}
+                                onClick={() => handleCopy(formatSectionContent(chartData[section.sectionKey]))}
                               >
                                 <ContentCopyIcon sx={{ fontSize: 16 }} />
                               </IconButton>
@@ -634,7 +718,7 @@ export default function RecordResultPage() {
                               fullWidth
                               multiline
                               minRows={3}
-                              value={chartData[section.sectionKey] || ''}
+                              value={formatSectionContent(chartData[section.sectionKey])}
                               onChange={(e) =>
                                 setChartData((prev) => ({
                                   ...prev,
@@ -662,7 +746,7 @@ export default function RecordResultPage() {
                                 fontStyle: chartData[section.sectionKey] ? 'normal' : 'italic',
                               }}
                             >
-                              {chartData[section.sectionKey] || '내용 없음'}
+                              {formatSectionContent(chartData[section.sectionKey]) || '내용 없음'}
                             </Typography>
                           )}
                         </Box>
