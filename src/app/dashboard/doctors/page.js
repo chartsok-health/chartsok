@@ -44,6 +44,9 @@ import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -65,6 +68,7 @@ const specialties = [
 ];
 
 const roleLabels = {
+  owner: { label: '관리자', color: 'info' },
   admin: { label: '관리자', color: 'info' },
   doctor: { label: '의사', color: 'primary' },
 };
@@ -374,22 +378,78 @@ export default function DoctorsPage() {
     }
   };
 
+  // Pending doctors (users with approvalStatus === 'pending')
+  const pendingDoctors = useMemo(() => {
+    return doctors.filter((d) => d.approvalStatus === 'pending');
+  }, [doctors]);
+
+  // Approve pending doctor
+  const handleApproveDoctor = async (doctorId) => {
+    try {
+      const hospitalId = userProfile?.hospitalId || 'default';
+      const response = await fetch('/api/doctors', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: doctorId, hospitalId, status: 'active' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to approve');
+
+      // Update local state
+      setDoctors(doctors.map((d) =>
+        d.id === doctorId ? { ...d, status: 'active', approvalStatus: 'active' } : d
+      ));
+      setSnackbar({ open: true, message: '의료진이 승인되었습니다', severity: 'success' });
+    } catch (error) {
+      console.error('Error approving doctor:', error);
+      setSnackbar({ open: true, message: '승인에 실패했습니다', severity: 'error' });
+    }
+  };
+
+  // Reject pending doctor
+  const handleRejectDoctor = async (doctorId) => {
+    if (!confirm('이 가입 요청을 거절하시겠습니까?')) return;
+    try {
+      const hospitalId = userProfile?.hospitalId || 'default';
+      const response = await fetch('/api/doctors', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: doctorId, hospitalId, status: 'archived' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to reject');
+
+      setDoctors(doctors.map((d) =>
+        d.id === doctorId ? { ...d, status: 'archived', approvalStatus: 'rejected' } : d
+      ));
+      setSnackbar({ open: true, message: '가입 요청이 거절되었습니다', severity: 'info' });
+    } catch (error) {
+      console.error('Error rejecting doctor:', error);
+      setSnackbar({ open: true, message: '거절에 실패했습니다', severity: 'error' });
+    }
+  };
+
   // Stats
   const { totalDoctors, activeDoctors, archivedDoctors, stats } = useMemo(() => {
     const total = doctors.length;
-    const active = doctors.filter((d) => d.status === 'active').length;
+    const active = doctors.filter((d) => d.status === 'active' && d.approvalStatus !== 'pending').length;
     const archived = doctors.filter((d) => d.status === 'archived').length;
+    const pending = pendingDoctors.length;
+    const statsList = [
+      { label: '전체 의료진', value: total, icon: GroupsIcon, color: '#4B9CD3', bgColor: '#EBF5FF' },
+      { label: '활성 의료진', value: active, icon: VerifiedIcon, color: '#10B981', bgColor: '#ECFDF5' },
+      { label: '보관된 의료진', value: archived, icon: ArchiveIcon, color: '#6B7280', bgColor: '#F3F4F6' },
+    ];
+    if (pending > 0) {
+      statsList.push({ label: '승인 대기', value: pending, icon: HourglassTopIcon, color: '#F59E0B', bgColor: '#FFFBEB' });
+    }
     return {
       totalDoctors: total,
       activeDoctors: active,
       archivedDoctors: archived,
-      stats: [
-        { label: '전체 의료진', value: total, icon: GroupsIcon, color: '#4B9CD3', bgColor: '#EBF5FF' },
-        { label: '활성 의료진', value: active, icon: VerifiedIcon, color: '#10B981', bgColor: '#ECFDF5' },
-        { label: '보관된 의료진', value: archived, icon: ArchiveIcon, color: '#6B7280', bgColor: '#F3F4F6' },
-      ],
+      stats: statsList,
     };
-  }, [doctors]);
+  }, [doctors, pendingDoctors]);
 
   if (loading) {
     return (
@@ -509,6 +569,99 @@ export default function DoctorsPage() {
           </Grid>
         ))}
       </Grid>
+
+      {/* Pending Approval Section */}
+      {pendingDoctors.length > 0 && (
+        <Card
+          elevation={0}
+          sx={{
+            mb: 3,
+            background: 'white',
+            border: '2px solid',
+            borderColor: '#FDE68A',
+            borderRadius: 3,
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ p: 2, bgcolor: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <HourglassTopIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#92400E' }}>
+              승인 대기 ({pendingDoctors.length}명)
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2 }}>
+            {pendingDoctors.map((doctor) => (
+              <Box
+                key={doctor.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: '#FEFCE8',
+                  mb: 1,
+                  '&:last-child': { mb: 0 },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {doctor.name?.charAt(0) || '?'}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1E293B' }}>
+                      {doctor.name}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748B' }}>
+                      {doctor.email} {doctor.specialty ? `· ${doctor.specialty}` : ''}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<CheckIcon />}
+                    onClick={() => handleApproveDoctor(doctor.id)}
+                    sx={{
+                      borderRadius: 2,
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                    }}
+                  >
+                    승인
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<CloseIcon />}
+                    onClick={() => handleRejectDoctor(doctor.id)}
+                    sx={{
+                      borderRadius: 2,
+                      borderColor: '#EF4444',
+                      color: '#EF4444',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      '&:hover': { borderColor: '#DC2626', bgcolor: '#FEF2F2' },
+                    }}
+                  >
+                    거절
+                  </Button>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Card>
+      )}
 
       {/* Search and Filters */}
       {doctors.length > 0 && (
@@ -631,8 +784,8 @@ export default function DoctorsPage() {
                   sx={{
                     background: 'white',
                     border: '1px solid',
-                    borderColor: doctor.role === 'admin' ? 'info.200' : 'grey.200',
-                    bgcolor: doctor.role === 'admin' ? 'info.50' : 'white',
+                    borderColor: (doctor.role === 'admin' || doctor.role === 'owner') ? 'info.200' : 'grey.200',
+                    bgcolor: (doctor.role === 'admin' || doctor.role === 'owner') ? 'info.50' : 'white',
                     borderRadius: 3,
                     position: 'relative',
                     overflow: 'visible',
@@ -658,7 +811,7 @@ export default function DoctorsPage() {
                       }}
                     />
                   )}
-                  {doctor.role === 'admin' && (
+                  {(doctor.role === 'admin' || doctor.role === 'owner') && (
                     <Chip
                       label="관리자"
                       size="small"
@@ -1007,7 +1160,7 @@ export default function DoctorsPage() {
                   fullWidth
                   select
                   label="역할"
-                  value={formRole}
+                  value={formRole === 'owner' ? 'admin' : formRole}
                   onChange={(e) => setFormRole(e.target.value)}
                   disabled={dialogMode === 'view'}
                 >

@@ -33,6 +33,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import { useAuth } from '@/lib/AuthContext';
 import { formatDuration } from '@/lib/helpers';
 
@@ -161,6 +162,7 @@ export default function DashboardPage() {
                 patient: session.patientName || '환자',
                 patientInfo,
                 diagnosis: session.diagnosis || '',
+                doctorName: session.doctorName || '',
                 duration: session.durationFormatted || formatDuration(session.duration || 0),
                 status: session.status,
               };
@@ -786,6 +788,16 @@ export default function DashboardPage() {
                           )}
                         </Box>
                       </Box>
+
+                      {/* Doctor */}
+                      {record.doctorName && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 80 }}>
+                          <MedicalServicesIcon sx={{ fontSize: 14, color: 'grey.400' }} />
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                            {record.doctorName}
+                          </Typography>
+                        </Box>
+                      )}
 
                       {/* Diagnosis */}
                       <Box sx={{ flex: 1 }}>

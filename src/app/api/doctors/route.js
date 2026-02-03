@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { userService, userHospitalService } from '@/lib/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-db';
 
 // Helper to convert Firestore Timestamp or string to date string
 const formatDateString = (dateValue) => {
@@ -48,6 +50,7 @@ export async function GET(request) {
         address: user.address || '',
         joinDate: uh.joinDate || formatDateString(user.createdAt),
         status: uh.status || 'active',
+        approvalStatus: user.approvalStatus || 'active',
         avatar: user.profileImage || null,
         isMe: userId && user.id === userId,
       };
@@ -249,9 +252,9 @@ export async function PATCH(request) {
       );
     }
 
-    if (!status || !['active', 'archived'].includes(status)) {
+    if (!status || !['active', 'archived', 'pending'].includes(status)) {
       return NextResponse.json(
-        { error: 'Valid status (active/archived) is required' },
+        { error: 'Valid status (active/archived/pending) is required' },
         { status: 400 }
       );
     }
@@ -261,8 +264,20 @@ export async function PATCH(request) {
     // Update status in userHospital relationship
     await userHospitalService.updateStatus(id, effectiveHospitalId, status);
 
+    // Also update user's approvalStatus when approving/rejecting
+    if (status === 'active') {
+      // Approve: update user's approvalStatus to active
+      await updateDoc(doc(db, 'users', id), { approvalStatus: 'active' });
+    } else if (status === 'archived') {
+      // If previously pending, this is a rejection
+      const userDoc = await userService.getById(id);
+      if (userDoc?.approvalStatus === 'pending') {
+        await updateDoc(doc(db, 'users', id), { approvalStatus: 'rejected' });
+      }
+    }
+
     return NextResponse.json({
-      message: status === 'archived' ? 'Doctor archived successfully' : 'Doctor restored successfully',
+      message: status === 'archived' ? 'Doctor archived successfully' : status === 'active' ? 'Doctor approved successfully' : 'Status updated',
       status,
     });
   } catch (error) {

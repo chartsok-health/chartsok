@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -8,37 +8,35 @@ import {
   Paper,
   Button,
   TextField,
-  Stepper,
-  Step,
-  StepLabel,
   Card,
   CardContent,
   Grid,
   Chip,
   LinearProgress,
-  Avatar,
   CircularProgress,
+  InputAdornment,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupsIcon from '@mui/icons-material/Groups';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CelebrationIcon from '@mui/icons-material/Celebration';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
+import SearchIcon from '@mui/icons-material/Search';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useAuth } from '@/lib/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { userHospitalService } from '@/lib/firestore';
 
 const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 const MotionCard = motion.create(Card);
-
-const steps = ['환영합니다', '진료 유형', '규모', '전문 분야', '추가 정보', '완료'];
 
 const practiceTypes = [
   {
@@ -95,19 +93,56 @@ const specialties = [
   { id: 'other', label: '기타', emoji: '➕' },
 ];
 
+// Step IDs for dynamic flow
+const STEP_WELCOME = 'welcome';
+const STEP_HOSPITAL = 'hospital';
+const STEP_TYPE = 'type';
+const STEP_SIZE = 'size';
+const STEP_SPECIALTY = 'specialty';
+const STEP_COMPLETE = 'complete';
+
+// Step icon mapping
+const stepIcons = {
+  [STEP_WELCOME]: '👋',
+  [STEP_HOSPITAL]: '🏥',
+  [STEP_TYPE]: '🏢',
+  [STEP_SIZE]: '👥',
+  [STEP_SPECIALTY]: '🩺',
+  [STEP_COMPLETE]: '✅',
+};
+
 export default function OnboardingPage() {
   const { user, userProfile, completeOnboarding, loading } = useAuth();
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     practiceType: '',
     practiceSize: '',
     specialty: '',
     clinicName: '',
-    doctorName: '',
     phoneNumber: '',
   });
+
+  // Hospital search state
+  const [hospitalInput, setHospitalInput] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [foundHospital, setFoundHospital] = useState(null); // null = not searched, false = not found, object = found
+  const [hospitalConfirmed, setHospitalConfirmed] = useState(false);
+
+  // Dynamic steps based on whether hospital was found
+  const getSteps = useCallback(() => {
+    if (foundHospital && hospitalConfirmed) {
+      return [STEP_WELCOME, STEP_HOSPITAL, STEP_SPECIALTY, STEP_COMPLETE];
+    }
+    if (foundHospital === false && hospitalConfirmed) {
+      return [STEP_WELCOME, STEP_HOSPITAL, STEP_TYPE, STEP_SIZE, STEP_SPECIALTY, STEP_COMPLETE];
+    }
+    return [STEP_WELCOME, STEP_HOSPITAL, STEP_TYPE, STEP_SIZE, STEP_SPECIALTY, STEP_COMPLETE];
+  }, [foundHospital, hospitalConfirmed]);
+
+  const steps = getSteps();
+  const currentStep = steps[activeStepIndex];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -119,35 +154,86 @@ export default function OnboardingPage() {
   }, [user, userProfile, loading, router]);
 
   const handleNext = () => {
-    setActiveStep((prev) => prev + 1);
+    setActiveStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
   const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
+    setActiveStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
   const handleSelect = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Validate hospital name: no special characters allowed, only Korean, English, numbers
+  const validateHospitalName = (name) => {
+    const cleaned = name.trim();
+    if (!cleaned) return false;
+    // Allow Korean, English, numbers only (no spaces, no special chars)
+    return /^[가-힣a-zA-Z0-9]+$/.test(cleaned);
+  };
+
+  // Search for hospital in DB
+  const handleHospitalSearch = async () => {
+    if (!hospitalInput.trim()) return;
+
+    setIsSearching(true);
+    setFoundHospital(null);
+    setHospitalConfirmed(false);
+
+    try {
+      const normalizedInput = hospitalInput.trim().replace(/\s+/g, '').toLowerCase();
+      const hospitalsRef = collection(db, 'hospitals');
+      const q = query(hospitalsRef, where('normalizedName', '==', normalizedInput));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const hospitalDoc = querySnapshot.docs[0];
+        const hospitalData = hospitalDoc.data();
+        setFoundHospital({
+          id: hospitalDoc.id,
+          ...hospitalData,
+        });
+        setFormData((prev) => ({
+          ...prev,
+          clinicName: hospitalData.name || hospitalInput.trim(),
+          practiceType: hospitalData.type || prev.practiceType,
+          practiceSize: hospitalData.size || prev.practiceSize,
+          specialty: hospitalData.specialty || prev.specialty,
+        }));
+      } else {
+        setFoundHospital(false);
+        setFormData((prev) => ({
+          ...prev,
+          clinicName: hospitalInput.trim(),
+        }));
+      }
+    } catch (error) {
+      console.error('Error searching hospital:', error);
+      setFoundHospital(false);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleConfirmHospital = (isExisting) => {
+    setHospitalConfirmed(true);
+    setTimeout(() => {
+      setActiveStepIndex((prev) => prev + 1);
+    }, 0);
+  };
+
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
-      // Normalize hospital name: trim and remove all whitespace for comparison
-      const normalizedName = formData.clinicName.trim().replace(/\s+/g, '').toLowerCase();
-
-      // Check if hospital with this normalized name already exists
-      const hospitalsRef = collection(db, 'hospitals');
-      const q = query(hospitalsRef, where('normalizedName', '==', normalizedName));
-      const querySnapshot = await getDocs(q);
-
       let hospitalId;
+      const isJoiningExisting = foundHospital && foundHospital.id;
 
-      if (!querySnapshot.empty) {
-        // Hospital exists, use the existing one
-        hospitalId = querySnapshot.docs[0].id;
+      if (isJoiningExisting) {
+        hospitalId = foundHospital.id;
       } else {
-        // Create a new hospital
+        const normalizedName = formData.clinicName.trim().replace(/\s+/g, '').toLowerCase();
+        const hospitalsRef = collection(db, 'hospitals');
         const hospitalData = {
           name: formData.clinicName.trim(),
           normalizedName: normalizedName,
@@ -159,24 +245,44 @@ export default function OnboardingPage() {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-
         const hospitalRef = await addDoc(hospitalsRef, hospitalData);
         hospitalId = hospitalRef.id;
       }
 
-      // Complete onboarding with hospitalId
+      // Set approvalStatus: 'pending' when joining existing hospital, 'active' when creating new
+      const approvalStatus = isJoiningExisting ? 'pending' : 'active';
+      const role = isJoiningExisting ? 'doctor' : 'owner';
+
       await completeOnboarding({
         ...formData,
         hospitalId: hospitalId,
         hospitalName: formData.clinicName.trim(),
-        displayName: formData.doctorName,
+        displayName: user?.displayName || '',
+        approvalStatus,
       });
 
+      // Create userHospitals record with correct status
+      await userHospitalService.associateUser(
+        user.uid,
+        hospitalId,
+        role,
+        true, // isPrimary
+        {
+          status: isJoiningExisting ? 'pending' : 'active',
+          joinDate: new Date().toISOString().split('T')[0],
+        }
+      );
+
       // Move to completion step
-      setActiveStep(5);
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
+      setActiveStepIndex(steps.length - 1);
+
+      if (!isJoiningExisting) {
+        // New hospital owner → go to dashboard
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      }
+      // Pending users stay on completion screen with info
     } catch (error) {
       console.error('Error completing onboarding:', error);
       setIsSubmitting(false);
@@ -184,17 +290,17 @@ export default function OnboardingPage() {
   };
 
   const canProceed = () => {
-    switch (activeStep) {
-      case 0:
+    switch (currentStep) {
+      case STEP_WELCOME:
         return true;
-      case 1:
+      case STEP_HOSPITAL:
+        return hospitalConfirmed;
+      case STEP_TYPE:
         return !!formData.practiceType;
-      case 2:
+      case STEP_SIZE:
         return !!formData.practiceSize;
-      case 3:
+      case STEP_SPECIALTY:
         return !!formData.specialty;
-      case 4:
-        return !!formData.clinicName && !!formData.doctorName;
       default:
         return true;
     }
@@ -208,11 +314,15 @@ export default function OnboardingPage() {
     );
   }
 
+  // Is the user joining an existing hospital (will be pending)?
+  const isPendingFlow = foundHospital && foundHospital.id;
+
   const renderStepContent = () => {
-    switch (activeStep) {
-      case 0:
+    switch (currentStep) {
+      case STEP_WELCOME:
         return (
           <MotionBox
+            key="welcome"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -244,26 +354,231 @@ export default function OnboardingPage() {
               chartsok에 오신 것을 환영합니다!
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: 500, mx: 'auto' }}>
-              몇 가지 간단한 질문에 답해주시면, 선생님의 진료 환경에 맞게 최적화된 서비스를 제공해 드릴게요.
+              병원 정보만 간단히 확인하면 바로 시작할 수 있습니다.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chip icon={<CheckCircleIcon />} label="2분 이내 완료" variant="outlined" />
+              <Chip icon={<CheckCircleIcon />} label="1분 이내 완료" variant="outlined" />
               <Chip icon={<CheckCircleIcon />} label="언제든 수정 가능" variant="outlined" />
               <Chip icon={<CheckCircleIcon />} label="개인정보 보호" variant="outlined" />
             </Box>
           </MotionBox>
         );
 
-      case 1:
+      case STEP_HOSPITAL:
         return (
           <MotionBox
+            key="hospital"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              어떤 유형의 의료기관에서 근무하시나요?
+              병원 이름을 입력해 주세요
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
+              등록된 병원이 있는지 확인합니다
+            </Typography>
+
+            <Box sx={{ maxWidth: 450, mx: 'auto' }}>
+              <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+                <TextField
+                  fullWidth
+                  label="병원/의원 이름"
+                  placeholder="예: 서울내과의원"
+                  value={hospitalInput}
+                  onChange={(e) => {
+                    // Strip whitespace and special characters as they type
+                    const value = e.target.value.replace(/[^가-힣a-zA-Z0-9]/g, '');
+                    setHospitalInput(value);
+                    if (hospitalConfirmed) {
+                      setFoundHospital(null);
+                      setHospitalConfirmed(false);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && hospitalInput.trim()) {
+                      handleHospitalSearch();
+                    }
+                  }}
+                  disabled={isSearching}
+                  helperText="공백 및 특수문자 없이 입력해주세요"
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocalHospitalIcon sx={{ color: 'grey.400' }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleHospitalSearch}
+                  disabled={!hospitalInput.trim() || isSearching}
+                  sx={{
+                    minWidth: 80,
+                    background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                  }}
+                >
+                  {isSearching ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                </Button>
+              </Box>
+
+              <AnimatePresence mode="wait">
+                {foundHospital && !hospitalConfirmed && (
+                  <MotionBox
+                    key="found"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card
+                      elevation={0}
+                      sx={{
+                        border: '2px solid',
+                        borderColor: '#10B981',
+                        borderRadius: 3,
+                        bgcolor: '#F0FDF4',
+                        mb: 2,
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                          <CheckCircleIcon sx={{ color: '#10B981', fontSize: 28 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#065F46' }}>
+                            병원을 찾았습니다!
+                          </Typography>
+                        </Box>
+                        <Box sx={{ pl: 0.5, mb: 2 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                            {foundHospital.name}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {foundHospital.type && (
+                              <Chip
+                                size="small"
+                                label={practiceTypes.find(t => t.id === foundHospital.type)?.label || foundHospital.type}
+                                sx={{ bgcolor: '#E0F2FE', color: '#0369A1' }}
+                              />
+                            )}
+                            {foundHospital.size && (
+                              <Chip
+                                size="small"
+                                label={`의료진 ${foundHospital.size}명`}
+                                sx={{ bgcolor: '#F3E8FF', color: '#7C3AED' }}
+                              />
+                            )}
+                            {foundHospital.specialty && (
+                              <Chip
+                                size="small"
+                                label={specialties.find(s => s.id === foundHospital.specialty)?.label || foundHospital.specialty}
+                                sx={{ bgcolor: '#FEF3C7', color: '#D97706' }}
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                        <Typography variant="caption" sx={{ color: '#065F46', display: 'block', mb: 2 }}>
+                          가입 후 병원 관리자의 승인이 필요합니다
+                        </Typography>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          onClick={() => handleConfirmHospital(true)}
+                          sx={{
+                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          이 병원으로 시작하기
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </MotionBox>
+                )}
+
+                {foundHospital === false && !hospitalConfirmed && (
+                  <MotionBox
+                    key="not-found"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card
+                      elevation={0}
+                      sx={{
+                        border: '2px solid',
+                        borderColor: '#F59E0B',
+                        borderRadius: 3,
+                        bgcolor: '#FFFBEB',
+                        mb: 2,
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                          <AddCircleOutlineIcon sx={{ color: '#F59E0B', fontSize: 28 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#92400E' }}>
+                            새로운 병원이네요!
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#78350F', mb: 2 }}>
+                          <strong>{hospitalInput.trim()}</strong>을(를) 새로 등록합니다. 병원 정보를 입력해 주세요.
+                        </Typography>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          onClick={() => handleConfirmHospital(false)}
+                          sx={{
+                            background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          병원 등록하기
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </MotionBox>
+                )}
+              </AnimatePresence>
+
+              {hospitalConfirmed && (
+                <MotionBox
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: '#F0FDF4',
+                    border: '1px solid #BBF7D0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <CheckCircleIcon sx={{ color: '#10B981', fontSize: 20 }} />
+                  <Typography variant="body2" sx={{ color: '#065F46', fontWeight: 600 }}>
+                    {foundHospital ? `${foundHospital.name} 선택됨` : `${hospitalInput.trim()} — 새로 등록`}
+                  </Typography>
+                </MotionBox>
+              )}
+            </Box>
+          </MotionBox>
+        );
+
+      case STEP_TYPE:
+        return (
+          <MotionBox
+            key="type"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
+              어떤 유형의 의료기관인가요?
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
               가장 적합한 옵션을 선택해 주세요
@@ -314,9 +629,7 @@ export default function OnboardingPage() {
                             {type.description}
                           </Typography>
                         </Box>
-                        {isSelected && (
-                          <CheckCircleIcon sx={{ color: type.color }} />
-                        )}
+                        {isSelected && <CheckCircleIcon sx={{ color: type.color }} />}
                       </CardContent>
                     </MotionCard>
                   </Grid>
@@ -326,9 +639,10 @@ export default function OnboardingPage() {
           </MotionBox>
         );
 
-      case 2:
+      case STEP_SIZE:
         return (
           <MotionBox
+            key="size"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -377,16 +691,17 @@ export default function OnboardingPage() {
           </MotionBox>
         );
 
-      case 3:
+      case STEP_SPECIALTY:
         return (
           <MotionBox
+            key="specialty"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              전문 분야를 선택해 주세요
+              {foundHospital ? '선생님의 전문 분야를 선택해 주세요' : '전문 분야를 선택해 주세요'}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
               AI가 해당 분야에 최적화된 의학 용어를 학습합니다
@@ -427,51 +742,62 @@ export default function OnboardingPage() {
           </MotionBox>
         );
 
-      case 4:
-        return (
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              마지막으로 기본 정보를 입력해 주세요
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              차트 생성 시 사용됩니다
-            </Typography>
-            <Box sx={{ maxWidth: 400, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <TextField
-                fullWidth
-                label="의원/병원 이름"
-                placeholder="예: 서울내과의원"
-                value={formData.clinicName}
-                onChange={(e) => handleSelect('clinicName', e.target.value)}
-                required
-              />
-              <TextField
-                fullWidth
-                label="선생님 성함"
-                placeholder="예: 홍길동"
-                value={formData.doctorName}
-                onChange={(e) => handleSelect('doctorName', e.target.value)}
-                required
-              />
-              <TextField
-                fullWidth
-                label="연락처 (선택)"
-                placeholder="예: 02-1234-5678"
-                value={formData.phoneNumber}
-                onChange={(e) => handleSelect('phoneNumber', e.target.value)}
-              />
-            </Box>
-          </MotionBox>
-        );
+      case STEP_COMPLETE:
+        // Different completion for pending vs active
+        if (isPendingFlow) {
+          return (
+            <MotionBox
+              key="pending"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              sx={{ textAlign: 'center', py: 4 }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', duration: 0.6 }}
+              >
+                <Box
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 4,
+                    boxShadow: '0 12px 40px rgba(245, 158, 11, 0.3)',
+                  }}
+                >
+                  <HourglassTopIcon sx={{ fontSize: 48, color: 'white' }} />
+                </Box>
+              </motion.div>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 2 }}>
+                가입 요청이 전송되었습니다
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
+                <strong>{foundHospital.name}</strong> 관리자가 승인하면
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
+                모든 기능을 사용하실 수 있습니다.
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => router.push('/dashboard')}
+                sx={{ borderRadius: 3 }}
+              >
+                대시보드로 이동
+              </Button>
+            </MotionBox>
+          );
+        }
 
-      case 5:
         return (
           <MotionBox
+            key="complete"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -515,6 +841,13 @@ export default function OnboardingPage() {
     }
   };
 
+  const isLastActionStep = activeStepIndex === steps.length - 2;
+  const isCompleteStep = currentStep === STEP_COMPLETE;
+
+  // Get actionable steps (excluding welcome and complete) for stepper display
+  const actionSteps = steps.filter(s => s !== STEP_WELCOME && s !== STEP_COMPLETE);
+  const currentActionIndex = actionSteps.indexOf(currentStep);
+
   return (
     <Box
       sx={{
@@ -531,7 +864,7 @@ export default function OnboardingPage() {
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
         <LinearProgress
           variant="determinate"
-          value={(activeStep / (steps.length - 1)) * 100}
+          value={(activeStepIndex / (steps.length - 1)) * 100}
           sx={{
             height: 4,
             bgcolor: 'grey.200',
@@ -579,25 +912,82 @@ export default function OnboardingPage() {
           overflow: 'hidden',
         }}
       >
-        {/* Stepper */}
-        {activeStep < 5 && (
-          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100', bgcolor: 'grey.50' }}>
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.slice(0, -1).map((label, index) => (
-                <Step key={label}>
-                  <StepLabel
-                    sx={{
-                      '& .MuiStepLabel-label': {
-                        fontSize: '0.75rem',
-                        fontWeight: activeStep === index ? 600 : 400,
-                      },
-                    }}
-                  >
-                    {label}
-                  </StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+        {/* Stepper — only show during action steps (not welcome, not complete) */}
+        {!isCompleteStep && currentStep !== STEP_WELCOME && (
+          <Box sx={{ px: 4, pt: 3, pb: 2, borderBottom: '1px solid', borderColor: 'grey.100', bgcolor: 'grey.50' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {actionSteps.map((step, index) => {
+                const isCompleted = index < currentActionIndex;
+                const isCurrent = index === currentActionIndex;
+                const stepLabel = {
+                  [STEP_HOSPITAL]: '병원 확인',
+                  [STEP_TYPE]: '기관 유형',
+                  [STEP_SIZE]: '규모',
+                  [STEP_SPECIALTY]: '전문 분야',
+                }[step] || step;
+
+                return (
+                  <Box key={step} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                      <motion.div
+                        animate={{
+                          scale: isCurrent ? [1, 1.1, 1] : 1,
+                        }}
+                        transition={{ duration: 1.5, repeat: isCurrent ? Infinity : 0 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: isCompleted ? '1rem' : '0.8rem',
+                            fontWeight: 700,
+                            bgcolor: isCompleted ? '#10B981' : isCurrent ? '#4B9CD3' : '#E2E8F0',
+                            color: isCompleted || isCurrent ? 'white' : '#94A3B8',
+                            transition: 'all 0.4s ease',
+                            boxShadow: isCurrent ? '0 0 0 4px rgba(75, 156, 211, 0.2)' : 'none',
+                          }}
+                        >
+                          {isCompleted ? (
+                            <CheckCircleIcon sx={{ fontSize: 20 }} />
+                          ) : (
+                            <span>{stepIcons[step]}</span>
+                          )}
+                        </Box>
+                      </motion.div>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: isCurrent ? 700 : 500,
+                          color: isCurrent ? '#4B9CD3' : isCompleted ? '#10B981' : '#94A3B8',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.3s',
+                        }}
+                      >
+                        {stepLabel}
+                      </Typography>
+                    </Box>
+                    {index < actionSteps.length - 1 && (
+                      <Box
+                        sx={{
+                          width: { xs: 24, sm: 48 },
+                          height: 2,
+                          borderRadius: 1,
+                          bgcolor: isCompleted ? '#10B981' : '#E2E8F0',
+                          mx: { xs: 0.5, sm: 1.5 },
+                          mt: -2,
+                          transition: 'all 0.4s ease',
+                        }}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
           </Box>
         )}
 
@@ -609,31 +999,20 @@ export default function OnboardingPage() {
         </Box>
 
         {/* Actions */}
-        {activeStep < 5 && (
+        {!isCompleteStep && (
           <Box sx={{ p: 3, borderTop: '1px solid', borderColor: 'grey.100', display: 'flex', justifyContent: 'space-between' }}>
             <Button
               variant="outlined"
               startIcon={<ArrowBackIcon />}
               onClick={handleBack}
-              disabled={activeStep === 0}
-              sx={{ visibility: activeStep === 0 ? 'hidden' : 'visible' }}
+              disabled={activeStepIndex === 0}
+              sx={{ visibility: activeStepIndex === 0 ? 'hidden' : 'visible' }}
             >
               이전
             </Button>
-            {activeStep < 4 ? (
-              <Button
-                variant="contained"
-                endIcon={<ArrowForwardIcon />}
-                onClick={handleNext}
-                disabled={!canProceed()}
-                sx={{
-                  px: 4,
-                  background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-                }}
-              >
-                다음
-              </Button>
-            ) : (
+            {currentStep === STEP_HOSPITAL ? (
+              <Box />
+            ) : isLastActionStep ? (
               <Button
                 variant="contained"
                 endIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />}
@@ -646,21 +1025,23 @@ export default function OnboardingPage() {
               >
                 {isSubmitting ? '저장 중...' : '완료하기'}
               </Button>
+            ) : (
+              <Button
+                variant="contained"
+                endIcon={<ArrowForwardIcon />}
+                onClick={handleNext}
+                disabled={!canProceed()}
+                sx={{
+                  px: 4,
+                  background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                }}
+              >
+                다음
+              </Button>
             )}
           </Box>
         )}
       </MotionPaper>
-
-      {/* Skip for now */}
-      {activeStep < 5 && activeStep > 0 && (
-        <Button
-          variant="text"
-          sx={{ mt: 2, color: 'text.secondary' }}
-          onClick={handleComplete}
-        >
-          나중에 설정하기
-        </Button>
-      )}
     </Box>
   );
 }

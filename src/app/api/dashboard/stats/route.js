@@ -184,6 +184,7 @@ export async function GET(request) {
       patientGender: r.patientInfo?.gender || '',
       patientAge: r.patientInfo?.age || '',
       diagnosis: r.diagnosis || '',
+      doctorName: r.doctorName || '',
       duration: r.duration || 0,
       durationFormatted: r.recordingDuration || '0:00',
       status: r.status || 'completed',
