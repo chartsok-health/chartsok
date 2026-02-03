@@ -481,28 +481,53 @@ export default function HistoryDetailPage() {
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                   진료 대화 기록
                 </Typography>
-                <Chip
-                  icon={<TimerIcon sx={{ fontSize: 14 }} />}
-                  label={`대화 기록 삭제: ${formatCountdown(remainingSeconds)}`}
-                  size="small"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 600,
-                    bgcolor: remainingSeconds <= 0 ? 'grey.200' : remainingSeconds < 3600 ? 'error.50' : 'warning.50',
-                    color: remainingSeconds <= 0 ? 'grey.500' : remainingSeconds < 3600 ? 'error.main' : 'warning.main',
-                    '& .MuiChip-icon': {
-                      color: remainingSeconds <= 0 ? 'grey.400' : remainingSeconds < 3600 ? 'error.main' : 'warning.main',
-                    },
-                  }}
-                />
+                {remainingSeconds > 0 ? (
+                  <Chip
+                    icon={<TimerIcon sx={{ fontSize: 14 }} />}
+                    label={`자동 삭제: ${formatCountdown(remainingSeconds)}`}
+                    size="small"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      bgcolor: remainingSeconds < 3600 ? 'error.50' : 'warning.50',
+                      color: remainingSeconds < 3600 ? 'error.main' : 'warning.main',
+                      '& .MuiChip-icon': {
+                        color: remainingSeconds < 3600 ? 'error.main' : 'warning.main',
+                      },
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label="삭제됨"
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      bgcolor: 'grey.200',
+                      color: 'grey.500',
+                    }}
+                  />
+                )}
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                음성 파일은 텍스트 변환 후 즉시 삭제되었습니다
+                음성 파일은 텍스트 변환 후 즉시 삭제되며, 대화 기록은 24시간 후 자동 삭제됩니다
               </Typography>
             </Box>
 
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              {detailData.transcription && detailData.transcription.length > 0 ? (
+              {remainingSeconds <= 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                  <TimerIcon sx={{ fontSize: 48, color: 'grey.300', mb: 1 }} />
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: 'grey.500', mb: 1 }}>
+                    대화 기록이 삭제되었습니다
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'grey.400' }}>
+                    환자 개인정보 보호를 위해 대화 기록은 24시간 후 자동으로 삭제됩니다.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'grey.400', mt: 0.5 }}>
+                    차트, 안내문, 후속 조치는 그대로 유지됩니다.
+                  </Typography>
+                </Box>
+              ) : detailData.transcription && detailData.transcription.length > 0 ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {detailData.transcription.map((item, index) => (
                     <MotionBox

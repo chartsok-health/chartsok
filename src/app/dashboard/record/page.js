@@ -54,6 +54,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import HomeIcon from '@mui/icons-material/Home';
+import AddIcon from '@mui/icons-material/Add';
 import StarIcon from '@mui/icons-material/Star';
 import { useAuth } from '@/lib/AuthContext';
 import PatientFormDialog from '@/app/dashboard/patients/PatientFormDialog';
@@ -70,6 +71,8 @@ const commonComplaints = [
   '두통', '발열', '기침', '인후통', '복통', '어지러움',
   '피로감', '호흡곤란', '관절통', '피부발진', '소화불량', '불면'
 ];
+
+const onsetOptions = ['오늘', '어제', '2일 전', '3일 전', '1주일 전', '2주일 전', '1개월 전'];
 
 const steps = [
   { label: '환자 선택', icon: PersonSearchIcon, color: '#4B9CD3' },
@@ -107,6 +110,23 @@ export default function RecordPage() {
     spO2: '',
     chiefComplaint: '',
   });
+
+  // Structured complaints with onset
+  const [complaints, setComplaints] = useState([]);
+  const [newComplaintText, setNewComplaintText] = useState('');
+  const [newComplaintOnset, setNewComplaintOnset] = useState('');
+
+  // Sync structured complaints -> chiefComplaint string
+  useEffect(() => {
+    if (complaints.length > 0) {
+      const chiefComplaint = complaints
+        .map(c => c.onset ? `${c.text} (${c.onset})` : c.text)
+        .join(', ');
+      setVitals(prev => ({ ...prev, chiefComplaint }));
+    } else if (vitals.chiefComplaint && complaints.length === 0) {
+      // Don't clear if user typed directly
+    }
+  }, [complaints]);
 
   // Template selection
   const [templates, setTemplates] = useState([]);
@@ -174,7 +194,7 @@ export default function RecordPage() {
         const transformedPatients = patientsList.map(patient => ({
           ...patient,
           age: patient.birthDate ? calculateAge(patient.birthDate) : patient.age || 0,
-          recentDiagnosis: patient.recentDiagnosis || '기록 없음',
+          recentDiagnosis: patient.recentDiagnosis || (patient.lastVisit ? `최근 방문: ${patient.lastVisit}` : '기록 없음'),
         }));
 
         setPatients(transformedPatients);
@@ -463,14 +483,29 @@ export default function RecordPage() {
     }
   };
 
-  // Add common complaint chip
-  const handleAddComplaint = (complaint) => {
-    const current = vitals.chiefComplaint;
-    if (current) {
-      setVitals({ ...vitals, chiefComplaint: current + ', ' + complaint });
-    } else {
-      setVitals({ ...vitals, chiefComplaint: complaint });
-    }
+  // Add a complaint from quick chips
+  const handleAddComplaintChip = (complaintText) => {
+    // Don't add duplicate
+    if (complaints.some(c => c.text === complaintText)) return;
+    setComplaints(prev => [...prev, { text: complaintText, onset: '' }]);
+  };
+
+  // Add a custom complaint from text input
+  const handleAddCustomComplaint = () => {
+    if (!newComplaintText.trim()) return;
+    setComplaints(prev => [...prev, { text: newComplaintText.trim(), onset: newComplaintOnset.trim() }]);
+    setNewComplaintText('');
+    setNewComplaintOnset('');
+  };
+
+  // Update onset for a complaint
+  const handleUpdateOnset = (index, onset) => {
+    setComplaints(prev => prev.map((c, i) => i === index ? { ...c, onset } : c));
+  };
+
+  // Remove a complaint
+  const handleRemoveComplaint = (index) => {
+    setComplaints(prev => prev.filter((_, i) => i !== index));
   };
 
   // Handle new template creation (receives formData from TemplateFormDialog)
@@ -774,7 +809,7 @@ export default function RecordPage() {
   };
 
   const canProceedStep1 = selectedPatient !== null;
-  const canProceedStep2 = vitals.chiefComplaint.trim() !== '';
+  const canProceedStep2 = complaints.length > 0 || vitals.chiefComplaint.trim() !== '';
 
   // Custom Stepper Component
   const renderStepper = () => (
@@ -1281,11 +1316,11 @@ export default function RecordPage() {
                     <Chip
                       label={complaint}
                       size="small"
-                      onClick={() => handleAddComplaint(complaint)}
+                      onClick={() => handleAddComplaintChip(complaint)}
                       sx={{
                         cursor: 'pointer',
-                        bgcolor: vitals.chiefComplaint.includes(complaint) ? 'primary.100' : 'grey.100',
-                        color: vitals.chiefComplaint.includes(complaint) ? 'primary.main' : 'text.primary',
+                        bgcolor: complaints.some(c => c.text === complaint) ? 'primary.100' : 'grey.100',
+                        color: complaints.some(c => c.text === complaint) ? 'primary.main' : 'text.primary',
                         '&:hover': { bgcolor: 'primary.50' },
                       }}
                     />
@@ -1293,19 +1328,112 @@ export default function RecordPage() {
                 ))}
               </Box>
 
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="환자의 주요 증상을 입력하세요..."
-                value={vitals.chiefComplaint}
-                onChange={(e) => setVitals({ ...vitals, chiefComplaint: e.target.value })}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
-              />
+              {/* Structured complaint list */}
+              {complaints.length > 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  {complaints.map((complaint, index) => (
+                    <Paper
+                      key={index}
+                      elevation={0}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        p: 1,
+                        pl: 2,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        bgcolor: 'grey.50',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 60 }}>
+                        {complaint.text}
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, flex: 1 }}>
+                        {onsetOptions.map((onset) => (
+                          <Chip
+                            key={onset}
+                            label={onset}
+                            size="small"
+                            onClick={() => handleUpdateOnset(index, onset)}
+                            sx={{
+                              cursor: 'pointer',
+                              height: 24,
+                              fontSize: '0.7rem',
+                              bgcolor: complaint.onset === onset ? 'primary.main' : 'white',
+                              color: complaint.onset === onset ? 'white' : 'text.secondary',
+                              border: '1px solid',
+                              borderColor: complaint.onset === onset ? 'primary.main' : 'grey.300',
+                              '&:hover': { bgcolor: complaint.onset === onset ? 'primary.dark' : 'grey.100' },
+                            }}
+                          />
+                        ))}
+                        <TextField
+                          size="small"
+                          variant="standard"
+                          placeholder="직접 입력"
+                          value={onsetOptions.includes(complaint.onset) ? '' : complaint.onset}
+                          onChange={(e) => handleUpdateOnset(index, e.target.value)}
+                          sx={{
+                            width: 80,
+                            '& .MuiInput-root': { fontSize: '0.75rem' },
+                            '& .MuiInput-input': { py: 0.25 },
+                          }}
+                        />
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveComplaint(index)}
+                        sx={{ color: 'grey.400', '&:hover': { color: 'error.main' } }}
+                      >
+                        <CloseIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Paper>
+                  ))}
+                </Box>
+              )}
+
+              {/* Add custom complaint */}
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="증상 입력..."
+                  value={newComplaintText}
+                  onChange={(e) => setNewComplaintText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomComplaint();
+                    }
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="발병 시기"
+                  value={newComplaintOnset}
+                  onChange={(e) => setNewComplaintOnset(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomComplaint();
+                    }
+                  }}
+                  sx={{ width: 130, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddCustomComplaint}
+                  disabled={!newComplaintText.trim()}
+                  sx={{ borderRadius: 2, whiteSpace: 'nowrap', fontWeight: 600 }}
+                >
+                  추가
+                </Button>
+              </Box>
             </Box>
 
             {/* Template Selection */}
@@ -1892,7 +2020,20 @@ export default function RecordPage() {
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>주호소</Typography>
-            <Typography variant="body2">{vitals.chiefComplaint}</Typography>
+            {complaints.length > 0 ? (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                {complaints.map((c, i) => (
+                  <Chip
+                    key={i}
+                    label={c.onset ? `${c.text} (${c.onset})` : c.text}
+                    size="small"
+                    sx={{ fontWeight: 500, bgcolor: 'primary.50', color: 'primary.main' }}
+                  />
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="body2">{vitals.chiefComplaint}</Typography>
+            )}
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Divider sx={{ my: 1 }} />

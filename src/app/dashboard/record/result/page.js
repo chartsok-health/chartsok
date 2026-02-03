@@ -39,6 +39,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import { useAuth } from '@/lib/AuthContext';
 
 const MotionBox = motion.create(Box);
@@ -81,6 +82,7 @@ export default function RecordResultPage() {
   const [recordingDuration, setRecordingDuration] = useState('00:00');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [error, setError] = useState(null);
+  const [noRecording, setNoRecording] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
   // New B2B fields
@@ -226,18 +228,11 @@ export default function RecordResultPage() {
               userSettings: storedUserSettings ? JSON.parse(storedUserSettings) : null,
             });
           } else {
-            setError('녹음된 내용이 없습니다. 다시 녹음해 주세요.');
+            setNoRecording(true);
             setIsGenerating(false);
           }
         } else {
-          setError('녹음 데이터가 없습니다. 데모 데이터를 표시합니다.');
-          setTranscription([
-            { speaker: '의사', text: '안녕하세요, 어디가 불편하셔서 오셨나요?', timestamp: '00:03' },
-            { speaker: '환자', text: '며칠 전부터 목이 아프고 기침이 나요.', timestamp: '00:08' },
-            { speaker: '의사', text: '열은 있으셨나요?', timestamp: '00:15' },
-            { speaker: '환자', text: '어제 밤에 37.8도까지 올랐어요.', timestamp: '00:20' },
-          ]);
-          generateDemoData();
+          setNoRecording(true);
           setIsGenerating(false);
         }
       } catch (err) {
@@ -251,27 +246,6 @@ export default function RecordResultPage() {
       loadAndGenerate();
     }
   }, [selectedTemplateId]);
-
-  const generateDemoData = () => {
-    setChartData({
-      subjective: '주소: 인후통, 기침\n현병력: 며칠 전부터 목 통증과 기침 증상 시작. 어제 밤 37.8°C 발열.\n과거력: 특이 병력 없음',
-      objective: '활력징후: BT 37.8°C\n신체검사: 추가 검사 필요',
-      assessment: '급성 인두염 의심\n- J02.9 급성 인두염, 상세불명',
-      plan: '1. 추가 신체검사 필요\n2. 증상에 따른 대증 치료\n3. 수분 섭취 권장',
-    });
-    setPatientInstructions(
-      '진단명: 급성 인두염 (목감기)\n\n' +
-      '[ 복약 안내 ]\n- 처방된 약을 하루 3회 식후 30분에 드세요\n- 약을 빠뜨리지 않고 끝까지 복용하세요\n\n' +
-      '[ 생활 수칙 ]\n- 물을 자주 드세요 (하루 8잔 이상)\n- 충분히 쉬세요\n- 자극적인 음식은 피하세요\n\n' +
-      '[ 주의사항 ]\n- 열이 39도 이상 오르면 응급실을 방문하세요\n- 호흡곤란이 있으면 즉시 내원하세요\n\n' +
-      '[ 재방문 ]\n- 3일 후 재진 예정입니다'
-    );
-    setFollowUpActions([
-      { text: '처방전 출력', completed: false },
-      { text: '3일 후 재진 예약', completed: false },
-      { text: '환자 안내문 출력', completed: false },
-    ]);
-  };
 
   const generateChart = async (transcriptionData, additionalData = {}) => {
     try {
@@ -310,8 +284,8 @@ export default function RecordResultPage() {
       } else if (data.soap && Object.keys(data.soap).length > 0) {
         setChartData(data.soap);
       } else {
-        console.warn('API returned empty data, using demo data');
-        generateDemoData();
+        console.warn('API returned empty data');
+        setError('AI가 차트를 생성하지 못했습니다. 녹음 내용이 너무 짧을 수 있습니다.');
         return;
       }
 
@@ -329,7 +303,6 @@ export default function RecordResultPage() {
     } catch (err) {
       console.error('Chart generation error:', err);
       setError('차트 생성 중 오류가 발생했습니다: ' + err.message);
-      generateDemoData();
     } finally {
       setIsGenerating(false);
     }
@@ -560,8 +533,47 @@ export default function RecordResultPage() {
         )}
       </AnimatePresence>
 
+      {/* No Recording State */}
+      {noRecording && !isGenerating && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: 6,
+              borderRadius: 4,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              textAlign: 'center',
+            }}
+          >
+            <MicOffIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'grey.600', mb: 1 }}>
+              녹음된 내용이 없습니다
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'grey.400', mb: 4 }}>
+              진료 녹음을 먼저 진행해 주세요. 녹음된 내용이 너무 짧으면 차트를 생성할 수 없습니다.
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => router.push('/dashboard/record')}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+              }}
+            >
+              녹음 다시 시작
+            </Button>
+          </Paper>
+        </motion.div>
+      )}
+
       {/* Main Content */}
-      {!isGenerating && (
+      {!isGenerating && !noRecording && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

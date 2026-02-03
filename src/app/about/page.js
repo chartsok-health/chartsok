@@ -43,7 +43,7 @@ const values = {
     {
       icon: SecurityIcon,
       title: '데이터 신중 처리',
-      description: '음성 파일은 변환 후 즉시 삭제. 최소 수집, 권한 기반 접근, AES-256 암호화가 기본입니다.',
+      description: '음성 파일은 변환 후 즉시 삭제, 대화 기록은 24시간 후 자동 삭제. 최소 수집, 권한 기반 접근, AES-256 암호화가 기본입니다.',
       color: '#EF4444',
     },
     {

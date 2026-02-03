@@ -61,7 +61,7 @@ export async function GET(request) {
         const recordsRef = collection(db, 'hospitals', hospitalId, 'records');
         const recordsSnapshot = await getDocs(recordsRef);
 
-        // Build a map of patientId -> { visitCount, lastVisit }
+        // Build a map of patientId -> { visitCount, lastVisit, recentDiagnosis }
         const patientStats = {};
         recordsSnapshot.docs.forEach(doc => {
           const data = doc.data();
@@ -77,14 +77,15 @@ export async function GET(request) {
           }
 
           if (!patientStats[patientId]) {
-            patientStats[patientId] = { visitCount: 0, lastVisit: null };
+            patientStats[patientId] = { visitCount: 0, lastVisit: null, recentDiagnosis: null };
           }
 
           patientStats[patientId].visitCount += 1;
 
-          // Update lastVisit if this record is more recent
+          // Update lastVisit and recentDiagnosis if this record is more recent
           if (createdAt && (!patientStats[patientId].lastVisit || createdAt > patientStats[patientId].lastVisit)) {
             patientStats[patientId].lastVisit = createdAt;
+            patientStats[patientId].recentDiagnosis = data.diagnosis || null;
           }
         });
 
@@ -98,11 +99,12 @@ export async function GET(request) {
 
         // Enrich patients with calculated stats
         patients = patients.map(patient => {
-          const stats = patientStats[patient.id] || { visitCount: 0, lastVisit: null };
+          const stats = patientStats[patient.id] || { visitCount: 0, lastVisit: null, recentDiagnosis: null };
           return {
             ...patient,
             visitCount: stats.visitCount,
             lastVisit: stats.lastVisit ? formatLocalDate(stats.lastVisit) : null,
+            recentDiagnosis: stats.recentDiagnosis || null,
           };
         });
       } catch (statsError) {
