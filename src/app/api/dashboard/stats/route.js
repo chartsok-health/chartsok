@@ -187,6 +187,7 @@ export async function GET(request) {
       duration: r.duration || 0,
       durationFormatted: r.recordingDuration || '0:00',
       status: r.status || 'completed',
+      followUpActions: Array.isArray(r.followUpActions) ? r.followUpActions : [],
     }));
 
     return NextResponse.json({

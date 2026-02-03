@@ -57,7 +57,7 @@ const navItems = [
 
 const pageInfo = {
   '/dashboard': { title: '대시보드', subtitle: '오늘의 진료 현황을 확인하세요' },
-  '/dashboard/record': { title: '새 진료', subtitle: 'AI가 진료 내용을 실시간으로 기록합니다' },
+  '/dashboard/record': { title: '새 진료', subtitle: '녹음 → 차트 → 안내문 → 액션까지 한번에' },
   '/dashboard/history': { title: '진료 기록', subtitle: '과거 진료 내역을 조회하고 관리합니다' },
   '/dashboard/patients': { title: '환자 관리', subtitle: '환자 목록을 조회하고 관리합니다' },
   '/dashboard/doctors': { title: '의료진 관리', subtitle: '병원 의료진을 관리합니다' },

@@ -89,7 +89,7 @@ export async function POST(request) {
 
     if (isSOAPTemplate) {
       // SOAP format
-      systemPrompt = `당신은 숙련된 의료 차트 작성 전문가입니다. 의사와 환자의 대화 내용을 분석하여 SOAP 형식의 의료 차트를 작성합니다.
+      systemPrompt = `당신은 숙련된 의료 차트 작성 전문가입니다. 의사와 환자의 대화 내용을 분석하여 SOAP 형식의 의료 차트를 작성하고, 환자 안내문과 후속 조치 항목도 함께 생성합니다.
 
 전문 분야: ${specialty || '일반 진료'}${patientContext}${vitalsInfo}${keywordsContext}${toneInstructions}
 
@@ -98,7 +98,9 @@ export async function POST(request) {
   "subjective": "주소(Chief Complaint)와 현병력(History of Present Illness)을 포함한 환자의 주관적 증상 기술",
   "objective": "활력징후와 신체검사 소견 등 객관적 데이터",
   "assessment": "진단명과 ICD 코드 (예: J03.9 급성 편도염)",
-  "plan": "치료 계획, 처방, 환자 교육 사항"
+  "plan": "치료 계획, 처방, 환자 교육 사항",
+  "patientInstructions": "환자에게 전달할 안내문. 쉬운 말로 작성. 진단명, 복약 안내, 생활 수칙, 주의사항, 재방문 일정을 포함. 줄바꿈으로 구분.",
+  "followUpActions": ["처방전 출력", "다음 예약 잡기", "검사 의뢰서 작성 등 의료진이 해야 할 후속 조치 항목들"]
 }
 
 주의사항:
@@ -106,14 +108,16 @@ export async function POST(request) {
 - 사전 입력된 활력징후가 있으면 Objective에 포함하세요
 - 추측하지 마세요
 - 의학적으로 정확한 용어를 사용하세요
-- 한국어로 작성하세요`;
+- 한국어로 작성하세요
+- patientInstructions는 환자가 이해할 수 있는 쉬운 말로 작성하세요
+- followUpActions는 구체적이고 실행 가능한 항목으로 3~5개 작성하세요`;
 
       responseFormat = { type: 'json_object' };
     } else {
       // Custom template format - use the template content as a guide
       const templateContent = template.content || '';
 
-      systemPrompt = `당신은 숙련된 의료 차트 작성 전문가입니다. 의사와 환자의 대화 내용을 분석하여 지정된 템플릿 형식에 맞게 의료 차트를 작성합니다.
+      systemPrompt = `당신은 숙련된 의료 차트 작성 전문가입니다. 의사와 환자의 대화 내용을 분석하여 지정된 템플릿 형식에 맞게 의료 차트를 작성하고, 환자 안내문과 후속 조치 항목도 함께 생성합니다.
 
 전문 분야: ${specialty || '일반 진료'}${patientContext}${vitalsInfo}${keywordsContext}${toneInstructions}
 
@@ -122,7 +126,9 @@ ${templateContent}
 
 다음 형식으로 JSON을 반환하세요:
 {
-  "content": "위의 템플릿 형식에 맞춰 작성된 전체 차트 내용"
+  "content": "위의 템플릿 형식에 맞춰 작성된 전체 차트 내용",
+  "patientInstructions": "환자에게 전달할 안내문. 쉬운 말로 작성. 진단명, 복약 안내, 생활 수칙, 주의사항, 재방문 일정을 포함. 줄바꿈으로 구분.",
+  "followUpActions": ["처방전 출력", "다음 예약 잡기", "검사 의뢰서 작성 등 의료진이 해야 할 후속 조치 항목들"]
 }
 
 주의사항:
@@ -131,7 +137,9 @@ ${templateContent}
 - 사전 입력된 활력징후가 있으면 적절한 위치에 포함하세요
 - 추측하지 마세요
 - 의학적으로 정확한 용어를 사용하세요
-- 한국어로 작성하세요`;
+- 한국어로 작성하세요
+- patientInstructions는 환자가 이해할 수 있는 쉬운 말로 작성하세요
+- followUpActions는 구체적이고 실행 가능한 항목으로 3~5개 작성하세요`;
 
       responseFormat = { type: 'json_object' };
     }
@@ -151,15 +159,25 @@ ${templateContent}
 
     const chartData = JSON.parse(completion.choices[0].message.content);
 
+    // Extract new fields (backward-compatible: these may not exist in older responses)
+    const patientInstructions = chartData.patientInstructions || '';
+    const followUpActions = Array.isArray(chartData.followUpActions) ? chartData.followUpActions : [];
+
     // Return appropriate format based on template type
     if (isSOAPTemplate) {
+      // Remove non-SOAP keys from the soap object
+      const { patientInstructions: _pi, followUpActions: _fa, ...soapData } = chartData;
       return NextResponse.json({
-        soap: chartData,
+        soap: soapData,
+        patientInstructions,
+        followUpActions,
         usage: completion.usage,
       });
     } else {
       return NextResponse.json({
         chartContent: chartData.content,
+        patientInstructions,
+        followUpActions,
         usage: completion.usage,
       });
     }

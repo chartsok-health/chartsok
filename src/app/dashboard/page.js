@@ -30,6 +30,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ChecklistIcon from '@mui/icons-material/Checklist';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { useAuth } from '@/lib/AuthContext';
 import { formatDuration } from '@/lib/helpers';
 
@@ -58,6 +61,7 @@ export default function DashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [todayRecords, setTodayRecords] = useState([]);
+  const [pendingActions, setPendingActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState('');
   const [stats, setStats] = useState({
@@ -147,7 +151,6 @@ export default function DashboardPage() {
           // Set today's sessions for the list
           if (statsData.todaySessions && statsData.todaySessions.length > 0) {
             const records = statsData.todaySessions.map((session) => {
-              // Only show gender/age if at least one exists
               const gender = session.patientGender || '';
               const age = session.patientAge || '';
               const patientInfo = gender || age ? `${gender}${gender && age ? '/' : ''}${age}` : '';
@@ -163,6 +166,23 @@ export default function DashboardPage() {
               };
             });
             setTodayRecords(records);
+
+            // Extract pending (incomplete) follow-up actions
+            const allPending = [];
+            statsData.todaySessions.forEach((session) => {
+              if (Array.isArray(session.followUpActions)) {
+                session.followUpActions.forEach((action) => {
+                  if (!action.completed) {
+                    allPending.push({
+                      text: action.text,
+                      patientName: session.patientName || '환자',
+                      sessionId: session.id,
+                    });
+                  }
+                });
+              }
+            });
+            setPendingActions(allPending);
           }
         }
       } catch (error) {
@@ -246,8 +266,7 @@ export default function DashboardPage() {
                   안녕하세요, {greeting} 👋
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                  오늘 하루도 chartsok과 함께 효율적인 진료를 시작하세요.
-                  AI가 차트 작성을 도와드립니다.
+                  녹음 → 차트 → 안내문 → 후속 조치까지, chartsok이 함께합니다.
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
@@ -595,6 +614,87 @@ export default function DashboardPage() {
             </CardContent>
           </CleanCard>
         </Grid>
+
+        {/* Pending Actions */}
+        {pendingActions.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <CleanCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.55 }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 2,
+                        bgcolor: '#FFFBEB',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ChecklistIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+                    </Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                      미완료 후속 조치
+                    </Typography>
+                    <Chip
+                      label={`${pendingActions.length}건`}
+                      size="small"
+                      sx={{ bgcolor: '#FFFBEB', color: '#F59E0B', fontWeight: 700, fontSize: '0.75rem' }}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {pendingActions.slice(0, 5).map((action, index) => (
+                    <MotionBox
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      onClick={() => router.push(`/dashboard/history/${action.sessionId}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 1,
+                        px: 2,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: '#F59E0B40',
+                          bgcolor: '#FFFBEB',
+                        },
+                      }}
+                    >
+                      <RadioButtonUncheckedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500, flex: 1 }}>
+                        {action.text}
+                      </Typography>
+                      <Chip
+                        label={action.patientName}
+                        size="small"
+                        sx={{ fontSize: '0.7rem', fontWeight: 600, bgcolor: 'grey.100' }}
+                      />
+                    </MotionBox>
+                  ))}
+                  {pendingActions.length > 5 && (
+                    <Typography variant="caption" sx={{ color: 'text.secondary', textAlign: 'center', mt: 1 }}>
+                      외 {pendingActions.length - 5}건 더 있습니다
+                    </Typography>
+                  )}
+                </Box>
+              </CardContent>
+            </CleanCard>
+          </Grid>
+        )}
 
         {/* Today's Records */}
         <Grid size={{ xs: 12 }}>

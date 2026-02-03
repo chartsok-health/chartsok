@@ -139,6 +139,9 @@ export async function POST(request) {
       // Optional patient info to embed
       patientName,
       patientChartNo,
+      // New B2B fields
+      patientInstructions,
+      followUpActions,
     } = body;
 
     if (!chartData) {
@@ -168,6 +171,10 @@ export async function POST(request) {
       recordingDuration: recordingDuration || '00:00',
       chartData: chartData,
       vitals: vitals || null,
+      patientInstructions: patientInstructions || '',
+      followUpActions: Array.isArray(followUpActions)
+        ? followUpActions.map(action => typeof action === 'string' ? { text: action, completed: false } : action)
+        : [],
       createdAt: now,
       updatedAt: now,
     };
@@ -249,7 +256,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { chartId, hospitalId, diagnosis, icdCode, chartData, vitals } = body;
+    const { chartId, hospitalId, diagnosis, icdCode, chartData, vitals, patientInstructions, followUpActions } = body;
 
     if (!chartId) {
       return NextResponse.json(
@@ -271,6 +278,8 @@ export async function PUT(request) {
       if (icdCode !== undefined) updateData.icdCode = icdCode;
       if (chartData !== undefined) updateData.chartData = chartData;
       if (vitals !== undefined) updateData.vitals = vitals;
+      if (patientInstructions !== undefined) updateData.patientInstructions = patientInstructions;
+      if (followUpActions !== undefined) updateData.followUpActions = followUpActions;
 
       await updateDoc(recordRef, updateData);
 

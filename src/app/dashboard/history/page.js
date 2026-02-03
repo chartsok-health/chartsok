@@ -43,6 +43,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonIcon from '@mui/icons-material/Person';
 import TimerIcon from '@mui/icons-material/Timer';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 import { useAuth } from '@/lib/AuthContext';
 import { formatCountdown, getSecondsUntilDeletion } from '@/lib/helpers';
 
@@ -111,6 +112,10 @@ export default function HistoryPage() {
               }
             }
 
+            const followUpActions = Array.isArray(chart.followUpActions) ? chart.followUpActions : [];
+            const actionsTotal = followUpActions.length;
+            const actionsCompleted = followUpActions.filter(a => a.completed).length;
+
             return {
               id: chart.id,
               date: createdAtDate ? createdAtDate.toISOString().split('T')[0] : '',
@@ -121,6 +126,8 @@ export default function HistoryPage() {
               icdCode: chart.icdCode || '',
               createdAt: createdAtDate ? createdAtDate.toISOString() : null,
               doctorName: chart.doctorName || '',
+              actionsTotal,
+              actionsCompleted,
             };
           });
 
@@ -454,6 +461,7 @@ export default function HistoryPage() {
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>환자</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>담당 의사</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>진단명</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>액션</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>대화 기록 삭제</TableCell>
                   <TableCell align="right"></TableCell>
                 </TableRow>
@@ -468,13 +476,14 @@ export default function HistoryPage() {
                       <TableCell><Skeleton variant="circular" width={28} height={28} /></TableCell>
                       <TableCell><Skeleton variant="text" width={80} /></TableCell>
                       <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                      <TableCell><Skeleton variant="rounded" width={50} height={24} /></TableCell>
                       <TableCell><Skeleton variant="rounded" width={80} height={24} /></TableCell>
                       <TableCell></TableCell>
                     </TableRow>
                   ))
                 ) : filteredData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ py: 6, textAlign: 'center' }}>
+                    <TableCell colSpan={8} sx={{ py: 6, textAlign: 'center' }}>
                       <LocalHospitalIcon sx={{ fontSize: 48, color: 'grey.300', mb: 1 }} />
                       <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                         해당 기간에 진료 기록이 없습니다
@@ -542,6 +551,26 @@ export default function HistoryPage() {
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {row.diagnosis || '-'}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {row.actionsTotal > 0 ? (
+                            <Chip
+                              icon={<ChecklistIcon sx={{ fontSize: 14 }} />}
+                              label={`${row.actionsCompleted}/${row.actionsTotal}`}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                fontSize: '0.75rem',
+                                bgcolor: row.actionsCompleted === row.actionsTotal ? '#ECFDF5' : '#FFFBEB',
+                                color: row.actionsCompleted === row.actionsTotal ? '#10B981' : '#F59E0B',
+                                '& .MuiChip-icon': {
+                                  color: row.actionsCompleted === row.actionsTotal ? '#10B981' : '#F59E0B',
+                                },
+                              }}
+                            />
+                          ) : (
+                            <Typography variant="caption" sx={{ color: 'grey.400' }}>-</Typography>
+                          )}
                         </TableCell>
                         <TableCell>
                           {(() => {

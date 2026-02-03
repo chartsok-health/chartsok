@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase-db';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { chartService } from '@/lib/firestore';
+import { chartService, patientService } from '@/lib/firestore';
 
 /**
  * GET /api/charts/[id]
@@ -46,6 +46,33 @@ export async function GET(request, { params }) {
       );
     }
 
+    // Fetch patient details (age, gender) from patients collection if patientId exists
+    let patientAge = chart.patientAge || '';
+    let patientGender = chart.patientGender || '';
+    if (chart.patientId && (!patientAge || !patientGender)) {
+      try {
+        const patientRef = doc(db, 'patients', chart.patientId);
+        const patientSnap = await getDoc(patientRef);
+        if (patientSnap.exists()) {
+          const patientData = patientSnap.data();
+          patientGender = patientData.gender || patientGender;
+          // Calculate age from birthDate
+          if (patientData.birthDate && !patientAge) {
+            const birth = new Date(patientData.birthDate);
+            const now = new Date();
+            let age = now.getFullYear() - birth.getFullYear();
+            const monthDiff = now.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+              age--;
+            }
+            patientAge = `${age}세`;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching patient details:', e);
+      }
+    }
+
     // Transform to expected format
     const session = {
       id: chart.id,
@@ -54,8 +81,8 @@ export async function GET(request, { params }) {
         ? new Date(chart.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
         : '',
       patientName: chart.patientName || 'Unknown',
-      patientAge: chart.patientAge || '',
-      patientGender: chart.patientGender || '',
+      patientAge,
+      patientGender,
       chartNo: chart.patientChartNo || '',
       diagnosis: chart.diagnosis || chart.chartData?.assessment?.split('\n')[0] || '',
       icdCode: chart.icdCode || '',
@@ -65,6 +92,8 @@ export async function GET(request, { params }) {
       transcription: chart.transcription || [],
       doctorName: chart.doctorName || '',
       templateId: chart.templateId || 'default-soap',
+      patientInstructions: chart.patientInstructions || '',
+      followUpActions: Array.isArray(chart.followUpActions) ? chart.followUpActions : [],
       createdAt: chart.createdAt,
       updatedAt: chart.updatedAt,
     };
