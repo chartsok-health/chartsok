@@ -10,7 +10,10 @@
  * @returns {number} Seconds until deletion (0 if already expired)
  */
 export function getSecondsUntilDeletion(createdAt, retentionHours = 24) {
-  const deletionTime = createdAt + retentionHours * 60 * 60 * 1000;
+  if (!createdAt) return 0;
+  const createdMs = typeof createdAt === 'number' ? createdAt : new Date(createdAt).getTime();
+  if (isNaN(createdMs)) return 0;
+  const deletionTime = createdMs + retentionHours * 60 * 60 * 1000;
   const now = Date.now();
   return Math.max(0, Math.floor((deletionTime - now) / 1000));
 }

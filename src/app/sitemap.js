@@ -55,6 +55,18 @@ export default function sitemap() {
   // Product/Feature pages
   const productPages = [
     {
+      url: `${baseUrl}/features`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/integrations`,
       lastModified: currentDate,
       changeFrequency: 'monthly',

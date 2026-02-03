@@ -5,23 +5,11 @@ import { motion } from 'framer-motion';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useI18n } from '@/lib/i18n';
-import { useAuth } from '@/lib/AuthContext';
-import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 
 export default function CTA() {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const router = useRouter();
-
-  const handleCtaClick = () => {
-    if (user) {
-      router.push('/dashboard');
-    } else {
-      router.push('/?auth=signup');
-    }
-  };
 
   return (
     <Box
@@ -115,7 +103,7 @@ export default function CTA() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={handleCtaClick}
+                href="/contact"
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                   bgcolor: 'white',
@@ -131,7 +119,7 @@ export default function CTA() {
                   },
                 }}
               >
-                {user ? t('nav.dashboard') : t('cta.button')}
+                {t('cta.button')}
               </Button>
             </MotionBox>
             <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>

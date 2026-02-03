@@ -23,7 +23,9 @@
       "Bash(cd:*)",
       "Bash(dir /b \"c:\\\\Development\\\\chartsok\\\\src\\\\app\\\\dashboard\")",
       "Bash(timeout:*)",
-      "Bash(more:*)"
+      "Bash(more:*)",
+      "Bash(npx next build:*)",
+      "Bash(dir:*)"
     ]
   }
 }

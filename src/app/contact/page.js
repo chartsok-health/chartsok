@@ -7,12 +7,12 @@ import {
   Typography,
   Grid,
   Card,
-  CardContent,
   TextField,
   Button,
   Chip,
   Snackbar,
   Alert,
+  MenuItem,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -21,18 +21,16 @@ import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SendIcon from '@mui/icons-material/Send';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import BusinessIcon from '@mui/icons-material/Business';
-import HandshakeIcon from '@mui/icons-material/Handshake';
 import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 
 const content = {
   ko: {
-    badge: '문의하기',
-    title: '무엇이든 물어보세요',
-    subtitle: 'chartsok 팀이 빠르게 답변해 드리겠습니다. 제품 문의, 데모 예약, 파트너십 등 무엇이든 환영합니다.',
+    badge: '데모 요청',
+    title: '데모를 신청하세요',
+    subtitle:
+      '진료 요약부터 후속관리까지, Chartsok이 어떻게 도움이 되는지 직접 확인하세요.',
     contactInfo: [
       {
         icon: EmailIcon,
@@ -56,28 +54,36 @@ const content = {
         color: '#F59E0B',
       },
     ],
-    inquiryTypes: [
-      { icon: SupportAgentIcon, title: '기술 지원', desc: '제품 사용 중 문제가 있으신가요?' },
-      { icon: BusinessIcon, title: '영업 문의', desc: '도입 상담 및 데모 예약' },
-      { icon: HandshakeIcon, title: '파트너십', desc: 'EMR 연동 및 협력 문의' },
-    ],
     form: {
-      name: '이름',
+      clinicName: '병원명',
+      contactName: '담당자 성함',
       email: '이메일',
-      company: '병원/회사명',
-      subject: '문의 유형',
-      message: '문의 내용',
-      submit: '문의 보내기',
-      subjects: ['제품 문의', '데모 요청', '기술 지원', 'EMR 연동', '파트너십', '기타'],
+      specialty: '진료과',
+      volume: '일일 외래 환자 수 (대략)',
+      message: '추가 문의사항 (선택)',
+      submit: '데모 요청하기',
+      specialties: [
+        '내과',
+        '가정의학과',
+        '소아청소년과',
+        '정형외과',
+        '피부과',
+        '이비인후과',
+        '안과',
+        '치과',
+        '기타',
+      ],
+      volumes: ['20명 미만', '20~50명', '50~100명', '100명 이상'],
     },
-    success: '문의가 성공적으로 전송되었습니다. 빠른 시일 내에 답변 드리겠습니다.',
-    error: '문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+    success: '데모 요청이 성공적으로 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.',
+    error: '요청 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
     sending: '전송 중...',
   },
   en: {
-    badge: 'Contact Us',
-    title: 'Get in Touch',
-    subtitle: 'The chartsok team will respond quickly. Product inquiries, demo bookings, partnerships - all welcome.',
+    badge: 'Request Demo',
+    title: 'Request a Demo',
+    subtitle:
+      'From visit summaries to follow-up actions — see how Chartsok can help your clinic.',
     contactInfo: [
       {
         icon: EmailIcon,
@@ -101,22 +107,29 @@ const content = {
         color: '#F59E0B',
       },
     ],
-    inquiryTypes: [
-      { icon: SupportAgentIcon, title: 'Technical Support', desc: 'Having issues with the product?' },
-      { icon: BusinessIcon, title: 'Sales Inquiry', desc: 'Consultation and demo booking' },
-      { icon: HandshakeIcon, title: 'Partnership', desc: 'EMR integration and collaboration' },
-    ],
     form: {
-      name: 'Name',
+      clinicName: 'Clinic Name',
+      contactName: 'Contact Name',
       email: 'Email',
-      company: 'Hospital/Company',
-      subject: 'Inquiry Type',
-      message: 'Message',
-      submit: 'Send Inquiry',
-      subjects: ['Product Inquiry', 'Demo Request', 'Technical Support', 'EMR Integration', 'Partnership', 'Other'],
+      specialty: 'Specialty',
+      volume: 'Daily Outpatient Volume (approx.)',
+      message: 'Additional Notes (optional)',
+      submit: 'Request Demo',
+      specialties: [
+        'Internal Medicine',
+        'Family Medicine',
+        'Pediatrics',
+        'Orthopedics',
+        'Dermatology',
+        'ENT',
+        'Ophthalmology',
+        'Dentistry',
+        'Other',
+      ],
+      volumes: ['Under 20', '20–50', '50–100', '100+'],
     },
-    success: 'Your inquiry has been sent successfully. We will respond shortly.',
-    error: 'Failed to send inquiry. Please try again later.',
+    success: 'Your demo request has been submitted. We will contact you shortly.',
+    error: 'Failed to submit request. Please try again later.',
     sending: 'Sending...',
   },
 };
@@ -126,37 +139,54 @@ export default function ContactPage() {
   const t = content[locale] || content.ko;
 
   const [formData, setFormData] = useState({
-    name: '',
+    clinicName: '',
+    contactName: '',
     email: '',
-    company: '',
-    subject: '',
+    specialty: '',
+    volume: '',
     message: '',
+    website: '', // honeypot
   });
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Honeypot check
+    if (formData.website) return;
+
     setIsSubmitting(true);
 
     try {
+      const { website, ...submitData } = formData;
       const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...submitData, locale }),
       });
 
       if (response.ok) {
         setSnackbar({ open: true, message: t.success, severity: 'success' });
-        setFormData({ name: '', email: '', company: '', subject: '', message: '' });
+        setFormData({
+          clinicName: '',
+          contactName: '',
+          email: '',
+          specialty: '',
+          volume: '',
+          message: '',
+          website: '',
+        });
       } else {
-        setSnackbar({ open: true, message: t.error || 'Failed to send message', severity: 'error' });
+        setSnackbar({ open: true, message: t.error, severity: 'error' });
       }
     } catch (error) {
       console.error('Contact form error:', error);
-      setSnackbar({ open: true, message: t.error || 'Failed to send message', severity: 'error' });
+      setSnackbar({ open: true, message: t.error, severity: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -166,15 +196,16 @@ export default function ContactPage() {
     <>
       <Header />
       <Box sx={{ bgcolor: '#FAFBFC', minHeight: '100vh' }}>
-        {/* Hero Section */}
+        {/* Hero */}
         <Box
           sx={{
-            background: 'linear-gradient(180deg, #EBF5FF 0%, #FAFBFC 100%)',
+            background: 'linear-gradient(180deg, #1E3A5F 0%, #2D4A6F 100%)',
             pt: { xs: 8, md: 12 },
             pb: { xs: 6, md: 8 },
+            color: 'white',
           }}
         >
-          <Container maxWidth="xl">
+          <Container maxWidth="lg">
             <MotionBox
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -185,17 +216,15 @@ export default function ContactPage() {
                 label={t.badge}
                 sx={{
                   mb: 3,
-                  bgcolor: 'primary.main',
+                  bgcolor: 'rgba(255,255,255,0.2)',
                   color: 'white',
                   fontWeight: 600,
-                  px: 2,
                 }}
               />
               <Typography
                 variant="h2"
                 sx={{
                   fontWeight: 800,
-                  color: 'secondary.main',
                   mb: 3,
                   fontSize: { xs: '2rem', md: '3rem' },
                 }}
@@ -204,11 +233,7 @@ export default function ContactPage() {
               </Typography>
               <Typography
                 variant="h6"
-                sx={{
-                  color: 'text.secondary',
-                  fontWeight: 400,
-                  lineHeight: 1.8,
-                }}
+                sx={{ fontWeight: 400, lineHeight: 1.8, opacity: 0.9 }}
               >
                 {t.subtitle}
               </Typography>
@@ -216,8 +241,8 @@ export default function ContactPage() {
           </Container>
         </Box>
 
-        {/* Contact Info Cards */}
-        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
+        {/* Contact Info */}
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
           <Grid container spacing={3}>
             {t.contactInfo.map((info, index) => {
               const Icon = info.icon;
@@ -254,7 +279,10 @@ export default function ContactPage() {
                       >
                         <Icon sx={{ color: info.color, fontSize: 28 }} />
                       </Box>
-                      <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: 'text.secondary', mb: 0.5 }}
+                      >
                         {info.title}
                       </Typography>
                       <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
@@ -271,133 +299,148 @@ export default function ContactPage() {
           </Grid>
         </Container>
 
-        {/* Contact Form */}
-        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 3 }}>
-                {locale === 'ko' ? '문의 유형' : 'Inquiry Types'}
-              </Typography>
-              {t.inquiryTypes.map((type, index) => {
-                const Icon = type.icon;
-                return (
-                  <Box
-                    key={index}
+        {/* Demo Request Form */}
+        <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
+          <Card
+            elevation={0}
+            sx={{
+              p: { xs: 3, md: 4 },
+              border: '1px solid',
+              borderColor: 'grey.200',
+              borderRadius: 3,
+            }}
+          >
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    label={t.form.clinicName}
+                    value={formData.clinicName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clinicName: e.target.value })
+                    }
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label={t.form.contactName}
+                    value={formData.contactName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, contactName: e.target.value })
+                    }
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label={t.form.email}
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    select
+                    label={t.form.specialty}
+                    value={formData.specialty}
+                    onChange={(e) =>
+                      setFormData({ ...formData, specialty: e.target.value })
+                    }
+                    required
+                  >
+                    {t.form.specialties.map((s) => (
+                      <MenuItem key={s} value={s}>
+                        {s}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    select
+                    label={t.form.volume}
+                    value={formData.volume}
+                    onChange={(e) =>
+                      setFormData({ ...formData, volume: e.target.value })
+                    }
+                    required
+                  >
+                    {t.form.volumes.map((v) => (
+                      <MenuItem key={v} value={v}>
+                        {v}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    label={t.form.message}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                  />
+                </Grid>
+                {/* Honeypot - hidden from real users */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: '-9999px',
+                    opacity: 0,
+                    height: 0,
+                    overflow: 'hidden',
+                  }}
+                  aria-hidden="true"
+                >
+                  <TextField
+                    label="Website"
+                    value={formData.website}
+                    onChange={(e) =>
+                      setFormData({ ...formData, website: e.target.value })
+                    }
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </Box>
+                <Grid size={{ xs: 12 }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={isSubmitting}
+                    endIcon={!isSubmitting && <SendIcon />}
                     sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 2,
-                      mb: 3,
-                      p: 2,
-                      bgcolor: 'white',
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'grey.200',
+                      py: 1.5,
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      background:
+                        'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                      '&:disabled': {
+                        background: 'grey.400',
+                      },
                     }}
                   >
-                    <Icon sx={{ color: 'primary.main', mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        {type.title}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {type.desc}
-                      </Typography>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Card
-                elevation={0}
-                sx={{
-                  p: 4,
-                  border: '1px solid',
-                  borderColor: 'grey.200',
-                  borderRadius: 3,
-                }}
-              >
-                <form onSubmit={handleSubmit}>
-                  <Grid container spacing={3}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label={t.form.name}
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label={t.form.email}
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label={t.form.company}
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        select
-                        label={t.form.subject}
-                        value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        SelectProps={{ native: true }}
-                        required
-                      >
-                        <option value=""></option>
-                        {t.form.subjects.map((sub) => (
-                          <option key={sub} value={sub}>{sub}</option>
-                        ))}
-                      </TextField>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={5}
-                        label={t.form.message}
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        size="large"
-                        disabled={isSubmitting}
-                        endIcon={!isSubmitting && <SendIcon />}
-                        sx={{
-                          px: 4,
-                          py: 1.5,
-                          background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-                          '&:disabled': {
-                            background: 'grey.400',
-                          },
-                        }}
-                      >
-                        {isSubmitting ? t.sending : t.form.submit}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </form>
-              </Card>
-            </Grid>
-          </Grid>
+                    {isSubmitting ? t.sending : t.form.submit}
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Card>
         </Container>
       </Box>
       <Footer />
@@ -406,7 +449,10 @@ export default function ContactPage() {
         autoHideDuration={5000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

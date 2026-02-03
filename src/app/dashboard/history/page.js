@@ -9,8 +9,6 @@ import {
   Button,
   IconButton,
   Chip,
-  TextField,
-  InputAdornment,
   Table,
   TableBody,
   TableCell,
@@ -31,8 +29,6 @@ import {
   Skeleton,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -46,6 +42,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonIcon from '@mui/icons-material/Person';
 import TimerIcon from '@mui/icons-material/Timer';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import { useAuth } from '@/lib/AuthContext';
 import { formatCountdown, getSecondsUntilDeletion } from '@/lib/helpers';
 
@@ -61,7 +58,6 @@ export default function HistoryPage() {
 
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -181,16 +177,14 @@ export default function HistoryPage() {
   };
 
   const filteredData = historyData.filter((item) => {
-    // Filter by search query
-    const diagnosis = item.diagnosis || '';
-    const icdCode = item.icdCode || '';
-    const patientName = item.patientName || '';
-
-    return (
-      diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      icdCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patientName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    if (tabValue === 0) return true; // 전체
+    const today = new Date().toISOString().split('T')[0];
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    if (tabValue === 1) return item.date === today;
+    if (tabValue === 2) return item.date >= weekAgo;
+    if (tabValue === 3) return item.date >= monthAgo;
+    return true;
   });
 
   const formatDate = (dateStr) => {
@@ -429,47 +423,25 @@ export default function HistoryPage() {
             overflow: 'hidden',
           }}
         >
-          {/* Tabs & Search */}
-          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'grey.100' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-              <Tabs
-                value={tabValue}
-                onChange={(e, v) => setTabValue(v)}
-                sx={{
+          {/* Tabs */}
+          <Box sx={{ px: 3, pt: 2, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+            <Tabs
+              value={tabValue}
+              onChange={(e, v) => { setTabValue(v); setPage(0); }}
+              sx={{
+                minHeight: 40,
+                '& .MuiTab-root': {
                   minHeight: 40,
-                  '& .MuiTab-root': {
-                    minHeight: 40,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                  },
-                }}
-              >
-                <Tab label="전체" />
-                <Tab label="오늘" />
-                <Tab label="이번 주" />
-                <Tab label="이번 달" />
-              </Tabs>
-
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  placeholder="진단명 또는 환자명 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="small"
-                  sx={{ minWidth: 280 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: 'grey.400' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <Button variant="outlined" startIcon={<FilterListIcon />}>
-                  필터
-                </Button>
-              </Box>
-            </Box>
+                  textTransform: 'none',
+                  fontWeight: 600,
+                },
+              }}
+            >
+              <Tab label="전체" />
+              <Tab label="오늘" />
+              <Tab label="이번 주" />
+              <Tab label="이번 달" />
+            </Tabs>
           </Box>
 
           {/* Table */}
@@ -480,8 +452,8 @@ export default function HistoryPage() {
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>날짜</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>시간</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>환자</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>담당 의사</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>진단명</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>ICD 코드</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>대화 기록 삭제</TableCell>
                   <TableCell align="right"></TableCell>
                 </TableRow>
@@ -494,22 +466,18 @@ export default function HistoryPage() {
                       <TableCell><Skeleton variant="rounded" width={60} height={24} /></TableCell>
                       <TableCell><Skeleton variant="text" width={50} /></TableCell>
                       <TableCell><Skeleton variant="circular" width={28} height={28} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={80} /></TableCell>
                       <TableCell><Skeleton variant="text" width={120} /></TableCell>
-                      <TableCell><Skeleton variant="rounded" width={60} height={24} /></TableCell>
                       <TableCell><Skeleton variant="rounded" width={80} height={24} /></TableCell>
                       <TableCell></TableCell>
                     </TableRow>
                   ))
                 ) : filteredData.length === 0 ? (
-                  // No search results
                   <TableRow>
                     <TableCell colSpan={7} sx={{ py: 6, textAlign: 'center' }}>
-                      <SearchIcon sx={{ fontSize: 48, color: 'grey.300', mb: 1 }} />
+                      <LocalHospitalIcon sx={{ fontSize: 48, color: 'grey.300', mb: 1 }} />
                       <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                        검색 결과가 없습니다
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                        다른 검색어를 입력해 보세요
+                        해당 기간에 진료 기록이 없습니다
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -563,21 +531,17 @@ export default function HistoryPage() {
                           </Box>
                         </TableCell>
                         <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <MedicalServicesIcon sx={{ fontSize: 16, color: 'grey.400' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {row.doctorName || '-'}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {row.diagnosis || '-'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {row.icdCode ? (
-                            <Chip
-                              label={row.icdCode}
-                              size="small"
-                              variant="outlined"
-                              sx={{ fontFamily: 'monospace', fontWeight: 600 }}
-                            />
-                          ) : (
-                            <Typography variant="body2" sx={{ color: 'grey.400' }}>-</Typography>
-                          )}
                         </TableCell>
                         <TableCell>
                           {(() => {

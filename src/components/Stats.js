@@ -72,6 +72,26 @@ export default function Stats() {
       />
 
       <Container maxWidth="xl">
+        {/* Section Title */}
+        <MotionBox
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          sx={{ textAlign: 'center', mb: { xs: 4, sm: 5 } }}
+        >
+          <Typography
+            variant="h3"
+            sx={{
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              fontWeight: 700,
+              color: 'white',
+            }}
+          >
+            {t('stats.title')}
+          </Typography>
+        </MotionBox>
+
         <Grid container spacing={{ xs: 3, sm: 4 }} justifyContent="center">
           {stats.map((stat, index) => (
             <Grid size={{ xs: 6, sm: 6, md: 3 }} key={index}>

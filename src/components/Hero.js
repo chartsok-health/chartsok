@@ -7,6 +7,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -22,7 +23,7 @@ export default function Hero() {
     if (user) {
       router.push('/dashboard');
     } else {
-      router.push('/?auth=signup');
+      router.push('/contact');
     }
   };
 
@@ -191,7 +192,7 @@ export default function Hero() {
               </Stack>
             </MotionBox>
 
-            {/* Trust badges */}
+            {/* Trust badges from i18n */}
             <MotionBox
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -203,26 +204,30 @@ export default function Hero() {
                 justifyContent: { xs: 'center', lg: 'flex-start' },
               }}
             >
-              {[
-                { icon: <SecurityIcon sx={{ fontSize: 14 }} />, label: '데이터 보호' },
-                { icon: <SpeedIcon sx={{ fontSize: 14 }} />, label: '실시간 처리' },
-                { icon: <AutoAwesomeIcon sx={{ fontSize: 14 }} />, label: 'AI 정확도 98%' },
-              ].map((badge, i) => (
-                <Chip
-                  key={i}
-                  icon={badge.icon}
-                  label={badge.label}
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    borderColor: 'grey.300',
-                    color: 'text.secondary',
-                    fontSize: '0.75rem',
-                    height: 28,
-                    '& .MuiChip-icon': { color: 'primary.main' },
-                  }}
-                />
-              ))}
+              {(t('hero.badges') || []).map((badge, i) => {
+                const iconMap = {
+                  mic: <MicIcon sx={{ fontSize: 14 }} />,
+                  template: <DescriptionIcon sx={{ fontSize: 14 }} />,
+                  speed: <SpeedIcon sx={{ fontSize: 14 }} />,
+                  security: <SecurityIcon sx={{ fontSize: 14 }} />,
+                };
+                return (
+                  <Chip
+                    key={i}
+                    icon={iconMap[badge.icon] || <AutoAwesomeIcon sx={{ fontSize: 14 }} />}
+                    label={badge.text}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderColor: 'grey.300',
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      height: 28,
+                      '& .MuiChip-icon': { color: 'primary.main' },
+                    }}
+                  />
+                );
+              })}
             </MotionBox>
           </Box>
 

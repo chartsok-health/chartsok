@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Paper, Stack, Button, TextField, Chip, Grid, Avatar, LinearProgress, IconButton } from '@mui/material';
+import { Box, Container, Typography, Paper, Stack, Button, TextField, Chip, Grid, Avatar, LinearProgress, IconButton, Checkbox } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
@@ -25,6 +25,9 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull';
 import WifiIcon from '@mui/icons-material/Wifi';
 import LoginIcon from '@mui/icons-material/Login';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import PrintIcon from '@mui/icons-material/Print';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -37,6 +40,7 @@ const tabs = [
   { id: 'vitals', icon: MonitorHeartIcon, color: '#10B981', label: '사전정보' },
   { id: 'recording', icon: MicIcon, color: '#EF4444', label: '녹음' },
   { id: 'soap', icon: AutoAwesomeIcon, color: '#8B5CF6', label: 'AI분석' },
+  { id: 'actions', icon: AssignmentTurnedInIcon, color: '#F59E0B', label: '안내/액션' },
   { id: 'emr', icon: SendIcon, color: '#EC4899', label: 'EMR' },
 ];
 
@@ -72,6 +76,8 @@ export default function Demo() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [checkedActions, setCheckedActions] = useState([]);
+  const [instructionsCopied, setInstructionsCopied] = useState(false);
   const autoPlayRef = useRef(null);
 
   const demo = t('demo');
@@ -175,9 +181,30 @@ export default function Demo() {
       // Step 4: SOAP review
       await new Promise(r => autoPlayRef.current = setTimeout(r, 3000));
       if (!isAutoPlaying) return;
+      setActiveTab('actions');
+
+      // Step 5: Actions - check items one by one
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 1000));
+      if (!isAutoPlaying) return;
+      setInstructionsCopied(true);
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 800));
+      setInstructionsCopied(false);
+
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 600));
+      if (!isAutoPlaying) return;
+      setCheckedActions(['recall']);
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 600));
+      if (!isAutoPlaying) return;
+      setCheckedActions(['recall', 'test']);
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 600));
+      if (!isAutoPlaying) return;
+      setCheckedActions(['recall', 'test', 'meds']);
+
+      await new Promise(r => autoPlayRef.current = setTimeout(r, 1500));
+      if (!isAutoPlaying) return;
       setActiveTab('emr');
 
-      // Step 5: Send to EMR
+      // Step 6: Send to EMR
       await new Promise(r => autoPlayRef.current = setTimeout(r, 1500));
       if (!isAutoPlaying) return;
       setIsSent(true);
@@ -233,6 +260,8 @@ export default function Demo() {
     setProcessingProgress(0);
     setIsSent(false);
     setIsAutoPlaying(false);
+    setCheckedActions([]);
+    setInstructionsCopied(false);
   };
 
   const toggleAutoPlay = () => {
@@ -742,11 +771,210 @@ export default function Demo() {
             <Button
               variant="contained"
               fullWidth
+              endIcon={<AssignmentTurnedInIcon />}
+              onClick={() => setActiveTab('actions')}
+              sx={{ mt: 2, py: 1.25, borderRadius: 2, fontSize: '0.85rem', bgcolor: '#F59E0B', '&:hover': { bgcolor: '#D97706' } }}
+            >
+              {locale === 'ko' ? '안내문 · 후속관리 확인' : 'Review Instructions & Actions'}
+            </Button>
+          </MotionBox>
+        );
+
+      case 'actions':
+        const actionItems = locale === 'ko'
+          ? [
+              { id: 'recall', label: '1주 후 재내원 리마인더 설정', icon: NotificationsActiveIcon },
+              { id: 'test', label: '증상 지속 시 MRI 검사 예약', icon: AssignmentTurnedInIcon },
+              { id: 'meds', label: '진통제 복용 경과 확인 (3일 후)', icon: CheckCircleIcon },
+            ]
+          : [
+              { id: 'recall', label: 'Set 1-week return reminder', icon: NotificationsActiveIcon },
+              { id: 'test', label: 'Schedule MRI if symptoms persist', icon: AssignmentTurnedInIcon },
+              { id: 'meds', label: 'Check pain medication progress (3 days)', icon: CheckCircleIcon },
+            ];
+
+        const instructionText = locale === 'ko'
+          ? '김영희 님께,\n\n1. 처방된 진통제(이부프로펜 400mg)를 식후 30분에 복용해주세요.\n2. 목과 어깨 스트레칭을 하루 3회, 10분씩 해주세요.\n3. 모니터 높이를 눈높이에 맞추고, 50분 작업 후 10분 휴식을 권합니다.\n4. 1주일 후 재내원하여 경과를 확인합니다.\n\n증상이 악화되면 즉시 내원해주세요.'
+          : 'Dear Ms. Kim,\n\n1. Take prescribed ibuprofen 400mg 30 min after meals.\n2. Stretch neck & shoulders 3x daily, 10 min each.\n3. Adjust monitor to eye level, take 10-min breaks every 50 min.\n4. Return in 1 week for follow-up.\n\nVisit immediately if symptoms worsen.';
+
+        return (
+          <MotionBox
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Patient Instructions Card */}
+            <MotionBox
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              sx={{
+                p: 1.5,
+                bgcolor: '#FFFBEB',
+                borderRadius: 2,
+                border: '1.5px solid #FDE68A',
+                mb: 2,
+              }}
+            >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={0.75}>
+                  <DescriptionIcon sx={{ fontSize: 16, color: '#F59E0B' }} />
+                  <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 700, fontSize: '0.75rem' }}>
+                    {locale === 'ko' ? '환자 안내문' : 'Patient Instructions'}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setInstructionsCopied(true);
+                      setTimeout(() => setInstructionsCopied(false), 2000);
+                    }}
+                    sx={{
+                      width: 26, height: 26,
+                      bgcolor: instructionsCopied ? '#10B981' : '#FEF3C7',
+                      '&:hover': { bgcolor: instructionsCopied ? '#10B981' : '#FDE68A' },
+                    }}
+                  >
+                    {instructionsCopied
+                      ? <CheckCircleIcon sx={{ fontSize: 14, color: 'white' }} />
+                      : <ContentCopyIcon sx={{ fontSize: 13, color: '#92400E' }} />}
+                  </IconButton>
+                  <IconButton size="small" sx={{ width: 26, height: 26, bgcolor: '#FEF3C7', '&:hover': { bgcolor: '#FDE68A' } }}>
+                    <PrintIcon sx={{ fontSize: 13, color: '#92400E' }} />
+                  </IconButton>
+                </Stack>
+              </Stack>
+              <Box
+                sx={{
+                  bgcolor: 'white',
+                  borderRadius: 1.5,
+                  p: 1.5,
+                  maxHeight: 120,
+                  overflow: 'auto',
+                  border: '1px solid #FDE68A',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#78350F',
+                    fontSize: '0.7rem',
+                    lineHeight: 1.6,
+                    whiteSpace: 'pre-line',
+                  }}
+                >
+                  {instructionText}
+                </Typography>
+              </Box>
+            </MotionBox>
+
+            {/* Follow-up Actions Checklist */}
+            <MotionBox
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.25 }}
+              sx={{
+                p: 1.5,
+                bgcolor: '#EDE9FE',
+                borderRadius: 2,
+                border: '1.5px solid #C4B5FD',
+                mb: 2,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1 }}>
+                <AssignmentTurnedInIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+                <Typography variant="caption" sx={{ color: '#5B21B6', fontWeight: 700, fontSize: '0.75rem' }}>
+                  {locale === 'ko' ? 'Follow-up 액션' : 'Follow-up Actions'}
+                </Typography>
+                <Chip
+                  label={`${checkedActions.length}/${actionItems.length}`}
+                  size="small"
+                  sx={{
+                    height: 18,
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    bgcolor: checkedActions.length === actionItems.length ? '#10B981' : '#7C3AED',
+                    color: 'white',
+                  }}
+                />
+              </Stack>
+              <Stack spacing={0.5}>
+                {actionItems.map((action, i) => {
+                  const ActionIcon = action.icon;
+                  const isChecked = checkedActions.includes(action.id);
+                  return (
+                    <MotionBox
+                      key={action.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: 0.3 + i * 0.1 }}
+                      onClick={() => {
+                        setCheckedActions(prev =>
+                          prev.includes(action.id)
+                            ? prev.filter(id => id !== action.id)
+                            : [...prev, action.id]
+                        );
+                      }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        p: 0.75,
+                        bgcolor: isChecked ? '#D1FAE5' : 'white',
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: isChecked ? '#6EE7B7' : '#DDD6FE',
+                        transition: 'all 0.2s ease',
+                        '&:hover': { bgcolor: isChecked ? '#A7F3D0' : '#F5F3FF' },
+                      }}
+                    >
+                      <Checkbox
+                        checked={isChecked}
+                        size="small"
+                        sx={{
+                          p: 0,
+                          color: '#8B5CF6',
+                          '&.Mui-checked': { color: '#10B981' },
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.72rem',
+                          fontWeight: isChecked ? 600 : 400,
+                          color: isChecked ? '#065F46' : '#4C1D95',
+                          textDecoration: isChecked ? 'line-through' : 'none',
+                          flex: 1,
+                        }}
+                      >
+                        {action.label}
+                      </Typography>
+                      {isChecked && (
+                        <MotionBox
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 500 }}
+                        >
+                          <CheckCircleIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                        </MotionBox>
+                      )}
+                    </MotionBox>
+                  );
+                })}
+              </Stack>
+            </MotionBox>
+
+            <Button
+              variant="contained"
+              fullWidth
               endIcon={<SendIcon />}
               onClick={() => setActiveTab('emr')}
-              sx={{ mt: 2, py: 1.25, borderRadius: 2, fontSize: '0.85rem' }}
+              sx={{ py: 1.25, borderRadius: 2, fontSize: '0.85rem' }}
             >
-              EMR로 전송
+              {locale === 'ko' ? 'EMR로 전송' : 'Send to EMR'}
             </Button>
           </MotionBox>
         );
@@ -1199,8 +1427,8 @@ export default function Demo() {
         >
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, fontSize: '1rem' }}>
             {isLoggedIn
-              ? '대시보드에서 실제 서비스를 이용해보세요'
-              : '실제 서비스에서 더 많은 기능을 경험해보세요'}
+              ? (locale === 'ko' ? '대시보드에서 실제 서비스를 이용해보세요' : 'Try the full service on your dashboard')
+              : (locale === 'ko' ? '우리 병원에 어떻게 적용되는지 확인해보세요' : 'See how it works for your clinic')}
           </Typography>
           {isLoggedIn ? (
             <Button
@@ -1216,14 +1444,14 @@ export default function Demo() {
                 fontWeight: 600,
               }}
             >
-              대시보드 가기
+              {locale === 'ko' ? '대시보드 가기' : 'Go to Dashboard'}
             </Button>
           ) : (
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" alignItems="center">
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => router.push('/?auth=signup')}
+                onClick={() => router.push('/contact')}
                 sx={{
                   borderRadius: 3,
                   px: 5,
@@ -1232,13 +1460,12 @@ export default function Demo() {
                   fontWeight: 600,
                 }}
               >
-                무료로 시작하기
+                {locale === 'ko' ? '데모 요청하기' : 'Request Demo'}
               </Button>
               <Button
                 variant="outlined"
                 size="large"
-                startIcon={<LoginIcon />}
-                onClick={() => router.push('/?auth=login')}
+                href="#features"
                 sx={{
                   borderRadius: 3,
                   px: 4,
@@ -1246,7 +1473,7 @@ export default function Demo() {
                   fontSize: '0.95rem',
                 }}
               >
-                로그인
+                {locale === 'ko' ? '기능 자세히 보기' : 'View Features'}
               </Button>
             </Stack>
           )}

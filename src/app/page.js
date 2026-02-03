@@ -8,7 +8,6 @@ import CustomTemplates from '@/components/CustomTemplates';
 import Demo from '@/components/Demo';
 import Specialties from '@/components/Specialties';
 import Testimonials from '@/components/Testimonials';
-import Pricing from '@/components/Pricing';
 import FAQ from '@/components/FAQ';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
@@ -28,7 +27,6 @@ export default function Home() {
         <Demo />
         <Specialties />
         <Testimonials />
-        <Pricing />
         <FAQ />
         <CTA />
       </main>

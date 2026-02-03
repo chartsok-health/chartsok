@@ -65,7 +65,7 @@ export default function Specialties() {
               fontWeight: 600,
             }}
           >
-            SPECIALTY AI
+            AI MODELS
           </Typography>
           <Typography
             variant="h2"
