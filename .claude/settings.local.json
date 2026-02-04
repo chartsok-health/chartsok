@@ -25,7 +25,9 @@
       "Bash(timeout:*)",
       "Bash(more:*)",
       "Bash(npx next build:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx next lint)",
+      "Bash(npx next lint:*)"
     ]
   }
 }

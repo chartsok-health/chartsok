@@ -1,66 +1,130 @@
 'use client';
 
-import { Box, Container, Typography, Button, Stack } from '@mui/material';
+import { useState, useEffect, useRef } from 'react';
+import { Box, Container, Typography, Button, Stack, Chip } from '@mui/material';
 import { motion } from 'framer-motion';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { useI18n } from '@/lib/i18n';
+import SecurityIcon from '@mui/icons-material/Security';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useRouter } from 'next/navigation';
 
 const MotionBox = motion.create(Box);
 
+/* Animated counter */
+function AnimatedCounter({ end, suffix = '', prefix = '' }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          const duration = 1800;
+          const steps = 40;
+          const increment = end / steps;
+          let current = 0;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= end) {
+              setCount(end);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(current));
+            }
+          }, duration / steps);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [end]);
+
+  return (
+    <span ref={ref}>
+      {prefix}{count}{suffix}
+    </span>
+  );
+}
+
+const highlights = [
+  '추가 개발 비용 ZERO',
+  'PoC 무료 제공',
+  '전담 엔지니어 배정',
+  '70% 매출 셰어',
+];
+
 export default function CTA() {
-  const { t } = useI18n();
+  const router = useRouter();
 
   return (
     <Box
       id="contact"
       sx={{
-        py: { xs: 12, md: 16 },
+        py: { xs: 10, sm: 12, md: 16 },
         background: 'linear-gradient(135deg, #0F2A44 0%, #1E4A6F 50%, #0F2A44 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Background pattern */}
+      {/* Background dot pattern */}
       <Box
         sx={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.05,
-          backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+          opacity: 0.04,
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
           backgroundSize: '40px 40px',
         }}
       />
 
-      {/* Floating elements */}
+      {/* Animated floating orbs */}
       <MotionBox
-        animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{ y: [0, -25, 0], x: [0, 10, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         sx={{
           position: 'absolute',
-          top: '20%',
-          left: '10%',
-          width: 100,
-          height: 100,
+          top: '15%',
+          left: '8%',
+          width: { xs: 80, md: 120 },
+          height: { xs: 80, md: 120 },
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(75, 156, 211, 0.2) 0%, transparent 70%)',
+          display: { xs: 'none', sm: 'block' },
         }}
       />
       <MotionBox
-        animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
+        animate={{ y: [0, 20, 0], x: [0, -15, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        sx={{
+          position: 'absolute',
+          bottom: '15%',
+          right: '8%',
+          width: { xs: 100, md: 160 },
+          height: { xs: 100, md: 160 },
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
+          display: { xs: 'none', sm: 'block' },
+        }}
+      />
+      <MotionBox
+        animate={{ y: [0, -15, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         sx={{
           position: 'absolute',
-          bottom: '20%',
-          right: '10%',
-          width: 150,
-          height: 150,
+          top: '50%',
+          right: '25%',
+          width: 60,
+          height: 60,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(75, 156, 211, 0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+          display: { xs: 'none', md: 'block' },
         }}
       />
 
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <MotionBox
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -68,106 +132,200 @@ export default function CTA() {
           transition={{ duration: 0.6 }}
           sx={{ textAlign: 'center' }}
         >
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '2rem', md: '3rem' },
-              fontWeight: 700,
-              color: 'white',
-              mb: 2,
-            }}
+          {/* Badge */}
+          <MotionBox
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
           >
-            {t('cta.title')}
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: { xs: '1rem', md: '1.25rem' },
-              mb: 5,
-              maxWidth: 600,
-              mx: 'auto',
-              lineHeight: 1.7,
-            }}
-          >
-            {t('cta.subtitle')}
-          </Typography>
-
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            justifyContent="center"
-            sx={{ mb: 4 }}
-          >
-            <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                variant="contained"
-                size="large"
-                href="/contact"
-                endIcon={<ArrowForwardIcon />}
-                sx={{
-                  bgcolor: 'white',
-                  color: 'secondary.main',
-                  px: 5,
-                  py: 1.75,
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  boxShadow: '0 4px 20px rgba(255, 255, 255, 0.2)',
-                  '&:hover': {
-                    bgcolor: 'grey.100',
-                    boxShadow: '0 6px 30px rgba(255, 255, 255, 0.3)',
-                  },
-                }}
-              >
-                {t('cta.button')}
-              </Button>
-            </MotionBox>
-            <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                variant="outlined"
-                size="large"
-                href="/contact"
-                startIcon={<CalendarTodayIcon />}
-                sx={{
-                  borderColor: 'rgba(255, 255, 255, 0.4)',
-                  color: 'white',
-                  px: 4,
-                  py: 1.75,
-                  fontSize: '1rem',
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-              >
-                {t('cta.demo')}
-              </Button>
-            </MotionBox>
-          </Stack>
-
-          <Box
-            component="span"
-            sx={{
-              color: 'rgba(255, 255, 255, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              fontSize: '0.875rem',
-            }}
-          >
-            <Box
-              component="span"
+            <Chip
+              label="EMR 파트너 프로그램"
               sx={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                bgcolor: '#10B981',
-                display: 'inline-block',
+                mb: 3,
+                bgcolor: 'rgba(75, 156, 211, 0.15)',
+                color: '#81C4F8',
+                fontWeight: 600,
+                fontSize: { xs: '0.75rem', md: '0.85rem' },
+                border: '1px solid rgba(75, 156, 211, 0.3)',
+                height: { xs: 28, md: 32 },
               }}
             />
-            {t('cta.note')}
-          </Box>
+          </MotionBox>
+
+          {/* Headline */}
+          <MotionBox
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '1.6rem', sm: '2rem', md: '2.75rem', lg: '3rem' },
+                fontWeight: 800,
+                color: 'white',
+                mb: 2,
+                lineHeight: 1.2,
+              }}
+            >
+              EMR에 AI 차트 모듈,{' '}
+              <Box
+                component="span"
+                sx={{
+                  background: 'linear-gradient(135deg, #4B9CD3, #81C4F8)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                <AnimatedCounter end={4} suffix="~8주" />
+              </Box>{' '}
+              안에 런칭
+            </Typography>
+          </MotionBox>
+
+          {/* Subtitle */}
+          <MotionBox
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
+                mb: 4,
+                maxWidth: 560,
+                mx: 'auto',
+                lineHeight: 1.7,
+              }}
+            >
+              NDA 체결 → 템플릿 매핑 → 파일럿 → 런칭까지,
+              <br />
+              검증된 파트너 온보딩 프로세스
+            </Typography>
+          </MotionBox>
+
+          {/* Highlight pills */}
+          <MotionBox
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: { xs: 1, md: 1.5 },
+              mb: { xs: 4, md: 5 },
+            }}
+          >
+            {highlights.map((text, i) => (
+              <MotionBox
+                key={text}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.35 + i * 0.08 }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={0.75}
+                  sx={{
+                    px: { xs: 1.5, md: 2 },
+                    py: { xs: 0.5, md: 0.75 },
+                    borderRadius: 2,
+                    bgcolor: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <CheckCircleOutlineIcon
+                    sx={{ fontSize: { xs: 14, md: 16 }, color: '#10B981' }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'rgba(255,255,255,0.85)',
+                      fontSize: { xs: '0.72rem', md: '0.82rem' },
+                      fontWeight: 500,
+                    }}
+                  >
+                    {text}
+                  </Typography>
+                </Stack>
+              </MotionBox>
+            ))}
+          </MotionBox>
+
+          {/* Buttons */}
+          <MotionBox
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              justifyContent="center"
+              sx={{ mb: 4 }}
+            >
+              <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => router.push('/contact?type=emr_partner')}
+                  endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    bgcolor: 'white',
+                    color: '#0F2A44',
+                    px: { xs: 3, sm: 4, md: 5 },
+                    py: { xs: 1.5, md: 1.75 },
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    fontWeight: 700,
+                    borderRadius: 2.5,
+                    width: { xs: '100%', sm: 'auto' },
+                    boxShadow: '0 4px 20px rgba(255, 255, 255, 0.2)',
+                    '&:hover': {
+                      bgcolor: 'grey.100',
+                      boxShadow: '0 8px 32px rgba(255, 255, 255, 0.3)',
+                    },
+                  }}
+                >
+                  파트너 미팅 신청
+                </Button>
+              </MotionBox>
+              <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => router.push('/contact?type=security_packet')}
+                  startIcon={<SecurityIcon />}
+                  sx={{
+                    borderColor: 'rgba(255, 255, 255, 0.35)',
+                    color: 'white',
+                    px: { xs: 3, sm: 4 },
+                    py: { xs: 1.5, md: 1.75 },
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    borderRadius: 2.5,
+                    width: { xs: '100%', sm: 'auto' },
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderColor: 'white',
+                      borderWidth: 2,
+                      bgcolor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                  }}
+                >
+                  보안 패킷 요청
+                </Button>
+              </MotionBox>
+            </Stack>
+          </MotionBox>
         </MotionBox>
       </Container>
     </Box>

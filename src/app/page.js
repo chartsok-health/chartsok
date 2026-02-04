@@ -1,14 +1,15 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
-import Stats from '@/components/Stats';
-import Trust from '@/components/Trust';
-import HowItWorks from '@/components/HowItWorks';
-import Features from '@/components/Features';
-import CustomTemplates from '@/components/CustomTemplates';
 import Demo from '@/components/Demo';
-import Specialties from '@/components/Specialties';
-import Testimonials from '@/components/Testimonials';
-import FAQ from '@/components/FAQ';
+import TemplateMapping from '@/components/TemplateMapping';
+import PartnerValue from '@/components/PartnerValue';
+import ProductStrategy from '@/components/ProductStrategy';
+import PartnerEconomics from '@/components/PartnerEconomics';
+import PoCPackage from '@/components/PoCPackage';
+import IntegrationOptions from '@/components/IntegrationOptions';
+import SecurityCompliance from '@/components/SecurityCompliance';
+import PartnerOnboarding from '@/components/PartnerOnboarding';
+import PartnerFAQ from '@/components/PartnerFAQ';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
@@ -19,15 +20,16 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <Stats />
-        <Trust />
-        <HowItWorks />
-        <Features />
-        <CustomTemplates />
         <Demo />
-        <Specialties />
-        <Testimonials />
-        <FAQ />
+        <TemplateMapping />
+        <PartnerValue />
+        <ProductStrategy />
+        <PartnerEconomics />
+        <PoCPackage />
+        <IntegrationOptions />
+        <SecurityCompliance />
+        <PartnerOnboarding />
+        <PartnerFAQ />
         <CTA />
       </main>
       <Footer />

@@ -1,0 +1,76 @@
+const I18nContext = createContext();
+
+export function I18nProvider({ children }) {
+  const [locale, setLocale] = useState('ko');
+  const [isLocaleDetected, setIsLocaleDetected] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Track when component is mounted to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Detect user's country based on IP and set locale (only after mount)
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const detectCountry = async () => {
+      // Skip if locale was already manually set by user
+      if (isLocaleDetected) return;
+
+      try {
+        // Use ipapi.co for free IP geolocation
+        const response = await fetch('https://ipapi.co/json/', {
+          signal: AbortSignal.timeout(3000), // 3 second timeout
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Set Korean for users in South Korea, English for everywhere else
+          const detectedLocale = data.country_code === 'KR' ? 'ko' : 'en';
+          setLocale(detectedLocale);
+        }
+      } catch (error) {
+        // On error (timeout, network issue, etc.), keep default locale (ko)
+        console.log('Could not detect location, using default locale');
+      } finally {
+        setIsLocaleDetected(true);
+      }
+    };
+
+    detectCountry();
+  }, [isMounted, isLocaleDetected]);
+
+  const t = useCallback(
+    (key) => {
+      const keys = key.split('.');
+      let value = translations[locale];
+      for (const k of keys) {
+        value = value?.[k];
+      }
+      return value || key;
+    },
+    [locale]
+  );
+
+  const toggleLocale = useCallback(() => {
+    setIsLocaleDetected(true); // Mark as user-set to prevent IP override
+    setLocale((prev) => (prev === 'ko' ? 'en' : 'ko'));
+  }, []);
+
+  return (
+    <I18nContext.Provider value={{ locale, setLocale, t, toggleLocale }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+export function useI18n() {
+  const context = useContext(I18nContext);
+  if (!context) {
+    throw new Error('useI18n must be used within an I18nProvider');
+  }
+  return context;
+}
+
+export default translations;

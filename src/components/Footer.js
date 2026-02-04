@@ -41,37 +41,35 @@ export default function Footer() {
 
   const footerSections = [
     {
-      title: t('footer.product'),
+      title: '제품',
       links: [
-        { label: t('footer.features'), href: '#features', isSection: true },
-        { label: t('footer.pricing'), href: '#pricing', isSection: true },
-        { label: t('footer.demo'), href: '#demo', isSection: true },
-        { label: t('footer.integrations'), href: '/integrations', isSection: false },
+        { label: '기능', href: '#partner-value', isSection: true },
+        { label: '통합 옵션', href: '#integration', isSection: true },
+        { label: '보안', href: '#security', isSection: true },
       ],
     },
     {
-      title: t('footer.company'),
+      title: '파트너',
       links: [
-        { label: t('footer.about'), href: '/about', isSection: false },
-        { label: t('footer.careers'), href: '/careers', isSection: false },
-        { label: t('footer.blog'), href: '/blog', isSection: false },
-        { label: t('footer.contact'), href: '/contact', isSection: false },
+        { label: 'EMR 파트너', href: '/partners', isSection: false },
+        { label: '파트너 문의', href: '/contact?type=emr_partner', isSection: false },
+        { label: '보안 자료 요청', href: '/contact?type=security_packet', isSection: false },
       ],
     },
     {
-      title: t('footer.support'),
+      title: '지원',
       links: [
-        { label: t('footer.help'), href: '/help', isSection: false },
-        { label: t('footer.docs'), href: '/docs', isSection: false },
-        { label: t('footer.status'), href: '/status', isSection: false },
+        { label: '문의', href: '/contact', isSection: false },
+        { label: '도움말', href: '/help', isSection: false },
+        { label: 'API 문서', href: '/docs', isSection: false },
       ],
     },
     {
-      title: t('footer.legal'),
+      title: '법적 고지',
       links: [
-        { label: t('footer.privacy'), href: '/privacy', isSection: false },
-        { label: t('footer.terms'), href: '/terms', isSection: false },
-        { label: t('footer.security'), href: '/security', isSection: false },
+        { label: '개인정보처리방침', href: '/privacy', isSection: false },
+        { label: '이용약관', href: '/terms', isSection: false },
+        { label: '보안 정책', href: '/security', isSection: false },
       ],
     },
   ];
@@ -118,7 +116,7 @@ export default function Footer() {
                 mb: 3,
               }}
             >
-              {t('footer.description')}
+              EMR 안에서 작동하는 AI 차트 자동화 모듈. 병원은 기존 워크플로를 유지하고, EMR은 AI 기능을 빠르게 번들링합니다.
             </Typography>
 
             {/* Social links */}

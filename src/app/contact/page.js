@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Box,
   Container,
@@ -21,145 +22,169 @@ import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SendIcon from '@mui/icons-material/Send';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import SecurityIcon from '@mui/icons-material/Security';
 import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 
-const content = {
-  ko: {
-    badge: '데모 요청',
-    title: '데모를 신청하세요',
-    subtitle:
-      '진료 요약부터 후속관리까지, Chartsok이 어떻게 도움이 되는지 직접 확인하세요.',
-    contactInfo: [
-      {
-        icon: EmailIcon,
-        title: '이메일',
-        value: 'chartsok.health@gmail.com',
-        description: '평일 24시간 내 답변',
-        color: '#4B9CD3',
-      },
-      {
-        icon: LocationOnIcon,
-        title: '주소',
-        value: '인천광역시 중구',
-        description: '대한민국',
-        color: '#10B981',
-      },
-      {
-        icon: AccessTimeIcon,
-        title: '영업 시간',
-        value: '평일 09:00 - 18:00',
-        description: '주말 및 공휴일 휴무',
-        color: '#F59E0B',
-      },
-    ],
-    form: {
-      clinicName: '병원명',
-      contactName: '담당자 성함',
-      email: '이메일',
-      specialty: '진료과',
-      volume: '일일 외래 환자 수 (대략)',
-      message: '추가 문의사항 (선택)',
-      submit: '데모 요청하기',
-      specialties: [
-        '내과',
-        '가정의학과',
-        '소아청소년과',
-        '정형외과',
-        '피부과',
-        '이비인후과',
-        '안과',
-        '치과',
-        '기타',
-      ],
-      volumes: ['20명 미만', '20~50명', '50~100명', '100명 이상'],
+const typeConfig = {
+  emr_partner: {
+    ko: {
+      badge: 'EMR 제휴 문의',
+      title: 'EMR 파트너 제휴 문의',
+      subtitle: 'Chartsok AI 차트 모듈을 귀사 EMR에 탑재하세요. 기술 검토부터 파일럿까지 전담팀이 함께합니다.',
+      icon: HandshakeIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'emrName', 'hospitalCount', 'message'],
     },
-    success: '데모 요청이 성공적으로 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.',
+    en: {
+      badge: 'EMR Partnership',
+      title: 'EMR Partner Inquiry',
+      subtitle: 'Embed Chartsok AI charting into your EMR. Our dedicated team supports you from technical review to pilot.',
+      icon: HandshakeIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'emrName', 'hospitalCount', 'message'],
+    },
+  },
+  clinic: {
+    ko: {
+      badge: '데모 요청',
+      title: '데모를 신청하세요',
+      subtitle: '진료 요약부터 후속관리까지, Chartsok이 어떻게 도움이 되는지 직접 확인하세요.',
+      icon: LocalHospitalIcon,
+      formFields: ['clinicName', 'contactName', 'email', 'specialty', 'volume', 'message'],
+    },
+    en: {
+      badge: 'Request Demo',
+      title: 'Request a Demo',
+      subtitle: 'From visit summaries to follow-up actions — see how Chartsok can help your clinic.',
+      icon: LocalHospitalIcon,
+      formFields: ['clinicName', 'contactName', 'email', 'specialty', 'volume', 'message'],
+    },
+  },
+  security_packet: {
+    ko: {
+      badge: '보안 자료 요청',
+      title: '보안 검토 자료 요청',
+      subtitle: 'Chartsok의 보안 체계, 인증 현황, 개인정보 처리 방침 등 기술 검토에 필요한 자료를 보내드립니다.',
+      icon: SecurityIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'message'],
+    },
+    en: {
+      badge: 'Security Packet',
+      title: 'Request Security Documentation',
+      subtitle: 'We\'ll send you our security architecture, certifications, and data processing policies for your technical review.',
+      icon: SecurityIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'message'],
+    },
+  },
+  template_mapping_check: {
+    ko: {
+      badge: '템플릿 매핑 확인',
+      title: 'EMR 템플릿 매핑 가능 여부 확인',
+      subtitle: '귀사 EMR의 차트 템플릿 샘플을 보내주시면, 매핑 가능 여부와 예상 소요 기간을 안내드립니다.',
+      icon: HandshakeIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'emrName', 'message'],
+    },
+    en: {
+      badge: 'Template Mapping',
+      title: 'Check Template Mapping Compatibility',
+      subtitle: 'Send us your EMR chart template samples and we\'ll confirm mapping feasibility and estimated timeline.',
+      icon: HandshakeIcon,
+      formFields: ['companyName', 'contactName', 'email', 'phone', 'emrName', 'message'],
+    },
+  },
+};
+
+const fieldLabels = {
+  ko: {
+    companyName: '회사명',
+    clinicName: '병원명',
+    contactName: '담당자 성함',
+    email: '이메일',
+    phone: '연락처',
+    emrName: 'EMR 제품명',
+    hospitalCount: '고객 병원 수 (대략)',
+    specialty: '진료과',
+    volume: '일일 외래 환자 수 (대략)',
+    message: '추가 문의사항 (선택)',
+    specialties: ['내과', '가정의학과', '소아청소년과', '정형외과', '피부과', '이비인후과', '안과', '치과', '기타'],
+    volumes: ['20명 미만', '20~50명', '50~100명', '100명 이상'],
+    hospitalCounts: ['100곳 미만', '100~500곳', '500~1,000곳', '1,000곳 이상'],
+    submit: {
+      emr_partner: '제휴 문의하기',
+      clinic: '데모 요청하기',
+      security_packet: '자료 요청하기',
+      template_mapping_check: '매핑 확인 요청하기',
+    },
+    success: '요청이 성공적으로 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.',
     error: '요청 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
     sending: '전송 중...',
   },
   en: {
-    badge: 'Request Demo',
-    title: 'Request a Demo',
-    subtitle:
-      'From visit summaries to follow-up actions — see how Chartsok can help your clinic.',
-    contactInfo: [
-      {
-        icon: EmailIcon,
-        title: 'Email',
-        value: 'chartsok.health@gmail.com',
-        description: 'Response within 24 hours',
-        color: '#4B9CD3',
-      },
-      {
-        icon: LocationOnIcon,
-        title: 'Address',
-        value: 'Jung-gu, Incheon',
-        description: 'South Korea',
-        color: '#10B981',
-      },
-      {
-        icon: AccessTimeIcon,
-        title: 'Business Hours',
-        value: 'Mon-Fri 09:00 - 18:00 KST',
-        description: 'Closed on weekends',
-        color: '#F59E0B',
-      },
-    ],
-    form: {
-      clinicName: 'Clinic Name',
-      contactName: 'Contact Name',
-      email: 'Email',
-      specialty: 'Specialty',
-      volume: 'Daily Outpatient Volume (approx.)',
-      message: 'Additional Notes (optional)',
-      submit: 'Request Demo',
-      specialties: [
-        'Internal Medicine',
-        'Family Medicine',
-        'Pediatrics',
-        'Orthopedics',
-        'Dermatology',
-        'ENT',
-        'Ophthalmology',
-        'Dentistry',
-        'Other',
-      ],
-      volumes: ['Under 20', '20–50', '50–100', '100+'],
+    companyName: 'Company Name',
+    clinicName: 'Clinic Name',
+    contactName: 'Contact Name',
+    email: 'Email',
+    phone: 'Phone',
+    emrName: 'EMR Product Name',
+    hospitalCount: 'Number of Client Hospitals (approx.)',
+    specialty: 'Specialty',
+    volume: 'Daily Outpatient Volume (approx.)',
+    message: 'Additional Notes (optional)',
+    specialties: ['Internal Medicine', 'Family Medicine', 'Pediatrics', 'Orthopedics', 'Dermatology', 'ENT', 'Ophthalmology', 'Dentistry', 'Other'],
+    volumes: ['Under 20', '20–50', '50–100', '100+'],
+    hospitalCounts: ['Under 100', '100–500', '500–1,000', '1,000+'],
+    submit: {
+      emr_partner: 'Submit Partnership Inquiry',
+      clinic: 'Request Demo',
+      security_packet: 'Request Security Packet',
+      template_mapping_check: 'Check Template Mapping',
     },
-    success: 'Your demo request has been submitted. We will contact you shortly.',
+    success: 'Your request has been submitted. We will contact you shortly.',
     error: 'Failed to submit request. Please try again later.',
     sending: 'Sending...',
   },
 };
 
-export default function ContactPage() {
-  const { locale } = useI18n();
-  const t = content[locale] || content.ko;
+const contactInfo = {
+  ko: [
+    { icon: EmailIcon, title: '이메일', value: 'chartsok.health@gmail.com', description: '평일 24시간 내 답변', color: '#4B9CD3' },
+    { icon: LocationOnIcon, title: '주소', value: '인천광역시 중구', description: '대한민국', color: '#10B981' },
+    { icon: AccessTimeIcon, title: '영업 시간', value: '평일 09:00 - 18:00', description: '주말 및 공휴일 휴무', color: '#F59E0B' },
+  ],
+  en: [
+    { icon: EmailIcon, title: 'Email', value: 'chartsok.health@gmail.com', description: 'Response within 24 hours', color: '#4B9CD3' },
+    { icon: LocationOnIcon, title: 'Address', value: 'Jung-gu, Incheon', description: 'South Korea', color: '#10B981' },
+    { icon: AccessTimeIcon, title: 'Business Hours', value: 'Mon-Fri 09:00 - 18:00 KST', description: 'Closed on weekends', color: '#F59E0B' },
+  ],
+};
 
-  const [formData, setFormData] = useState({
-    clinicName: '',
-    contactName: '',
-    email: '',
-    specialty: '',
-    volume: '',
-    message: '',
-    website: '', // honeypot
-  });
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+function ContactContent() {
+  const searchParams = useSearchParams();
+  const { locale } = useI18n();
+  const type = searchParams.get('type') || 'clinic';
+  const config = typeConfig[type] || typeConfig.clinic;
+  const t = config[locale] || config.ko;
+  const labels = fieldLabels[locale] || fieldLabels.ko;
+  const infos = contactInfo[locale] || contactInfo.ko;
+  const HeroIcon = t.icon;
+
+  const initialFormData = {};
+  t.formFields.forEach((f) => { initialFormData[f] = ''; });
+  initialFormData.website = ''; // honeypot
+
+  const [formData, setFormData] = useState(initialFormData);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field) => (e) => {
+    setFormData({ ...formData, [field]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Honeypot check
     if (formData.website) return;
-
     setIsSubmitting(true);
 
     try {
@@ -167,29 +192,108 @@ export default function ContactPage() {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...submitData, locale }),
+        body: JSON.stringify({ ...submitData, type, locale }),
       });
 
       if (response.ok) {
-        setSnackbar({ open: true, message: t.success, severity: 'success' });
-        setFormData({
-          clinicName: '',
-          contactName: '',
-          email: '',
-          specialty: '',
-          volume: '',
-          message: '',
-          website: '',
-        });
+        setSnackbar({ open: true, message: labels.success, severity: 'success' });
+        const resetData = {};
+        t.formFields.forEach((f) => { resetData[f] = ''; });
+        resetData.website = '';
+        setFormData(resetData);
       } else {
-        setSnackbar({ open: true, message: t.error, severity: 'error' });
+        setSnackbar({ open: true, message: labels.error, severity: 'error' });
       }
     } catch (error) {
       console.error('Contact form error:', error);
-      setSnackbar({ open: true, message: t.error, severity: 'error' });
+      setSnackbar({ open: true, message: labels.error, severity: 'error' });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const renderField = (field) => {
+    if (field === 'specialty') {
+      return (
+        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+          <TextField
+            fullWidth
+            select
+            label={labels[field]}
+            value={formData[field]}
+            onChange={handleChange(field)}
+            required
+          >
+            {labels.specialties.map((s) => (
+              <MenuItem key={s} value={s}>{s}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      );
+    }
+    if (field === 'volume') {
+      return (
+        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+          <TextField
+            fullWidth
+            select
+            label={labels[field]}
+            value={formData[field]}
+            onChange={handleChange(field)}
+            required
+          >
+            {labels.volumes.map((v) => (
+              <MenuItem key={v} value={v}>{v}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      );
+    }
+    if (field === 'hospitalCount') {
+      return (
+        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+          <TextField
+            fullWidth
+            select
+            label={labels[field]}
+            value={formData[field]}
+            onChange={handleChange(field)}
+            required
+          >
+            {labels.hospitalCounts.map((h) => (
+              <MenuItem key={h} value={h}>{h}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      );
+    }
+    if (field === 'message') {
+      return (
+        <Grid size={{ xs: 12 }} key={field}>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label={labels[field]}
+            value={formData[field]}
+            onChange={handleChange(field)}
+          />
+        </Grid>
+      );
+    }
+    const isFullWidth = ['companyName', 'clinicName'].includes(field);
+    return (
+      <Grid size={{ xs: 12, ...(isFullWidth ? {} : { sm: 6 }) }} key={field}>
+        <TextField
+          fullWidth
+          label={labels[field]}
+          type={field === 'email' ? 'email' : 'text'}
+          value={formData[field]}
+          onChange={handleChange(field)}
+          required={field !== 'message'}
+        />
+      </Grid>
+    );
   };
 
   return (
@@ -212,6 +316,21 @@ export default function ContactPage() {
               transition={{ duration: 0.6 }}
               sx={{ textAlign: 'center', maxWidth: 700, mx: 'auto' }}
             >
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(255,255,255,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <HeroIcon sx={{ fontSize: 28, color: 'white' }} />
+                </Box>
+              </Box>
               <Chip
                 label={t.badge}
                 sx={{
@@ -244,7 +363,7 @@ export default function ContactPage() {
         {/* Contact Info */}
         <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
           <Grid container spacing={3}>
-            {t.contactInfo.map((info, index) => {
+            {infos.map((info, index) => {
               const Icon = info.icon;
               return (
                 <Grid size={{ xs: 12, md: 4 }} key={index}>
@@ -279,10 +398,7 @@ export default function ContactPage() {
                       >
                         <Icon sx={{ color: info.color, fontSize: 28 }} />
                       </Box>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ color: 'text.secondary', mb: 0.5 }}
-                      >
+                      <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
                         {info.title}
                       </Typography>
                       <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
@@ -299,7 +415,7 @@ export default function ContactPage() {
           </Grid>
         </Container>
 
-        {/* Demo Request Form */}
+        {/* Form */}
         <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
           <Card
             elevation={0}
@@ -312,105 +428,16 @@ export default function ContactPage() {
           >
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    fullWidth
-                    label={t.form.clinicName}
-                    value={formData.clinicName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, clinicName: e.target.value })
-                    }
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={t.form.contactName}
-                    value={formData.contactName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, contactName: e.target.value })
-                    }
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={t.form.email}
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    select
-                    label={t.form.specialty}
-                    value={formData.specialty}
-                    onChange={(e) =>
-                      setFormData({ ...formData, specialty: e.target.value })
-                    }
-                    required
-                  >
-                    {t.form.specialties.map((s) => (
-                      <MenuItem key={s} value={s}>
-                        {s}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    select
-                    label={t.form.volume}
-                    value={formData.volume}
-                    onChange={(e) =>
-                      setFormData({ ...formData, volume: e.target.value })
-                    }
-                    required
-                  >
-                    {t.form.volumes.map((v) => (
-                      <MenuItem key={v} value={v}>
-                        {v}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    label={t.form.message}
-                    value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
-                  />
-                </Grid>
-                {/* Honeypot - hidden from real users */}
+                {t.formFields.map(renderField)}
+                {/* Honeypot */}
                 <Box
-                  sx={{
-                    position: 'absolute',
-                    left: '-9999px',
-                    opacity: 0,
-                    height: 0,
-                    overflow: 'hidden',
-                  }}
+                  sx={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}
                   aria-hidden="true"
                 >
                   <TextField
                     label="Website"
                     value={formData.website}
-                    onChange={(e) =>
-                      setFormData({ ...formData, website: e.target.value })
-                    }
+                    onChange={handleChange('website')}
                     tabIndex={-1}
                     autoComplete="off"
                   />
@@ -428,14 +455,11 @@ export default function ContactPage() {
                       fontSize: '1rem',
                       fontWeight: 600,
                       textTransform: 'none',
-                      background:
-                        'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-                      '&:disabled': {
-                        background: 'grey.400',
-                      },
+                      background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
+                      '&:disabled': { background: 'grey.400' },
                     }}
                   >
-                    {isSubmitting ? t.sending : t.form.submit}
+                    {isSubmitting ? labels.sending : labels.submit[type] || labels.submit.clinic}
                   </Button>
                 </Grid>
               </Grid>
@@ -457,5 +481,17 @@ export default function ContactPage() {
         </Alert>
       </Snackbar>
     </>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ color: '#64748B' }}>Loading...</Typography>
+      </Box>
+    }>
+      <ContactContent />
+    </Suspense>
   );
 }

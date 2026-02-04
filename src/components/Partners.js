@@ -144,29 +144,28 @@ export default function Partners() {
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.4 }}
           >
-            <Link href="/contact" passHref legacyBehavior>
-              <Button
-                component="a"
-                variant="outlined"
-                size="large"
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'white',
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255,255,255,0.08)',
-                  },
-                }}
-              >
-                {t('partners.cta')}
-              </Button>
-            </Link>
+            <Button
+              component={Link}
+              href="/contact"
+              variant="outlined"
+              size="large"
+              sx={{
+                borderColor: 'rgba(255,255,255,0.3)',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: 2,
+                '&:hover': {
+                  borderColor: 'white',
+                  bgcolor: 'rgba(255,255,255,0.08)',
+                },
+              }}
+            >
+              {t('partners.cta')}
+            </Button>
           </MotionBox>
         </MotionBox>
       </Container>

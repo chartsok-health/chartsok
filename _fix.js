@@ -104,12 +104,12 @@ export default function Header() {
   }, []);
 
   const navItems = [
-    { label: '데모', id: 'demo' },
-    { label: '수익 구조', id: 'partner-value' },
-    { label: '가격', id: 'economics' },
-    { label: 'PoC 패키지', id: 'poc-package' },
+    { label: '제품', id: 'partner-value' },
+    { label: '병원용', id: 'clinic-value' },
+    { label: 'EMR 파트너', href: '/partners' },
     { label: '보안', id: 'security' },
     { label: 'FAQ', id: 'faq' },
+    { label: '문의', href: '/contact' },
   ];
 
   const scrollToSection = (id) => {
@@ -225,30 +225,32 @@ export default function Header() {
         ) : (
           <>
             <Button
-              component={Link}
-              href="/contact?type=emr_partner"
               variant="contained"
               fullWidth
               size="large"
-              onClick={handleDrawerToggle}
+              onClick={() => {
+                handleDrawerToggle();
+                openAuthModal('signup');
+              }}
               sx={{
                 mb: 2,
                 py: 1.5,
                 background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
               }}
             >
-              EMR 제휴 문의
+              {t('nav.getStarted')}
             </Button>
             <Button
-              component={Link}
-              href="/contact?type=clinic"
               variant="outlined"
               fullWidth
               size="large"
-              onClick={handleDrawerToggle}
+              onClick={() => {
+                handleDrawerToggle();
+                openAuthModal('login');
+              }}
               sx={{ py: 1.5 }}
             >
-              병원 도입 문의
+              {t('nav.login')}
             </Button>
           </>
         )}
@@ -502,8 +504,7 @@ export default function Header() {
                 ) : (
                   <>
                     <Button
-                      component={Link}
-                      href="/contact?type=clinic"
+                      onClick={() => openAuthModal('login')}
                       variant="text"
                       sx={{
                         mr: 1,
@@ -511,7 +512,7 @@ export default function Header() {
                         fontWeight: 500,
                       }}
                     >
-                      병원 도입 문의
+                      {t('nav.login')}
                     </Button>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
@@ -519,8 +520,7 @@ export default function Header() {
                       style={{ display: 'inline-block' }}
                     >
                       <Button
-                        component={Link}
-                        href="/contact?type=emr_partner"
+                        onClick={() => openAuthModal('signup')}
                         variant="contained"
                         sx={{
                           px: 3,
@@ -533,7 +533,7 @@ export default function Header() {
                           },
                         }}
                       >
-                        EMR 제휴 문의
+                        {t('nav.getStarted')}
                       </Button>
                     </motion.div>
                   </>
