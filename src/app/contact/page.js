@@ -14,6 +14,8 @@ import {
   Snackbar,
   Alert,
   MenuItem,
+  InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -25,7 +27,18 @@ import SendIcon from '@mui/icons-material/Send';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import SecurityIcon from '@mui/icons-material/Security';
+import BusinessIcon from '@mui/icons-material/Business';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import GroupsIcon from '@mui/icons-material/Groups';
+import CategoryIcon from '@mui/icons-material/Category';
+import PeopleIcon from '@mui/icons-material/People';
+import MessageIcon from '@mui/icons-material/Message';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useI18n } from '@/lib/i18n';
+
+const MotionCard = motion.create(Card);
 
 const MotionBox = motion.create(Box);
 
@@ -96,6 +109,19 @@ const typeConfig = {
   },
 };
 
+const fieldIcons = {
+  companyName: BusinessIcon,
+  clinicName: LocalHospitalIcon,
+  contactName: PersonIcon,
+  email: EmailIcon,
+  phone: PhoneIcon,
+  emrName: MedicalServicesIcon,
+  hospitalCount: GroupsIcon,
+  specialty: CategoryIcon,
+  volume: PeopleIcon,
+  message: MessageIcon,
+};
+
 const fieldLabels = {
   ko: {
     companyName: '회사명',
@@ -117,6 +143,14 @@ const fieldLabels = {
       security_packet: '자료 요청하기',
       template_mapping_check: '매핑 확인 요청하기',
     },
+    formHeader: {
+      emr_partner: '제휴 정보 입력',
+      clinic: '병원 정보 입력',
+      security_packet: '요청자 정보 입력',
+      template_mapping_check: '제휴사 정보 입력',
+    },
+    requiredNote: '* 필수 입력 항목',
+    responseTime: '영업일 기준 24시간 내 답변드립니다',
     success: '요청이 성공적으로 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.',
     error: '요청 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
     sending: '전송 중...',
@@ -141,6 +175,14 @@ const fieldLabels = {
       security_packet: 'Request Security Packet',
       template_mapping_check: 'Check Template Mapping',
     },
+    formHeader: {
+      emr_partner: 'Partnership Details',
+      clinic: 'Clinic Information',
+      security_packet: 'Contact Information',
+      template_mapping_check: 'Partner Information',
+    },
+    requiredNote: '* Required fields',
+    responseTime: 'We respond within 24 business hours',
     success: 'Your request has been submitted. We will contact you shortly.',
     error: 'Failed to submit request. Please try again later.',
     sending: 'Sending...',
@@ -212,10 +254,37 @@ function ContactContent() {
     }
   };
 
+  // Determine if a field should be full width based on whether it would be alone in a row
+  const getFieldSize = (field) => {
+    const alwaysFullWidth = ['companyName', 'clinicName', 'message'];
+    if (alwaysFullWidth.includes(field)) return { xs: 12 };
+
+    // Get fields that can be paired (half-width candidates)
+    const pairableFields = t.formFields.filter((f) => !alwaysFullWidth.includes(f));
+    const fieldIndex = pairableFields.indexOf(field);
+
+    // If odd number of pairable fields and this is the last one, make it full width
+    if (pairableFields.length % 2 === 1 && fieldIndex === pairableFields.length - 1) {
+      return { xs: 12 };
+    }
+
+    return { xs: 12, sm: 6 };
+  };
+
   const renderField = (field) => {
+    const gridSize = getFieldSize(field);
+    const FieldIcon = fieldIcons[field];
+    const iconAdornment = FieldIcon ? {
+      startAdornment: (
+        <InputAdornment position="start">
+          <FieldIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+        </InputAdornment>
+      ),
+    } : {};
+
     if (field === 'specialty') {
       return (
-        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+        <Grid size={gridSize} key={field}>
           <TextField
             fullWidth
             select
@@ -223,6 +292,7 @@ function ContactContent() {
             value={formData[field]}
             onChange={handleChange(field)}
             required
+            slotProps={{ input: iconAdornment }}
           >
             {labels.specialties.map((s) => (
               <MenuItem key={s} value={s}>{s}</MenuItem>
@@ -233,7 +303,7 @@ function ContactContent() {
     }
     if (field === 'volume') {
       return (
-        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+        <Grid size={gridSize} key={field}>
           <TextField
             fullWidth
             select
@@ -241,6 +311,7 @@ function ContactContent() {
             value={formData[field]}
             onChange={handleChange(field)}
             required
+            slotProps={{ input: iconAdornment }}
           >
             {labels.volumes.map((v) => (
               <MenuItem key={v} value={v}>{v}</MenuItem>
@@ -251,7 +322,7 @@ function ContactContent() {
     }
     if (field === 'hospitalCount') {
       return (
-        <Grid size={{ xs: 12, sm: 6 }} key={field}>
+        <Grid size={gridSize} key={field}>
           <TextField
             fullWidth
             select
@@ -259,6 +330,7 @@ function ContactContent() {
             value={formData[field]}
             onChange={handleChange(field)}
             required
+            slotProps={{ input: iconAdornment }}
           >
             {labels.hospitalCounts.map((h) => (
               <MenuItem key={h} value={h}>{h}</MenuItem>
@@ -269,7 +341,7 @@ function ContactContent() {
     }
     if (field === 'message') {
       return (
-        <Grid size={{ xs: 12 }} key={field}>
+        <Grid size={gridSize} key={field}>
           <TextField
             fullWidth
             multiline
@@ -277,13 +349,13 @@ function ContactContent() {
             label={labels[field]}
             value={formData[field]}
             onChange={handleChange(field)}
+            placeholder={locale === 'ko' ? '궁금한 점이나 추가 요청사항을 입력해주세요' : 'Enter any questions or additional requests'}
           />
         </Grid>
       );
     }
-    const isFullWidth = ['companyName', 'clinicName'].includes(field);
     return (
-      <Grid size={{ xs: 12, ...(isFullWidth ? {} : { sm: 6 }) }} key={field}>
+      <Grid size={gridSize} key={field}>
         <TextField
           fullWidth
           label={labels[field]}
@@ -291,6 +363,7 @@ function ContactContent() {
           value={formData[field]}
           onChange={handleChange(field)}
           required={field !== 'message'}
+          slotProps={{ input: iconAdornment }}
         />
       </Grid>
     );
@@ -367,48 +440,52 @@ function ContactContent() {
               const Icon = info.icon;
               return (
                 <Grid size={{ xs: 12, md: 4 }} key={index}>
-                  <MotionBox
+                  <MotionCard
+                    elevation={0}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
+                    whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
+                    sx={{
+                      p: 3,
+                      textAlign: 'center',
+                      border: '1px solid',
+                      borderColor: 'grey.200',
+                      borderRadius: 3,
+                      height: '100%',
+                      cursor: 'default',
+                      transition: 'border-color 0.2s',
+                      '&:hover': {
+                        borderColor: info.color,
+                      },
+                    }}
                   >
-                    <Card
-                      elevation={0}
+                    <Box
                       sx={{
-                        p: 3,
-                        textAlign: 'center',
-                        border: '1px solid',
-                        borderColor: 'grey.200',
+                        width: 56,
+                        height: 56,
                         borderRadius: 3,
-                        height: '100%',
+                        bgcolor: `${info.color}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 2,
+                        transition: 'transform 0.2s',
                       }}
                     >
-                      <Box
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: 3,
-                          bgcolor: `${info.color}15`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mx: 'auto',
-                          mb: 2,
-                        }}
-                      >
-                        <Icon sx={{ color: info.color, fontSize: 28 }} />
-                      </Box>
-                      <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                        {info.title}
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                        {info.value}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {info.description}
-                      </Typography>
-                    </Card>
-                  </MotionBox>
+                      <Icon sx={{ color: info.color, fontSize: 28 }} />
+                    </Box>
+                    <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      {info.title}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                      {info.value}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {info.description}
+                    </Typography>
+                  </MotionCard>
                 </Grid>
               );
             })}
@@ -416,18 +493,47 @@ function ContactContent() {
         </Container>
 
         {/* Form */}
-        <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
-          <Card
+        <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 }, pb: { xs: 8, md: 10 } }}>
+          <MotionCard
             elevation={0}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
               p: { xs: 3, md: 4 },
               border: '1px solid',
               borderColor: 'grey.200',
               borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
             }}
           >
+            {/* Form Header */}
+            <Box sx={{ mb: 3, pb: 3, borderBottom: '1px solid', borderColor: 'grey.100' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: '#4B9CD315',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <HeroIcon sx={{ fontSize: 20, color: '#4B9CD3' }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  {labels.formHeader?.[type] || t.badge}
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {labels.requiredNote}
+              </Typography>
+            </Box>
+
             <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
+              <Grid container spacing={2.5}>
                 {t.formFields.map(renderField)}
                 {/* Honeypot */}
                 <Box
@@ -442,29 +548,48 @@ function ContactContent() {
                     autoComplete="off"
                   />
                 </Box>
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
                   <Button
                     type="submit"
                     variant="contained"
                     size="large"
                     fullWidth
                     disabled={isSubmitting}
-                    endIcon={!isSubmitting && <SendIcon />}
+                    endIcon={!isSubmitting ? <SendIcon /> : null}
+                    startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
                     sx={{
-                      py: 1.5,
+                      py: 1.75,
                       fontSize: '1rem',
                       fontWeight: 600,
                       textTransform: 'none',
+                      borderRadius: 2,
                       background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
-                      '&:disabled': { background: 'grey.400' },
+                      boxShadow: '0 4px 14px rgba(75, 156, 211, 0.3)',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        boxShadow: '0 6px 20px rgba(75, 156, 211, 0.4)',
+                        transform: 'translateY(-1px)',
+                      },
+                      '&:disabled': {
+                        background: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
+                        boxShadow: 'none',
+                      },
                     }}
                   >
                     {isSubmitting ? labels.sending : labels.submit[type] || labels.submit.clinic}
                   </Button>
                 </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75, mt: 1 }}>
+                    <CheckCircleOutlineIcon sx={{ fontSize: 16, color: '#10B981' }} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {labels.responseTime}
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
             </form>
-          </Card>
+          </MotionCard>
         </Container>
       </Box>
       <Footer />

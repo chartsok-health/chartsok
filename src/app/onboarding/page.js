@@ -30,6 +30,7 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import SearchIcon from '@mui/icons-material/Search';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useAuth } from '@/lib/AuthContext';
+import { useI18n } from '@/lib/i18n';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { userHospitalService } from '@/lib/firestore';
@@ -38,60 +39,209 @@ const MotionBox = motion.create(Box);
 const MotionPaper = motion.create(Paper);
 const MotionCard = motion.create(Card);
 
-const practiceTypes = [
-  {
-    id: 'individual',
-    label: '개인 의원',
-    description: '1인 또는 소규모 개인 의원',
-    icon: PersonIcon,
-    color: '#4B9CD3',
-  },
-  {
-    id: 'group',
-    label: '그룹 의원',
-    description: '여러 의사가 함께 운영하는 의원',
-    icon: GroupsIcon,
-    color: '#10B981',
-  },
-  {
-    id: 'hospital',
-    label: '병원',
-    description: '중소 규모 병원',
-    icon: LocalHospitalIcon,
-    color: '#F59E0B',
-  },
-  {
-    id: 'enterprise',
-    label: '대형 병원',
-    description: '종합병원 또는 대학병원',
-    icon: BusinessIcon,
-    color: '#8B5CF6',
-  },
+const practiceTypesBase = [
+  { id: 'individual', icon: PersonIcon, color: '#4B9CD3' },
+  { id: 'group', icon: GroupsIcon, color: '#10B981' },
+  { id: 'hospital', icon: LocalHospitalIcon, color: '#F59E0B' },
+  { id: 'enterprise', icon: BusinessIcon, color: '#8B5CF6' },
 ];
 
-const practiceSizes = [
-  { id: '1', label: '1명', description: '단독 진료' },
-  { id: '2-5', label: '2-5명', description: '소규모' },
-  { id: '6-20', label: '6-20명', description: '중규모' },
-  { id: '21-50', label: '21-50명', description: '중대규모' },
-  { id: '50+', label: '50명 이상', description: '대규모' },
+const practiceSizesBase = [
+  { id: '1' },
+  { id: '2-5' },
+  { id: '6-20' },
+  { id: '21-50' },
+  { id: '50+' },
 ];
 
-const specialties = [
-  { id: 'internal', label: '내과', emoji: '🩺' },
-  { id: 'ent', label: '이비인후과', emoji: '👂' },
-  { id: 'orthopedics', label: '정형외과', emoji: '🦴' },
-  { id: 'dermatology', label: '피부과', emoji: '🧴' },
-  { id: 'pediatrics', label: '소아과', emoji: '👶' },
-  { id: 'psychiatry', label: '정신건강의학과', emoji: '🧠' },
-  { id: 'family', label: '가정의학과', emoji: '👨‍👩‍👧' },
-  { id: 'neurology', label: '신경과', emoji: '⚡' },
-  { id: 'surgery', label: '외과', emoji: '🔪' },
-  { id: 'obgyn', label: '산부인과', emoji: '🤰' },
-  { id: 'ophthalmology', label: '안과', emoji: '👁️' },
-  { id: 'cardiology', label: '심장내과', emoji: '❤️' },
-  { id: 'other', label: '기타', emoji: '➕' },
+const specialtiesBase = [
+  { id: 'internal', emoji: '🩺' },
+  { id: 'ent', emoji: '👂' },
+  { id: 'orthopedics', emoji: '🦴' },
+  { id: 'dermatology', emoji: '🧴' },
+  { id: 'pediatrics', emoji: '👶' },
+  { id: 'psychiatry', emoji: '🧠' },
+  { id: 'family', emoji: '👨‍👩‍👧' },
+  { id: 'neurology', emoji: '⚡' },
+  { id: 'surgery', emoji: '🔪' },
+  { id: 'obgyn', emoji: '🤰' },
+  { id: 'ophthalmology', emoji: '👁️' },
+  { id: 'cardiology', emoji: '❤️' },
+  { id: 'other', emoji: '➕' },
 ];
+
+const content = {
+  ko: {
+    // Practice types
+    practiceTypeLabels: {
+      individual: { label: '개인 의원', description: '1인 또는 소규모 개인 의원' },
+      group: { label: '그룹 의원', description: '여러 의사가 함께 운영하는 의원' },
+      hospital: { label: '병원', description: '중소 규모 병원' },
+      enterprise: { label: '대형 병원', description: '종합병원 또는 대학병원' },
+    },
+    // Practice sizes
+    practiceSizeLabels: {
+      '1': { label: '1명', description: '단독 진료' },
+      '2-5': { label: '2-5명', description: '소규모' },
+      '6-20': { label: '6-20명', description: '중규모' },
+      '21-50': { label: '21-50명', description: '중대규모' },
+      '50+': { label: '50명 이상', description: '대규모' },
+    },
+    // Specialties
+    specialtyLabels: {
+      internal: '내과',
+      ent: '이비인후과',
+      orthopedics: '정형외과',
+      dermatology: '피부과',
+      pediatrics: '소아과',
+      psychiatry: '정신건강의학과',
+      family: '가정의학과',
+      neurology: '신경과',
+      surgery: '외과',
+      obgyn: '산부인과',
+      ophthalmology: '안과',
+      cardiology: '심장내과',
+      other: '기타',
+    },
+    // Step labels
+    stepLabels: {
+      hospital: '병원 확인',
+      type: '기관 유형',
+      size: '규모',
+      specialty: '전문 분야',
+    },
+    // Welcome step
+    welcomeTitle: 'chartsok에 오신 것을 환영합니다!',
+    welcomeSubtitle: '병원 정보만 간단히 확인하면 바로 시작할 수 있습니다.',
+    welcomeChip1: '1분 이내 완료',
+    welcomeChip2: '언제든 수정 가능',
+    welcomeChip3: '개인정보 보호',
+    // Hospital step
+    hospitalTitle: '병원 이름을 입력해 주세요',
+    hospitalSubtitle: '등록된 병원이 있는지 확인합니다',
+    hospitalLabel: '병원/의원 이름',
+    hospitalPlaceholder: '예: 서울내과의원',
+    hospitalHelperText: '공백 및 특수문자 없이 입력해주세요',
+    hospitalFound: '병원을 찾았습니다!',
+    hospitalApprovalNeeded: '가입 후 병원 관리자의 승인이 필요합니다',
+    hospitalJoin: '이 병원으로 시작하기',
+    hospitalNew: '새로운 병원이네요!',
+    hospitalRegisterMsg: (name) => `${name}을(를) 새로 등록합니다. 병원 정보를 입력해 주세요.`,
+    hospitalRegister: '병원 등록하기',
+    hospitalSelected: (name) => `${name} 선택됨`,
+    hospitalNewRegistration: (name) => `${name} — 새로 등록`,
+    staffChip: (size) => `의료진 ${size}명`,
+    // Type step
+    typeTitle: '어떤 유형의 의료기관인가요?',
+    typeSubtitle: '가장 적합한 옵션을 선택해 주세요',
+    // Size step
+    sizeTitle: '의료진 규모는 어떻게 되나요?',
+    sizeSubtitle: 'chartsok을 사용할 의료진 수를 선택해 주세요',
+    // Specialty step
+    specialtyTitleExisting: '선생님의 전문 분야를 선택해 주세요',
+    specialtyTitleNew: '전문 분야를 선택해 주세요',
+    specialtySubtitle: 'AI가 해당 분야에 최적화된 의학 용어를 학습합니다',
+    // Complete step (pending)
+    pendingTitle: '가입 요청이 전송되었습니다',
+    pendingAdminApproval: (name) => `${name} 관리자가 승인하면`,
+    pendingFullAccess: '모든 기능을 사용하실 수 있습니다.',
+    pendingDashboard: '대시보드로 이동',
+    // Complete step (active)
+    completeTitle: '설정이 완료되었습니다!',
+    completeMessage: '이제 chartsok의 모든 기능을 사용하실 수 있습니다.',
+    completeRedirect: '대시보드로 이동합니다...',
+    // Navigation
+    navBack: '이전',
+    navNext: '다음',
+    navComplete: '완료하기',
+    navSaving: '저장 중...',
+  },
+  en: {
+    // Practice types
+    practiceTypeLabels: {
+      individual: { label: 'Individual Practice', description: 'Solo or small private practice' },
+      group: { label: 'Group Practice', description: 'Practice run by multiple doctors' },
+      hospital: { label: 'Hospital', description: 'Small to medium hospital' },
+      enterprise: { label: 'Large Hospital', description: 'General or university hospital' },
+    },
+    // Practice sizes
+    practiceSizeLabels: {
+      '1': { label: '1', description: 'Solo' },
+      '2-5': { label: '2-5', description: 'Small' },
+      '6-20': { label: '6-20', description: 'Medium' },
+      '21-50': { label: '21-50', description: 'Medium-Large' },
+      '50+': { label: '50+', description: 'Large' },
+    },
+    // Specialties
+    specialtyLabels: {
+      internal: 'Internal Medicine',
+      ent: 'ENT',
+      orthopedics: 'Orthopedics',
+      dermatology: 'Dermatology',
+      pediatrics: 'Pediatrics',
+      psychiatry: 'Psychiatry',
+      family: 'Family Medicine',
+      neurology: 'Neurology',
+      surgery: 'Surgery',
+      obgyn: 'OB/GYN',
+      ophthalmology: 'Ophthalmology',
+      cardiology: 'Cardiology',
+      other: 'Other',
+    },
+    // Step labels
+    stepLabels: {
+      hospital: 'Hospital',
+      type: 'Type',
+      size: 'Size',
+      specialty: 'Specialty',
+    },
+    // Welcome step
+    welcomeTitle: 'Welcome to chartsok!',
+    welcomeSubtitle: 'Just verify your hospital info and you are ready to go.',
+    welcomeChip1: 'Done in under 1 min',
+    welcomeChip2: 'Editable anytime',
+    welcomeChip3: 'Privacy protected',
+    // Hospital step
+    hospitalTitle: 'Enter your hospital name',
+    hospitalSubtitle: 'We will check if it is already registered',
+    hospitalLabel: 'Hospital/Clinic Name',
+    hospitalPlaceholder: 'e.g. Seoul Internal Medicine',
+    hospitalHelperText: 'No spaces or special characters',
+    hospitalFound: 'Hospital found!',
+    hospitalApprovalNeeded: 'Admin approval required after registration',
+    hospitalJoin: 'Join this hospital',
+    hospitalNew: 'New hospital!',
+    hospitalRegisterMsg: (name) => `Registering ${name} as a new hospital. Please enter hospital details.`,
+    hospitalRegister: 'Register Hospital',
+    hospitalSelected: (name) => `${name} selected`,
+    hospitalNewRegistration: (name) => `${name} — New registration`,
+    staffChip: (size) => `${size} staff`,
+    // Type step
+    typeTitle: 'What type of medical institution?',
+    typeSubtitle: 'Select the best option',
+    // Size step
+    sizeTitle: 'How many medical staff?',
+    sizeSubtitle: 'Select the number of staff who will use chartsok',
+    // Specialty step
+    specialtyTitleExisting: 'Select your specialty',
+    specialtyTitleNew: 'Select your specialty',
+    specialtySubtitle: 'AI will learn optimized medical terminology for your specialty',
+    // Complete step (pending)
+    pendingTitle: 'Registration request sent',
+    pendingAdminApproval: (name) => `Once ${name} admin approves`,
+    pendingFullAccess: 'you will have full access.',
+    pendingDashboard: 'Go to Dashboard',
+    // Complete step (active)
+    completeTitle: 'Setup complete!',
+    completeMessage: 'You now have access to all chartsok features.',
+    completeRedirect: 'Redirecting to dashboard...',
+    // Navigation
+    navBack: 'Back',
+    navNext: 'Next',
+    navComplete: 'Complete',
+    navSaving: 'Saving...',
+  },
+};
 
 // Step IDs for dynamic flow
 const STEP_WELCOME = 'welcome';
@@ -113,6 +263,8 @@ const stepIcons = {
 
 export default function OnboardingPage() {
   const { user, userProfile, completeOnboarding, loading } = useAuth();
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const router = useRouter();
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,6 +275,22 @@ export default function OnboardingPage() {
     clinicName: '',
     phoneNumber: '',
   });
+
+  // Locale-aware data arrays
+  const practiceTypes = practiceTypesBase.map((pt) => ({
+    ...pt,
+    label: t.practiceTypeLabels[pt.id]?.label || pt.id,
+    description: t.practiceTypeLabels[pt.id]?.description || '',
+  }));
+  const practiceSizes = practiceSizesBase.map((ps) => ({
+    ...ps,
+    label: t.practiceSizeLabels[ps.id]?.label || ps.id,
+    description: t.practiceSizeLabels[ps.id]?.description || '',
+  }));
+  const specialties = specialtiesBase.map((sp) => ({
+    ...sp,
+    label: t.specialtyLabels[sp.id] || sp.id,
+  }));
 
   // Hospital search state
   const [hospitalInput, setHospitalInput] = useState('');
@@ -351,15 +519,15 @@ export default function OnboardingPage() {
               </Box>
             </motion.div>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 2 }}>
-              chartsok에 오신 것을 환영합니다!
+              {t.welcomeTitle}
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: 500, mx: 'auto' }}>
-              병원 정보만 간단히 확인하면 바로 시작할 수 있습니다.
+              {t.welcomeSubtitle}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chip icon={<CheckCircleIcon />} label="1분 이내 완료" variant="outlined" />
-              <Chip icon={<CheckCircleIcon />} label="언제든 수정 가능" variant="outlined" />
-              <Chip icon={<CheckCircleIcon />} label="개인정보 보호" variant="outlined" />
+              <Chip icon={<CheckCircleIcon />} label={t.welcomeChip1} variant="outlined" />
+              <Chip icon={<CheckCircleIcon />} label={t.welcomeChip2} variant="outlined" />
+              <Chip icon={<CheckCircleIcon />} label={t.welcomeChip3} variant="outlined" />
             </Box>
           </MotionBox>
         );
@@ -374,18 +542,18 @@ export default function OnboardingPage() {
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              병원 이름을 입력해 주세요
+              {t.hospitalTitle}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              등록된 병원이 있는지 확인합니다
+              {t.hospitalSubtitle}
             </Typography>
 
             <Box sx={{ maxWidth: 450, mx: 'auto' }}>
               <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
                 <TextField
                   fullWidth
-                  label="병원/의원 이름"
-                  placeholder="예: 서울내과의원"
+                  label={t.hospitalLabel}
+                  placeholder={t.hospitalPlaceholder}
                   value={hospitalInput}
                   onChange={(e) => {
                     // Strip whitespace and special characters as they type
@@ -402,7 +570,7 @@ export default function OnboardingPage() {
                     }
                   }}
                   disabled={isSearching}
-                  helperText="공백 및 특수문자 없이 입력해주세요"
+                  helperText={t.hospitalHelperText}
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -449,7 +617,7 @@ export default function OnboardingPage() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                           <CheckCircleIcon sx={{ color: '#10B981', fontSize: 28 }} />
                           <Typography variant="h6" sx={{ fontWeight: 700, color: '#065F46' }}>
-                            병원을 찾았습니다!
+                            {t.hospitalFound}
                           </Typography>
                         </Box>
                         <Box sx={{ pl: 0.5, mb: 2 }}>
@@ -460,14 +628,14 @@ export default function OnboardingPage() {
                             {foundHospital.type && (
                               <Chip
                                 size="small"
-                                label={practiceTypes.find(t => t.id === foundHospital.type)?.label || foundHospital.type}
+                                label={practiceTypes.find(pt => pt.id === foundHospital.type)?.label || foundHospital.type}
                                 sx={{ bgcolor: '#E0F2FE', color: '#0369A1' }}
                               />
                             )}
                             {foundHospital.size && (
                               <Chip
                                 size="small"
-                                label={`의료진 ${foundHospital.size}명`}
+                                label={t.staffChip(foundHospital.size)}
                                 sx={{ bgcolor: '#F3E8FF', color: '#7C3AED' }}
                               />
                             )}
@@ -481,7 +649,7 @@ export default function OnboardingPage() {
                           </Box>
                         </Box>
                         <Typography variant="caption" sx={{ color: '#065F46', display: 'block', mb: 2 }}>
-                          가입 후 병원 관리자의 승인이 필요합니다
+                          {t.hospitalApprovalNeeded}
                         </Typography>
                         <Button
                           fullWidth
@@ -492,7 +660,7 @@ export default function OnboardingPage() {
                             fontWeight: 600,
                           }}
                         >
-                          이 병원으로 시작하기
+                          {t.hospitalJoin}
                         </Button>
                       </CardContent>
                     </Card>
@@ -521,11 +689,11 @@ export default function OnboardingPage() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                           <AddCircleOutlineIcon sx={{ color: '#F59E0B', fontSize: 28 }} />
                           <Typography variant="h6" sx={{ fontWeight: 700, color: '#92400E' }}>
-                            새로운 병원이네요!
+                            {t.hospitalNew}
                           </Typography>
                         </Box>
                         <Typography variant="body2" sx={{ color: '#78350F', mb: 2 }}>
-                          <strong>{hospitalInput.trim()}</strong>을(를) 새로 등록합니다. 병원 정보를 입력해 주세요.
+                          {t.hospitalRegisterMsg(hospitalInput.trim())}
                         </Typography>
                         <Button
                           fullWidth
@@ -536,7 +704,7 @@ export default function OnboardingPage() {
                             fontWeight: 600,
                           }}
                         >
-                          병원 등록하기
+                          {t.hospitalRegister}
                         </Button>
                       </CardContent>
                     </Card>
@@ -560,7 +728,7 @@ export default function OnboardingPage() {
                 >
                   <CheckCircleIcon sx={{ color: '#10B981', fontSize: 20 }} />
                   <Typography variant="body2" sx={{ color: '#065F46', fontWeight: 600 }}>
-                    {foundHospital ? `${foundHospital.name} 선택됨` : `${hospitalInput.trim()} — 새로 등록`}
+                    {foundHospital ? t.hospitalSelected(foundHospital.name) : t.hospitalNewRegistration(hospitalInput.trim())}
                   </Typography>
                 </MotionBox>
               )}
@@ -578,10 +746,10 @@ export default function OnboardingPage() {
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              어떤 유형의 의료기관인가요?
+              {t.typeTitle}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              가장 적합한 옵션을 선택해 주세요
+              {t.typeSubtitle}
             </Typography>
             <Grid container spacing={2}>
               {practiceTypes.map((type, index) => {
@@ -649,10 +817,10 @@ export default function OnboardingPage() {
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              의료진 규모는 어떻게 되나요?
+              {t.sizeTitle}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              chartsok을 사용할 의료진 수를 선택해 주세요
+              {t.sizeSubtitle}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
               {practiceSizes.map((size, index) => {
@@ -701,10 +869,10 @@ export default function OnboardingPage() {
             transition={{ duration: 0.4 }}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1, textAlign: 'center' }}>
-              {foundHospital ? '선생님의 전문 분야를 선택해 주세요' : '전문 분야를 선택해 주세요'}
+              {foundHospital ? t.specialtyTitleExisting : t.specialtyTitleNew}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center' }}>
-              AI가 해당 분야에 최적화된 의학 용어를 학습합니다
+              {t.specialtySubtitle}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'center' }}>
               {specialties.map((spec, index) => {
@@ -776,20 +944,20 @@ export default function OnboardingPage() {
                 </Box>
               </motion.div>
               <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 2 }}>
-                가입 요청이 전송되었습니다
+                {t.pendingTitle}
               </Typography>
               <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
-                <strong>{foundHospital.name}</strong> 관리자가 승인하면
+                {t.pendingAdminApproval(foundHospital.name)}
               </Typography>
               <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-                모든 기능을 사용하실 수 있습니다.
+                {t.pendingFullAccess}
               </Typography>
               <Button
                 variant="outlined"
                 onClick={() => router.push('/dashboard')}
                 sx={{ borderRadius: 3 }}
               >
-                대시보드로 이동
+                {t.pendingDashboard}
               </Button>
             </MotionBox>
           );
@@ -826,11 +994,11 @@ export default function OnboardingPage() {
               </Box>
             </motion.div>
             <Typography variant="h4" sx={{ fontWeight: 800, color: 'secondary.main', mb: 2 }}>
-              설정이 완료되었습니다!
+              {t.completeTitle}
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-              이제 chartsok의 모든 기능을 사용하실 수 있습니다.<br />
-              대시보드로 이동합니다...
+              {t.completeMessage}<br />
+              {t.completeRedirect}
             </Typography>
             <CircularProgress size={24} />
           </MotionBox>
@@ -920,10 +1088,10 @@ export default function OnboardingPage() {
                 const isCompleted = index < currentActionIndex;
                 const isCurrent = index === currentActionIndex;
                 const stepLabel = {
-                  [STEP_HOSPITAL]: '병원 확인',
-                  [STEP_TYPE]: '기관 유형',
-                  [STEP_SIZE]: '규모',
-                  [STEP_SPECIALTY]: '전문 분야',
+                  [STEP_HOSPITAL]: t.stepLabels.hospital,
+                  [STEP_TYPE]: t.stepLabels.type,
+                  [STEP_SIZE]: t.stepLabels.size,
+                  [STEP_SPECIALTY]: t.stepLabels.specialty,
                 }[step] || step;
 
                 return (
@@ -1008,7 +1176,7 @@ export default function OnboardingPage() {
               disabled={activeStepIndex === 0}
               sx={{ visibility: activeStepIndex === 0 ? 'hidden' : 'visible' }}
             >
-              이전
+              {t.navBack}
             </Button>
             {currentStep === STEP_HOSPITAL ? (
               <Box />
@@ -1023,7 +1191,7 @@ export default function OnboardingPage() {
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 }}
               >
-                {isSubmitting ? '저장 중...' : '완료하기'}
+                {isSubmitting ? t.navSaving : t.navComplete}
               </Button>
             ) : (
               <Button
@@ -1036,7 +1204,7 @@ export default function OnboardingPage() {
                   background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
                 }}
               >
-                다음
+                {t.navNext}
               </Button>
             )}
           </Box>

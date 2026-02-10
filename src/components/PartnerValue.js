@@ -6,39 +6,81 @@ import { motion } from "framer-motion";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import LockIcon from "@mui/icons-material/Lock";
 import ShieldIcon from "@mui/icons-material/Shield";
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
-const cards = [
-  {
-    icon: TrendingUpIcon,
-    label: "객단가 상승",
-    subtitle: "의사당 월 ₩49K~₩149K 추가 매출",
-    description:
-      "기존 EMR 라이선스에 AI 차트 자동화를 번들링하면, 별도 영업 없이 의사당 월 ₩49,000~₩149,000의 업셀 매출이 발생합니다.",
-    metric: "EMR 파트너 70% · Chartsok 30%",
-    color: "#4B9CD3",
+
+const content = {
+  ko: {
+    title: "파트너가 얻는 3가지 가치",
+    subtitle: "추가 영업 비용 없이, 기존 고객 기반에서 바로 매출을 만드세요",
+    cards: [
+      {
+        icon: TrendingUpIcon,
+        label: "객단가 상승",
+        subtitle: "의사당 월 ₩49K~₩149K 추가 매출",
+        description:
+          "기존 EMR 라이선스에 AI 차트 자동화를 번들링하면, 별도 영업 없이 의사당 월 ₩49,000~₩149,000의 업셀 매출이 발생합니다.",
+        metric: "EMR 파트너 70% · Chartsok 30%",
+        color: "#4B9CD3",
+      },
+      {
+        icon: LockIcon,
+        label: "고객 이탈 방어",
+        subtitle: "AI가 만드는 자연스러운 Lock-in",
+        description:
+          "의료진이 AI 차트 자동화에 익숙해지면, EMR을 교체할 때 가장 아쉬운 기능이 됩니다. 일상 워크플로에 녹아든 AI가 고객 이탈을 방어합니다.",
+        color: "#10B981",
+      },
+      {
+        icon: ShieldIcon,
+        label: "도입 저항 최소화",
+        subtitle: "기존 화면 안에서 바로 작동",
+        description:
+          "EMR 안에 임베드되므로 별도 교육이 필요 없습니다. 병원의 기존 차트 양식을 그대로 매핑하여 바로 사용할 수 있습니다.",
+        metric: "템플릿 3~5개 매핑, 1주 내 적용 완료",
+        color: "#8B5CF6",
+      },
+    ],
   },
-  {
-    icon: LockIcon,
-    label: "고객 이탈 방어",
-    subtitle: "AI가 만드는 자연스러운 Lock-in",
-    description:
-      "의료진이 AI 차트 자동화에 익숙해지면, EMR을 교체할 때 가장 아쉬운 기능이 됩니다. 일상 워크플로에 녹아든 AI가 고객 이탈을 방어합니다.",
-    color: "#10B981",
+  en: {
+    title: "3 Wins for Partners",
+    subtitle: "New revenue from your existing customer base",
+    cards: [
+      {
+        icon: TrendingUpIcon,
+        label: "Boost ARPU",
+        subtitle: "₩49K–149K/mo per doctor",
+        description:
+          "Bundle AI charting into EMR licenses. Instant upsell — no extra sales effort.",
+        metric: "You keep 70%",
+        color: "#4B9CD3",
+      },
+      {
+        icon: LockIcon,
+        label: "Reduce Churn",
+        subtitle: "They won't want to leave",
+        description:
+          "Once clinicians rely on AI charting, switching EMRs feels like losing a superpower.",
+        color: "#10B981",
+      },
+      {
+        icon: ShieldIcon,
+        label: "Zero Friction",
+        subtitle: "Works inside the EMR",
+        description:
+          "No new app. No training. Map hospital templates and go live in a week.",
+        metric: "3–5 templates, 1 week",
+        color: "#8B5CF6",
+      },
+    ],
   },
-  {
-    icon: ShieldIcon,
-    label: "도입 저항 최소화",
-    subtitle: "기존 화면 안에서 바로 작동",
-    description:
-      "EMR 안에 임베드되므로 별도 교육이 필요 없습니다. 병원의 기존 차트 양식을 그대로 매핑하여 바로 사용할 수 있습니다.",
-    metric: "템플릿 3~5개 매핑, 1주 내 적용 완료",
-    color: "#8B5CF6",
-  },
-];
+};
 
 export default function PartnerValue() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const [hoveredCard, setHoveredCard] = useState(null);
 
   return (
@@ -80,7 +122,7 @@ export default function PartnerValue() {
               lineHeight: 1.2,
             }}
           >
-            파트너가 얻는 3가지 가치
+            {t.title}
           </Typography>
           <Typography
             variant="body1"
@@ -92,12 +134,12 @@ export default function PartnerValue() {
               lineHeight: 1.7,
             }}
           >
-            추가 영업 비용 없이, 기존 고객 기반에서 바로 매출을 만드세요
+            {t.subtitle}
           </Typography>
         </MotionBox>
 
         <Grid container spacing={{ xs: 2.5, md: 4 }}>
-          {cards.map((card, index) => {
+          {t.cards.map((card, index) => {
             const Icon = card.icon;
             const isHovered = hoveredCard === index;
             return (

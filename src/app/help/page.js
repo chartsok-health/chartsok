@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -84,6 +84,7 @@ const content = {
         a: '네, chartsok은 개인정보보호법, 의료법 등 국내 규정을 준수합니다. 모든 데이터는 AES-256 암호화로 저장되고, 전송 시에도 TLS 1.3으로 보호됩니다.',
       },
     ],
+    noResults: '검색 결과가 없습니다.',
     contactTitle: '원하는 답을 찾지 못하셨나요?',
     contactDesc: '직접 문의하시면 빠르게 도움을 드리겠습니다.',
     contactButton: '문의하기',
@@ -109,8 +110,8 @@ const content = {
         a: 'Audio files are deleted from our servers immediately after transcription is complete. We do not store or retain audio files. This is a core policy of chartsok.',
       },
       {
-        q: 'How do I set text retention period?',
-        a: 'You can configure how long transcribed text is retained. Choose from immediate deletion, 7 days, or 30 days based on your practice policy. Text is automatically deleted after the selected period, and manual deletion is also available.',
+        q: 'When is conversation text deleted?',
+        a: 'Conversation text (transcribed dialogue) is automatically deleted 24 hours after creation. Generated charts, patient instructions, and follow-up actions are securely retained and not affected by this policy.',
       },
       {
         q: 'How do I enter charts into my EMR?',
@@ -137,6 +138,7 @@ const content = {
         a: 'Yes, chartsok complies with Korean privacy regulations including PIPA and the Medical Service Act. All data is stored with AES-256 encryption and protected with TLS 1.3 during transit.',
       },
     ],
+    noResults: 'No results found.',
     contactTitle: 'Didn\'t find your answer?',
     contactDesc: 'Contact us directly and we\'ll help you quickly.',
     contactButton: 'Contact Us',
@@ -148,6 +150,27 @@ export default function HelpPage() {
   const { locale } = useI18n();
   const t = content[locale] || content.ko;
   const [expanded, setExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery.trim()) return t.faqs;
+    const query = searchQuery.toLowerCase();
+    return t.faqs.filter(
+      (faq) =>
+        faq.q.toLowerCase().includes(query) ||
+        faq.a.toLowerCase().includes(query)
+    );
+  }, [searchQuery, t.faqs]);
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return t.categories;
+    const query = searchQuery.toLowerCase();
+    return t.categories.filter(
+      (cat) =>
+        cat.title.toLowerCase().includes(query) ||
+        cat.desc.toLowerCase().includes(query)
+    );
+  }, [searchQuery, t.categories]);
 
   return (
     <>
@@ -177,6 +200,8 @@ export default function HelpPage() {
               <TextField
                 placeholder={t.search}
                 fullWidth
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{ maxWidth: 500, bgcolor: 'white', borderRadius: 2 }}
                 InputProps={{
                   startAdornment: (
@@ -193,8 +218,13 @@ export default function HelpPage() {
 
         {/* Categories */}
         <Container maxWidth="xl" sx={{ py: { xs: 6, md: 8 } }}>
+          {searchQuery && filteredCategories.length === 0 && filteredFaqs.length === 0 && (
+            <Typography variant="h6" sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}>
+              {t.noResults}
+            </Typography>
+          )}
           <Grid container spacing={3}>
-            {t.categories.map((cat, index) => {
+            {filteredCategories.map((cat, index) => {
               const Icon = cat.icon;
               const articleCount = getArticlesByCategory(cat.slug).length;
               return (
@@ -266,7 +296,7 @@ export default function HelpPage() {
               {t.faqTitle}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {t.faqs.map((faq, index) => (
+              {filteredFaqs.map((faq, index) => (
                 <Accordion
                   key={index}
                   expanded={expanded === index}

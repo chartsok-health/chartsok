@@ -8,38 +8,81 @@ import CloudIcon from "@mui/icons-material/Cloud";
 import StorageIcon from "@mui/icons-material/Storage";
 import CheckIcon from "@mui/icons-material/Check";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-const options = [
-  {
-    icon: CodeIcon,
-    title: "iFrame / SDK 임베딩",
-    description: "EMR 화면 안에 직접 탑재합니다",
-    color: "#4B9CD3",
-    needs: ["SSO 연동", "사용자 및 권한 정보", "환자 식별키"],
-    provides: ["UI 모듈 (React SDK)", "감사 기록 API", "권한 확인 미들웨어"],
+const content = {
+  ko: {
+    title: "연동 방식을 선택하세요",
+    subtitle: "EMR 아키텍처에 맞는 방식을 선택할 수 있습니다",
+    partnerNeeds: "파트너사에서 준비할 것",
+    weProvide: "저희가 제공하는 것",
+    options: [
+      {
+        icon: CodeIcon,
+        title: "iFrame / SDK 임베딩",
+        description: "EMR 화면 안에 직접 탑재합니다",
+        color: "#4B9CD3",
+        needs: ["SSO 연동", "사용자 및 권한 정보", "환자 식별키"],
+        provides: ["UI 모듈 (React SDK)", "감사 기록 API", "권한 확인 미들웨어"],
+      },
+      {
+        icon: CloudIcon,
+        title: "API 연동",
+        description: "RESTful API 기반으로 연동합니다",
+        color: "#10B981",
+        needs: ["환자/오더/노트 API 엔드포인트", "OAuth 토큰 교환"],
+        provides: ["RESTful API", "Webhook 알림", "데이터 매핑 가이드"],
+      },
+      {
+        icon: StorageIcon,
+        title: "On-premise / Private 배포",
+        description: "병원 내부망에 직접 설치합니다",
+        color: "#8B5CF6",
+        needs: ["서버 인프라 (VM / K8s)", "네트워크 정책"],
+        provides: ["Docker 이미지", "Helm 차트", "운영 가이드"],
+      },
+    ],
   },
-  {
-    icon: CloudIcon,
-    title: "API 연동",
-    description: "RESTful API 기반으로 연동합니다",
-    color: "#10B981",
-    needs: ["환자/오더/노트 API 엔드포인트", "OAuth 토큰 교환"],
-    provides: ["RESTful API", "Webhook 알림", "데이터 매핑 가이드"],
+  en: {
+    title: "Integration Options",
+    subtitle: "Pick what fits your EMR architecture",
+    partnerNeeds: "Partner Provides",
+    weProvide: "We Provide",
+    options: [
+      {
+        icon: CodeIcon,
+        title: "iFrame / SDK",
+        description: "Embed inside EMR",
+        color: "#4B9CD3",
+        needs: ["SSO", "User/Permission Data", "Patient ID Key"],
+        provides: ["React SDK", "Audit API", "Auth Middleware"],
+      },
+      {
+        icon: CloudIcon,
+        title: "API",
+        description: "RESTful integration",
+        color: "#10B981",
+        needs: ["Patient/Order/Note Endpoints", "OAuth Exchange"],
+        provides: ["REST API", "Webhooks", "Mapping Guide"],
+      },
+      {
+        icon: StorageIcon,
+        title: "On-prem / Private",
+        description: "Hospital network install",
+        color: "#8B5CF6",
+        needs: ["Server (VM/K8s)", "Network Policies"],
+        provides: ["Docker Images", "Helm Charts", "Ops Guide"],
+      },
+    ],
   },
-  {
-    icon: StorageIcon,
-    title: "On-premise / Private 배포",
-    description: "병원 내부망에 직접 설치합니다",
-    color: "#8B5CF6",
-    needs: ["서버 인프라 (VM / K8s)", "네트워크 정책"],
-    provides: ["Docker 이미지", "Helm 차트", "운영 가이드"],
-  },
-];
+};
 
 export default function IntegrationOptions() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const [hoveredCard, setHoveredCard] = useState(null);
 
   return (
@@ -62,15 +105,15 @@ export default function IntegrationOptions() {
             INTEGRATION
           </Typography>
           <Typography variant="h2" sx={{ fontSize: { xs: "1.6rem", sm: "2rem", md: "2.5rem" }, fontWeight: 800, color: "secondary.main", mb: 2, lineHeight: 1.2 }}>
-            연동 방식을 선택하세요
+            {t.title}
           </Typography>
           <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: "0.9rem", md: "1.05rem" }, maxWidth: 600, mx: "auto", lineHeight: 1.7 }}>
-            EMR 아키텍처에 맞는 방식을 선택할 수 있습니다
+            {t.subtitle}
           </Typography>
         </MotionBox>
 
         <Grid container spacing={{ xs: 2.5, md: 4 }}>
-          {options.map((opt, index) => {
+          {t.options.map((opt, index) => {
             const Icon = opt.icon;
             const isHovered = hoveredCard === index;
             return (
@@ -123,7 +166,7 @@ export default function IntegrationOptions() {
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, mb: 1, display: "block" }}>
-                            파트너사에서 준비할 것
+                            {t.partnerNeeds}
                           </Typography>
                           {opt.needs.map((item, i) => (
                             <Stack key={i} direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.5 }}>
@@ -134,7 +177,7 @@ export default function IntegrationOptions() {
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="caption" sx={{ color: opt.color, fontWeight: 700, mb: 1, display: "block" }}>
-                            저희가 제공하는 것
+                            {t.weProvide}
                           </Typography>
                           {opt.provides.map((item, i) => (
                             <Stack key={i} direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.5 }}>

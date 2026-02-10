@@ -10,34 +10,96 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import TimerIcon from '@mui/icons-material/Timer';
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-const pocIncludes = [
-  { text: 'NDA 체결 및 기술 문서 공유', week: '1주' },
-  { text: '대표 템플릿 3종 필드 매핑', week: '1주' },
-  { text: 'Sandbox 환경 API/SDK 연동', week: '2주' },
-  { text: '파일럿 병원 2~3곳 실전 테스트', week: '4~8주' },
-  { text: '전담 엔지니어 기술 지원', week: '전 기간' },
-  { text: '성과 리포트 및 본계약 협의', week: '완료 후' },
-];
-
-const successKPIs = [
-  { label: '차트 작성 시간', target: '70%+ 절감', color: '#4B9CD3' },
-  { label: '의료진 만족도', target: '4.0/5.0 이상', color: '#10B981' },
-  { label: '템플릿 매핑 정확도', target: '검증 완료', color: '#8B5CF6' },
-  { label: 'EMR 연동 안정성', target: '99.5% 가동', color: '#F59E0B' },
-];
-
-const emrRequirements = [
-  '웹뷰 또는 iFrame 임베드 가능한 EMR 환경',
-  'HTTPS 기반 API 통신 가능',
-  '파일럿 병원 2~3곳 섭외 (Chartsok 지원 가능)',
-  '기술 담당자 1명 배정',
-];
+const content = {
+  ko: {
+    sectionTitle: "무료 파일럿 패키지",
+    sectionSubtitle: "비용 부담 없이 실제 병원 환경에서 검증하세요. PoC 기간 중 과금은 없습니다.",
+    pocCardTitle: "PoC 패키지 포함 사항",
+    pocFree: "무료",
+    emrRequirementsTitle: "EMR사 준비사항",
+    successKPITitle: "PoC 성공 KPI",
+    dedicatedSupportTitle: "전담 지원",
+    totalDuration: "PoC 전체 기간: 7~11주",
+    totalDurationNote: "NDA 체결부터 성과 리포트까지 • 비용 무료",
+    ctaButton: "무료 PoC 신청하기",
+    ctaNote: "신청 후 2영업일 이내 전담 팀이 연락드립니다",
+    pocIncludes: [
+      { text: 'NDA 체결 및 기술 문서 공유', week: '1주' },
+      { text: '대표 템플릿 3종 필드 매핑', week: '1주' },
+      { text: 'Sandbox 환경 API/SDK 연동', week: '2주' },
+      { text: '파일럿 병원 2~3곳 실전 테스트', week: '4~8주' },
+      { text: '전담 엔지니어 기술 지원', week: '전 기간' },
+      { text: '성과 리포트 및 본계약 협의', week: '완료 후' },
+    ],
+    successKPIs: [
+      { label: '차트 작성 시간', target: '70%+ 절감', color: '#4B9CD3' },
+      { label: '의료진 만족도', target: '4.0/5.0 이상', color: '#10B981' },
+      { label: '템플릿 매핑 정확도', target: '검증 완료', color: '#8B5CF6' },
+      { label: 'EMR 연동 안정성', target: '99.5% 가동', color: '#F59E0B' },
+    ],
+    emrRequirements: [
+      '웹뷰 또는 iFrame 임베드 가능한 EMR 환경',
+      'HTTPS 기반 API 통신 가능',
+      '파일럿 병원 2~3곳 섭외 (Chartsok 지원 가능)',
+      '기술 담당자 1명 배정',
+    ],
+    supportItems: [
+      '전담 솔루션 엔지니어 배정',
+      '주간 진행 미팅 및 리포트',
+      '병원 현장 교육 지원',
+      '이슈 발생 시 24시간 내 대응',
+    ],
+  },
+  en: {
+    sectionTitle: "Free Pilot Package",
+    sectionSubtitle: "Test in real hospital settings. Zero cost during PoC.",
+    pocCardTitle: "What's Included",
+    pocFree: "Free",
+    emrRequirementsTitle: "What You Need",
+    successKPITitle: "Success KPIs",
+    dedicatedSupportTitle: "Dedicated Support",
+    totalDuration: "Total Timeline: 7–11 Weeks",
+    totalDurationNote: "From NDA to results report — all free",
+    ctaButton: "Start Free PoC",
+    ctaNote: "Our team will reach out within 2 business days",
+    pocIncludes: [
+      { text: 'NDA & technical docs', week: 'Wk 1' },
+      { text: 'Map 3 key templates', week: 'Wk 1' },
+      { text: 'Sandbox API/SDK setup', week: 'Wk 2' },
+      { text: 'Live testing at 2–3 hospitals', week: 'Wk 4–8' },
+      { text: 'Dedicated engineer support', week: 'Ongoing' },
+      { text: 'Results report & contract talk', week: 'After' },
+    ],
+    successKPIs: [
+      { label: 'Charting Time', target: '70%+ Reduction', color: '#4B9CD3' },
+      { label: 'Clinician Satisfaction', target: '4.0/5.0+', color: '#10B981' },
+      { label: 'Template Accuracy', target: 'Validated', color: '#8B5CF6' },
+      { label: 'EMR Uptime', target: '99.5%', color: '#F59E0B' },
+    ],
+    emrRequirements: [
+      'EMR with WebView or iFrame support',
+      'HTTPS API capability',
+      '2–3 pilot hospitals (we can help source)',
+      '1 technical point of contact',
+    ],
+    supportItems: [
+      'Dedicated solutions engineer',
+      'Weekly syncs & reports',
+      'On-site training support',
+      '24-hour issue response',
+    ],
+  },
+};
 
 export default function PoCPackage() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
+
   return (
     <Box
       id="poc-package"
@@ -78,7 +140,7 @@ export default function PoCPackage() {
               lineHeight: 1.2,
             }}
           >
-            무료 파일럿 패키지
+            {t.sectionTitle}
           </Typography>
           <Typography
             variant="body1"
@@ -90,7 +152,7 @@ export default function PoCPackage() {
               lineHeight: 1.7,
             }}
           >
-            비용 부담 없이 실제 병원 환경에서 검증하세요. PoC 기간 중 과금은 없습니다.
+            {t.sectionSubtitle}
           </Typography>
         </MotionBox>
 
@@ -116,10 +178,10 @@ export default function PoCPackage() {
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                   <RocketLaunchIcon sx={{ color: 'white', fontSize: 24 }} />
                   <Typography variant="h6" sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    PoC 패키지 포함 사항
+                    {t.pocCardTitle}
                   </Typography>
                   <Chip
-                    label="무료"
+                    label={t.pocFree}
                     size="small"
                     sx={{
                       bgcolor: 'rgba(255,255,255,0.2)',
@@ -133,7 +195,7 @@ export default function PoCPackage() {
 
               <CardContent sx={{ p: 3 }}>
                 <Stack spacing={2}>
-                  {pocIncludes.map((item, index) => (
+                  {t.pocIncludes.map((item, index) => (
                     <MotionBox
                       key={index}
                       initial={{ opacity: 0, x: -10 }}
@@ -178,11 +240,11 @@ export default function PoCPackage() {
                   <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                     <AssignmentIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#92400E', fontSize: '0.85rem' }}>
-                      EMR사 준비사항
+                      {t.emrRequirementsTitle}
                     </Typography>
                   </Stack>
                   <Stack spacing={0.75}>
-                    {emrRequirements.map((req, i) => (
+                    {t.emrRequirements.map((req, i) => (
                       <Typography key={i} variant="body2" sx={{ color: '#78350F', fontSize: '0.82rem', pl: 0.5 }}>
                         • {req}
                       </Typography>
@@ -213,11 +275,11 @@ export default function PoCPackage() {
                   <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
                     <VerifiedIcon sx={{ color: '#10B981', fontSize: 22 }} />
                     <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B', fontSize: '1rem' }}>
-                      PoC 성공 KPI
+                      {t.successKPITitle}
                     </Typography>
                   </Stack>
                   <Grid container spacing={2}>
-                    {successKPIs.map((kpi, index) => (
+                    {t.successKPIs.map((kpi, index) => (
                       <Grid size={{ xs: 6 }} key={index}>
                         <Box
                           sx={{
@@ -266,16 +328,11 @@ export default function PoCPackage() {
                   <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                     <SupportAgentIcon sx={{ color: '#8B5CF6', fontSize: 22 }} />
                     <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B', fontSize: '1rem' }}>
-                      전담 지원
+                      {t.dedicatedSupportTitle}
                     </Typography>
                   </Stack>
                   <Stack spacing={1.5}>
-                    {[
-                      '전담 솔루션 엔지니어 배정',
-                      '주간 진행 미팅 및 리포트',
-                      '병원 현장 교육 지원',
-                      '이슈 발생 시 24시간 내 대응',
-                    ].map((item, i) => (
+                    {t.supportItems.map((item, i) => (
                       <Stack key={i} direction="row" alignItems="center" spacing={1}>
                         <CheckCircleIcon sx={{ color: '#8B5CF6', fontSize: 18 }} />
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
@@ -304,11 +361,11 @@ export default function PoCPackage() {
                 <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 1 }}>
                   <TimerIcon sx={{ color: '#4B9CD3', fontSize: 20 }} />
                   <Typography variant="subtitle2" sx={{ color: '#1E40AF', fontWeight: 700, fontSize: '0.9rem' }}>
-                    PoC 전체 기간: 7~11주
+                    {t.totalDuration}
                   </Typography>
                 </Stack>
                 <Typography variant="caption" sx={{ color: '#3B82F6', fontSize: '0.78rem' }}>
-                  NDA 체결부터 성과 리포트까지 • 비용 무료
+                  {t.totalDurationNote}
                 </Typography>
               </MotionBox>
             </Stack>
@@ -341,13 +398,13 @@ export default function PoCPackage() {
               '&:hover': { bgcolor: '#3A8BC2', boxShadow: '0 6px 24px rgba(75, 156, 211, 0.35)' },
             }}
           >
-            무료 PoC 신청하기
+            {t.ctaButton}
           </Button>
           <Typography
             variant="caption"
             sx={{ display: 'block', mt: 1.5, color: 'text.disabled', fontSize: '0.78rem' }}
           >
-            신청 후 2영업일 이내 전담 팀이 연락드립니다
+            {t.ctaNote}
           </Typography>
         </MotionBox>
       </Container>

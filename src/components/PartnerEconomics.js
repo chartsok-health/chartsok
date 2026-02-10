@@ -15,64 +15,63 @@ import { motion } from "framer-motion";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import HandshakeIcon from "@mui/icons-material/Handshake";
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-const pricingModels = [
-  {
-    title: "구독형",
-    billing: "의사 단위 월 구독",
-    price: "₩49,000~₩149,000",
-    priceUnit: "/ 의사 / 월",
-    detail: "진료과와 기능 범위에 따라 단가가 조정됩니다",
-    revShare: "EMR 70% · Chartsok 30%",
-    color: "#4B9CD3",
+const content = {
+  ko: {
+    sectionTitle: "파트너 수익 모델",
+    sectionSubtitle: "EMR 파트너는 기존 영업 채널을 그대로 활용하여 추가 수익을 창출합니다",
+    revShareTitle: "EMR 파트너 70% : Chartsok 30%",
+    revShareSubtitle: "업계 최고 수준의 파트너 배분율",
+    revShareDesc: "EMR사가 고객 관계를 유지하고, Chartsok은 기술/인프라를 전담합니다",
+    volumeTitle: "볼륨 인센티브",
+    disclaimer: "위 가격은 표준 기준이며, 파트너 규모와 계약 조건에 따라 조정됩니다. 정확한 견적은 파트너 미팅에서 안내드립니다.",
+    pricingModels: [
+      { title: "구독형", billing: "의사 단위 월 구독", price: "₩49,000~₩149,000", priceUnit: "/ 의사 / 월", detail: "진료과와 기능 범위에 따라 단가가 조정됩니다", revShare: "EMR 70% · Chartsok 30%", color: "#4B9CD3" },
+      { title: "건별 과금", billing: "차트 생성 건당 과금", price: "₩200~₩1,000", priceUnit: "/ 차트 1건", detail: "월 최소 요금 없이 사용한 만큼만 과금됩니다", revShare: "EMR 70% · Chartsok 30%", color: "#10B981" },
+      { title: "엔터프라이즈", billing: "대형 병원·체인 연간 계약", price: "₩3,000만~₩2억", priceUnit: "/ 년", detail: "전용 인프라, SLA 보장, 맞춤형 AI 모델 제공", revShare: "별도 협의", color: "#8B5CF6" },
+    ],
+    volumeTiers: [
+      { label: "의사 50명 이하", description: "기본 단가", color: "#4B9CD3" },
+      { label: "50~200명", description: "10% 할인", color: "#10B981" },
+      { label: "200명 이상", description: "개별 협의 (최대 30% 할인)", color: "#8B5CF6" },
+    ],
+    highlights: [
+      { icon: TrendingUpIcon, title: "추가 영업 비용 없음", description: "기존 EMR 영업팀이 번들로 제안하므로 별도 영업 인력이 필요하지 않습니다", color: "#4B9CD3" },
+      { icon: SupportAgentIcon, title: "기술·운영 전담 지원", description: "AI 모델 업데이트, 서버 운영, 장애 대응까지 Chartsok이 전담합니다", color: "#10B981" },
+    ],
   },
-  {
-    title: "건별 과금",
-    billing: "차트 생성 건당 과금",
-    price: "₩200~₩1,000",
-    priceUnit: "/ 차트 1건",
-    detail: "월 최소 요금 없이 사용한 만큼만 과금됩니다",
-    revShare: "EMR 70% · Chartsok 30%",
-    color: "#10B981",
+  en: {
+    sectionTitle: "Revenue Model",
+    sectionSubtitle: "Generate revenue using your existing sales channels",
+    revShareTitle: "You Keep 70%",
+    revShareSubtitle: "Industry-leading partner share",
+    revShareDesc: "You own the customer relationship. We handle the tech.",
+    volumeTitle: "Volume Discounts",
+    disclaimer: "Standard rates shown. Final pricing depends on partner size and terms.",
+    pricingModels: [
+      { title: "Subscription", billing: "Per-doctor monthly", price: "₩49K–149K", priceUnit: "/ doc / mo", detail: "Varies by specialty and features", revShare: "Partner 70% · Chartsok 30%", color: "#4B9CD3" },
+      { title: "Per Chart", billing: "Pay per chart", price: "₩200–1,000", priceUnit: "/ chart", detail: "No minimums. Pay for what you use.", revShare: "Partner 70% · Chartsok 30%", color: "#10B981" },
+      { title: "Enterprise", billing: "Annual contract", price: "₩30M–200M", priceUnit: "/ year", detail: "Dedicated infra, SLA, custom AI", revShare: "Custom", color: "#8B5CF6" },
+    ],
+    volumeTiers: [
+      { label: "Under 50 docs", description: "Standard rate", color: "#4B9CD3" },
+      { label: "50–200 docs", description: "10% off", color: "#10B981" },
+      { label: "200+ docs", description: "Custom (up to 30% off)", color: "#8B5CF6" },
+    ],
+    highlights: [
+      { icon: TrendingUpIcon, title: "No Sales Overhead", description: "Your EMR team bundles it. No extra hires.", color: "#4B9CD3" },
+      { icon: SupportAgentIcon, title: "We Run the Tech", description: "AI updates, server ops, support — all on us.", color: "#10B981" },
+    ],
   },
-  {
-    title: "엔터프라이즈",
-    billing: "대형 병원·체인 연간 계약",
-    price: "₩3,000만~₩2억",
-    priceUnit: "/ 년",
-    detail: "전용 인프라, SLA 보장, 맞춤형 AI 모델 제공",
-    revShare: "별도 협의",
-    color: "#8B5CF6",
-  },
-];
-
-const volumeTiers = [
-  { label: "의사 50명 이하", description: "기본 단가", color: "#4B9CD3" },
-  { label: "50~200명", description: "10% 할인", color: "#10B981" },
-  { label: "200명 이상", description: "개별 협의 (최대 30% 할인)", color: "#8B5CF6" },
-];
-
-const highlights = [
-  {
-    icon: TrendingUpIcon,
-    title: "추가 영업 비용 없음",
-    description:
-      "기존 EMR 영업팀이 번들로 제안하므로 별도 영업 인력이 필요하지 않습니다",
-    color: "#4B9CD3",
-  },
-  {
-    icon: SupportAgentIcon,
-    title: "기술·운영 전담 지원",
-    description:
-      "AI 모델 업데이트, 서버 운영, 장애 대응까지 Chartsok이 전담합니다",
-    color: "#10B981",
-  },
-];
+};
 
 export default function PartnerEconomics() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   return (
     <Box
       id="economics"
@@ -113,7 +112,7 @@ export default function PartnerEconomics() {
               lineHeight: 1.2,
             }}
           >
-            파트너 수익 모델
+            {t.sectionTitle}
           </Typography>
           <Typography
             variant="body1"
@@ -125,13 +124,13 @@ export default function PartnerEconomics() {
               lineHeight: 1.7,
             }}
           >
-            EMR 파트너는 기존 영업 채널을 그대로 활용하여 추가 수익을 창출합니다
+            {t.sectionSubtitle}
           </Typography>
         </MotionBox>
 
         {/* Pricing Model Cards - 3 side by side */}
         <Grid container spacing={{ xs: 2.5, md: 4 }} sx={{ mb: { xs: 5, md: 6 } }}>
-          {pricingModels.map((model, index) => (
+          {t.pricingModels.map((model, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
               <MotionCard
                 initial={{ opacity: 0, y: 30 }}
@@ -282,7 +281,7 @@ export default function PartnerEconomics() {
               lineHeight: 1.3,
             }}
           >
-            EMR 파트너 70% : Chartsok 30%
+            {t.revShareTitle}
           </Typography>
           <Typography
             variant="h6"
@@ -294,7 +293,7 @@ export default function PartnerEconomics() {
               position: "relative",
             }}
           >
-            업계 최고 수준의 파트너 배분율
+            {t.revShareSubtitle}
           </Typography>
           <Typography
             variant="body2"
@@ -307,7 +306,7 @@ export default function PartnerEconomics() {
               position: "relative",
             }}
           >
-            EMR사가 고객 관계를 유지하고, Chartsok은 기술/인프라를 전담합니다
+            {t.revShareDesc}
           </Typography>
         </MotionBox>
 
@@ -329,7 +328,7 @@ export default function PartnerEconomics() {
               fontSize: { xs: "1.1rem", md: "1.25rem" },
             }}
           >
-            볼륨 인센티브
+            {t.volumeTitle}
           </Typography>
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -337,7 +336,7 @@ export default function PartnerEconomics() {
             justifyContent="center"
             alignItems="center"
           >
-            {volumeTiers.map((tier, index) => (
+            {t.volumeTiers.map((tier, index) => (
               <Chip
                 key={index}
                 label={
@@ -382,7 +381,7 @@ export default function PartnerEconomics() {
 
         {/* Bottom Highlight Cards */}
         <Grid container spacing={{ xs: 2.5, md: 4 }} sx={{ mb: { xs: 4, md: 5 } }}>
-          {highlights.map((item, index) => {
+          {t.highlights.map((item, index) => {
             const Icon = item.icon;
             return (
               <Grid size={{ xs: 12, sm: 6 }} key={index}>
@@ -472,8 +471,7 @@ export default function PartnerEconomics() {
               fontSize: "0.8rem",
             }}
           >
-            위 가격은 표준 기준이며, 파트너 규모와 계약 조건에 따라 조정됩니다.
-            정확한 견적은 파트너 미팅에서 안내드립니다.
+            {t.disclaimer}
           </Typography>
         </MotionBox>
       </Container>

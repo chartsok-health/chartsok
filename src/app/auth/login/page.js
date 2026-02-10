@@ -26,8 +26,48 @@ import { useI18n } from '@/lib/i18n';
 
 const MotionPaper = motion.create(Paper);
 
+const content = {
+  ko: {
+    login: '로그인',
+    loginSubtitle: '계정에 로그인하여 서비스를 이용하세요',
+    email: '이메일',
+    password: '비밀번호',
+    forgotPassword: '비밀번호를 잊으셨나요?',
+    or: '또는',
+    googleLogin: 'Google로 로그인',
+    noAccount: '계정이 없으신가요?',
+    signUp: '회원가입',
+    errorInvalidEmail: '올바른 이메일 주소를 입력해주세요.',
+    errorUserDisabled: '비활성화된 계정입니다.',
+    errorUserNotFound: '등록되지 않은 이메일입니다.',
+    errorWrongPassword: '비밀번호가 일치하지 않습니다.',
+    errorInvalidCredential: '이메일 또는 비밀번호가 올바르지 않습니다.',
+    errorTooManyRequests: '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.',
+    errorDefault: '로그인에 실패했습니다. 다시 시도해주세요.',
+  },
+  en: {
+    login: 'Log In',
+    loginSubtitle: 'Log in to your account to use the service',
+    email: 'Email',
+    password: 'Password',
+    forgotPassword: 'Forgot your password?',
+    or: 'or',
+    googleLogin: 'Log in with Google',
+    noAccount: "Don't have an account?",
+    signUp: 'Sign Up',
+    errorInvalidEmail: 'Please enter a valid email address.',
+    errorUserDisabled: 'This account has been disabled.',
+    errorUserNotFound: 'Email not found.',
+    errorWrongPassword: 'Incorrect password.',
+    errorInvalidCredential: 'Invalid email or password.',
+    errorTooManyRequests: 'Too many attempts. Please try again later.',
+    errorDefault: 'Login failed. Please try again.',
+  },
+};
+
 export default function LoginPage() {
-  const { t } = useI18n();
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
 
@@ -69,19 +109,19 @@ export default function LoginPage() {
   const getErrorMessage = (code) => {
     switch (code) {
       case 'auth/invalid-email':
-        return '올바른 이메일 주소를 입력해주세요.';
+        return t.errorInvalidEmail;
       case 'auth/user-disabled':
-        return '비활성화된 계정입니다.';
+        return t.errorUserDisabled;
       case 'auth/user-not-found':
-        return '등록되지 않은 이메일입니다.';
+        return t.errorUserNotFound;
       case 'auth/wrong-password':
-        return '비밀번호가 일치하지 않습니다.';
+        return t.errorWrongPassword;
       case 'auth/invalid-credential':
-        return '이메일 또는 비밀번호가 올바르지 않습니다.';
+        return t.errorInvalidCredential;
       case 'auth/too-many-requests':
-        return '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+        return t.errorTooManyRequests;
       default:
-        return '로그인에 실패했습니다. 다시 시도해주세요.';
+        return t.errorDefault;
     }
   };
 
@@ -131,10 +171,10 @@ export default function LoginPage() {
               chartsok
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
-              로그인
+              {t.login}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              계정에 로그인하여 서비스를 이용하세요
+              {t.loginSubtitle}
             </Typography>
           </Box>
 
@@ -149,7 +189,7 @@ export default function LoginPage() {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="이메일"
+              label={t.email}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -158,7 +198,7 @@ export default function LoginPage() {
             />
             <TextField
               fullWidth
-              label="비밀번호"
+              label={t.password}
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -188,7 +228,7 @@ export default function LoginPage() {
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  비밀번호를 잊으셨나요?
+                  {t.forgotPassword}
                 </Typography>
               </Link>
             </Box>
@@ -207,14 +247,14 @@ export default function LoginPage() {
                 fontSize: '1rem',
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t.login}
             </Button>
           </Box>
 
           {/* Divider */}
           <Divider sx={{ my: 3 }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              또는
+              {t.or}
             </Typography>
           </Divider>
 
@@ -238,13 +278,13 @@ export default function LoginPage() {
               },
             }}
           >
-            Google로 로그인
+            {t.googleLogin}
           </Button>
 
           {/* Sign Up Link */}
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              계정이 없으신가요?{' '}
+              {t.noAccount}{' '}
               <Link href="/auth/signup" style={{ textDecoration: 'none' }}>
                 <Typography
                   component="span"
@@ -255,7 +295,7 @@ export default function LoginPage() {
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  회원가입
+                  {t.signUp}
                 </Typography>
               </Link>
             </Typography>

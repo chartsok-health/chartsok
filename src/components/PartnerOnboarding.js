@@ -2,17 +2,36 @@
 
 import { Box, Container, Typography, Stack, Chip } from "@mui/material";
 import { motion } from "framer-motion";
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 
-const steps = [
-  { title: "NDA 체결 및 대표 템플릿 선정", badge: "1주", description: "보안 요구사항과 기술 스펙을 정리하고, 매핑할 대표 차트 템플릿 3종을 선정합니다", color: "#4B9CD3" },
-  { title: "샌드박스 검증 및 템플릿 매핑", badge: "2주", description: "테스트 환경에서 연동을 검증하고, 선정된 템플릿의 필드 매핑을 완료합니다", color: "#10B981" },
-  { title: "병원 현장 PoC 진행", badge: "4~8주", description: "실제 병원 2~3곳에서 파일럿을 진행하고, 현장 피드백을 반영합니다", color: "#F59E0B" },
-  { title: "정식 런칭 및 공동 마케팅", badge: "런칭", description: "과금 모델을 확정하고, 공동 마케팅과 함께 정식으로 출시합니다", color: "#8B5CF6" },
-];
+const content = {
+  ko: {
+    title: "파트너 도입 절차",
+    subtitle: "NDA 체결부터 정식 런칭까지, 단계별로 함께 진행합니다",
+    steps: [
+      { title: "NDA 체결 및 대표 템플릿 선정", badge: "1주", description: "보안 요구사항과 기술 스펙을 정리하고, 매핑할 대표 차트 템플릿 3종을 선정합니다", color: "#4B9CD3" },
+      { title: "샌드박스 검증 및 템플릿 매핑", badge: "2주", description: "테스트 환경에서 연동을 검증하고, 선정된 템플릿의 필드 매핑을 완료합니다", color: "#10B981" },
+      { title: "병원 현장 PoC 진행", badge: "4~8주", description: "실제 병원 2~3곳에서 파일럿을 진행하고, 현장 피드백을 반영합니다", color: "#F59E0B" },
+      { title: "정식 런칭 및 공동 마케팅", badge: "런칭", description: "과금 모델을 확정하고, 공동 마케팅과 함께 정식으로 출시합니다", color: "#8B5CF6" },
+    ],
+  },
+  en: {
+    title: "How We Onboard Partners",
+    subtitle: "From NDA to launch — we walk you through it",
+    steps: [
+      { title: "NDA & Templates", badge: "Week 1", description: "Lock in specs, pick 3 chart templates to map", color: "#4B9CD3" },
+      { title: "Sandbox Testing", badge: "Week 2", description: "Verify integration, complete field mapping", color: "#10B981" },
+      { title: "Hospital Pilot", badge: "Weeks 4–8", description: "Live testing at 2–3 hospitals, iterate fast", color: "#F59E0B" },
+      { title: "Go Live", badge: "Launch", description: "Finalize billing, launch with co-marketing", color: "#8B5CF6" },
+    ],
+  },
+};
 
 export default function PartnerOnboarding() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   return (
     <Box
       id="onboarding-process"
@@ -33,10 +52,10 @@ export default function PartnerOnboarding() {
             ONBOARDING
           </Typography>
           <Typography variant="h2" sx={{ fontSize: { xs: "2rem", md: "2.75rem" }, fontWeight: 700, color: "secondary.main", mb: 2 }}>
-            파트너 도입 절차
+            {t.title}
           </Typography>
           <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: "1rem", md: "1.125rem" }, maxWidth: 600, mx: "auto" }}>
-            NDA 체결부터 정식 런칭까지, 단계별로 함께 진행합니다
+            {t.subtitle}
           </Typography>
         </MotionBox>
 
@@ -70,7 +89,7 @@ export default function PartnerOnboarding() {
             </Box>
 
             <Stack direction="row" justifyContent="space-between" sx={{ position: "relative", zIndex: 1 }}>
-              {steps.map((step, index) => (
+              {t.steps.map((step, index) => (
                 <MotionBox
                   key={index}
                   initial={{ opacity: 0, y: 30 }}
@@ -132,7 +151,7 @@ export default function PartnerOnboarding() {
         {/* Mobile: Vertical */}
         <Box sx={{ display: { xs: "block", md: "none" } }}>
           <Stack spacing={3}>
-            {steps.map((step, index) => (
+            {t.steps.map((step, index) => (
               <MotionBox
                 key={index}
                 initial={{ opacity: 0, x: -20 }}

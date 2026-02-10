@@ -7,6 +7,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SecurityIcon from '@mui/icons-material/Security';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 
@@ -49,15 +50,45 @@ function AnimatedCounter({ end, suffix = '', prefix = '' }) {
   );
 }
 
-const highlights = [
-  '추가 개발 비용 ZERO',
-  'PoC 무료 제공',
-  '전담 엔지니어 배정',
-  '70% 매출 셰어',
-];
+const content = {
+  ko: {
+    badge: 'EMR 파트너 프로그램',
+    headlineBefore: 'EMR에 AI 차트 모듈,',
+    counterSuffix: '~8주',
+    headlineAfter: '안에 런칭',
+    subtitle1: 'NDA 체결 → 템플릿 매핑 → 파일럿 → 런칭까지,',
+    subtitle2: '검증된 파트너 온보딩 프로세스',
+    highlights: [
+      '추가 개발 비용 ZERO',
+      'PoC 무료 제공',
+      '전담 엔지니어 배정',
+      '70% 매출 셰어',
+    ],
+    partnerButton: '파트너 미팅 신청',
+    securityButton: '보안 패킷 요청',
+  },
+  en: {
+    badge: 'Partner Program',
+    headlineBefore: 'AI Charting in Your EMR in',
+    counterSuffix: '–8 Weeks',
+    headlineAfter: '',
+    subtitle1: 'NDA → Mapping → Pilot → Launch',
+    subtitle2: 'We guide you every step.',
+    highlights: [
+      'Zero Dev Cost',
+      'Free PoC',
+      'Dedicated Engineer',
+      '70% RevShare',
+    ],
+    partnerButton: 'Let\'s Talk',
+    securityButton: 'Get Security Packet',
+  },
+};
 
 export default function CTA() {
   const router = useRouter();
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
 
   return (
     <Box
@@ -140,7 +171,7 @@ export default function CTA() {
             transition={{ duration: 0.5 }}
           >
             <Chip
-              label="EMR 파트너 프로그램"
+              label={t.badge}
               sx={{
                 mb: 3,
                 bgcolor: 'rgba(75, 156, 211, 0.15)',
@@ -170,7 +201,7 @@ export default function CTA() {
                 lineHeight: 1.2,
               }}
             >
-              EMR에 AI 차트 모듈,{' '}
+              {t.headlineBefore}{' '}
               <Box
                 component="span"
                 sx={{
@@ -179,9 +210,9 @@ export default function CTA() {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                <AnimatedCounter end={4} suffix="~8주" />
-              </Box>{' '}
-              안에 런칭
+                <AnimatedCounter end={4} suffix={t.counterSuffix} />
+              </Box>
+              {t.headlineAfter && <>{' '}{t.headlineAfter}</>}
             </Typography>
           </MotionBox>
 
@@ -203,9 +234,9 @@ export default function CTA() {
                 lineHeight: 1.7,
               }}
             >
-              NDA 체결 → 템플릿 매핑 → 파일럿 → 런칭까지,
+              {t.subtitle1}
               <br />
-              검증된 파트너 온보딩 프로세스
+              {t.subtitle2}
             </Typography>
           </MotionBox>
 
@@ -223,7 +254,7 @@ export default function CTA() {
               mb: { xs: 4, md: 5 },
             }}
           >
-            {highlights.map((text, i) => (
+            {t.highlights.map((text, i) => (
               <MotionBox
                 key={text}
                 initial={{ opacity: 0, y: 10 }}
@@ -296,7 +327,7 @@ export default function CTA() {
                     },
                   }}
                 >
-                  파트너 미팅 신청
+                  {t.partnerButton}
                 </Button>
               </MotionBox>
               <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
@@ -321,7 +352,7 @@ export default function CTA() {
                     },
                   }}
                 >
-                  보안 패킷 요청
+                  {t.securityButton}
                 </Button>
               </MotionBox>
             </Stack>

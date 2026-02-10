@@ -7,74 +7,153 @@ import Link from 'next/link';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 const MotionCard = motion.create(Card);
 
-const steps = [
-  {
-    number: 1,
-    title: 'EMR 차트 필드/양식 수집',
-    description: '파트너사의 기존 차트 템플릿 구조를 분석합니다. SOAP, 자유형식, 과별 양식 모두 지원.',
-    duration: '1~2일',
-    color: '#4B9CD3',
-  },
-  {
-    number: 2,
-    title: '템플릿 매핑 (SOAP → EMR 필드)',
-    description: 'Chartsok AI 출력을 EMR 필드에 1:1 매핑합니다. 진료과별 커스터마이징 포함.',
-    duration: '2~3일',
-    color: '#10B981',
-  },
-  {
-    number: 3,
-    title: '병원 피드백 반영 → 확정',
-    description: '실제 진료 데이터로 검증하고 현장 피드백을 반영하여 최종 확정합니다.',
-    duration: '1~2일',
-    color: '#F59E0B',
-  },
-];
-
-const templateCards = [
-  {
-    name: '내과 SOAP 템플릿',
-    status: '매핑 완료',
-    statusColor: '#10B981',
-    StatusIcon: CheckCircleIcon,
-    mappings: [
-      { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
-      { from: 'HPI', to: 'History of Present Illness', color: '#10B981' },
-      { from: 'Dx', to: 'Assessment / 진단코드', color: '#F59E0B' },
-      { from: 'Plan', to: '처방 / 처치 계획', color: '#8B5CF6' },
+const content = {
+  ko: {
+    sectionTitle: "기존 차트 양식 그대로,",
+    sectionTitleHighlight: "3~7일",
+    sectionTitleEnd: "안에 매핑",
+    sectionSubtitle: "SOAP, 자유형식, 진료과별 양식 — 어떤 포맷이든 AI 출력을 EMR 필드에 정확히 매핑합니다",
+    ctaButton: "우리 EMR 양식으로 매핑 가능 여부 확인",
+    steps: [
+      {
+        number: 1,
+        title: 'EMR 차트 필드/양식 수집',
+        description: '파트너사의 기존 차트 템플릿 구조를 분석합니다. SOAP, 자유형식, 과별 양식 모두 지원.',
+        duration: '1~2일',
+        color: '#4B9CD3',
+      },
+      {
+        number: 2,
+        title: '템플릿 매핑 (SOAP → EMR 필드)',
+        description: 'Chartsok AI 출력을 EMR 필드에 1:1 매핑합니다. 진료과별 커스터마이징 포함.',
+        duration: '2~3일',
+        color: '#10B981',
+      },
+      {
+        number: 3,
+        title: '병원 피드백 반영 → 확정',
+        description: '실제 진료 데이터로 검증하고 현장 피드백을 반영하여 최종 확정합니다.',
+        duration: '1~2일',
+        color: '#F59E0B',
+      },
+    ],
+    templateCards: [
+      {
+        name: '내과 SOAP 템플릿',
+        status: '매핑 완료',
+        statusColor: '#10B981',
+        StatusIcon: CheckCircleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'HPI', to: 'History of Present Illness', color: '#10B981' },
+          { from: 'Dx', to: 'Assessment / 진단코드', color: '#F59E0B' },
+          { from: 'Plan', to: '처방 / 처치 계획', color: '#8B5CF6' },
+        ],
+      },
+      {
+        name: '정형외과 수술기록',
+        status: '매핑 완료',
+        statusColor: '#10B981',
+        StatusIcon: CheckCircleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'OP', to: 'Operative Note', color: '#10B981' },
+          { from: 'Dx', to: 'Post-Op Diagnosis', color: '#F59E0B' },
+          { from: 'Plan', to: 'Post-Op Order', color: '#8B5CF6' },
+        ],
+      },
+      {
+        name: '피부과 상담 템플릿',
+        status: '매핑 진행 중',
+        statusColor: '#F59E0B',
+        StatusIcon: ScheduleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'Skin', to: 'Skin Exam Findings', color: '#10B981' },
+          { from: 'Dx', to: 'Assessment', color: '#F59E0B' },
+          { from: 'Plan', to: '시술/처방 계획', color: '#8B5CF6' },
+        ],
+      },
     ],
   },
-  {
-    name: '정형외과 수술기록',
-    status: '매핑 완료',
-    statusColor: '#10B981',
-    StatusIcon: CheckCircleIcon,
-    mappings: [
-      { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
-      { from: 'OP', to: 'Operative Note', color: '#10B981' },
-      { from: 'Dx', to: 'Post-Op Diagnosis', color: '#F59E0B' },
-      { from: 'Plan', to: 'Post-Op Order', color: '#8B5CF6' },
+  en: {
+    sectionTitle: "Your Templates, Mapped in",
+    sectionTitleHighlight: "3–7 Days",
+    sectionTitleEnd: "",
+    sectionSubtitle: "SOAP, free-form, specialty formats — we map AI output to your exact EMR fields",
+    ctaButton: "Check If Your EMR Is Compatible",
+    steps: [
+      {
+        number: 1,
+        title: 'Collect EMR Fields',
+        description: 'We analyze your existing chart templates. SOAP, free-form, specialty — all supported.',
+        duration: '1–2 days',
+        color: '#4B9CD3',
+      },
+      {
+        number: 2,
+        title: 'Map Templates (SOAP → EMR)',
+        description: '1:1 mapping from Chartsok AI output to your EMR fields. Custom by specialty.',
+        duration: '2–3 days',
+        color: '#10B981',
+      },
+      {
+        number: 3,
+        title: 'Validate & Finalize',
+        description: 'Test with real data, incorporate feedback, lock it in.',
+        duration: '1–2 days',
+        color: '#F59E0B',
+      },
+    ],
+    templateCards: [
+      {
+        name: 'Internal Medicine SOAP',
+        status: 'Mapped',
+        statusColor: '#10B981',
+        StatusIcon: CheckCircleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'HPI', to: 'History of Present Illness', color: '#10B981' },
+          { from: 'Dx', to: 'Assessment / Diagnosis', color: '#F59E0B' },
+          { from: 'Plan', to: 'Treatment Plan', color: '#8B5CF6' },
+        ],
+      },
+      {
+        name: 'Orthopedic Op Note',
+        status: 'Mapped',
+        statusColor: '#10B981',
+        StatusIcon: CheckCircleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'OP', to: 'Operative Note', color: '#10B981' },
+          { from: 'Dx', to: 'Post-Op Diagnosis', color: '#F59E0B' },
+          { from: 'Plan', to: 'Post-Op Order', color: '#8B5CF6' },
+        ],
+      },
+      {
+        name: 'Dermatology Consult',
+        status: 'In Progress',
+        statusColor: '#F59E0B',
+        StatusIcon: ScheduleIcon,
+        mappings: [
+          { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
+          { from: 'Skin', to: 'Skin Exam Findings', color: '#10B981' },
+          { from: 'Dx', to: 'Assessment', color: '#F59E0B' },
+          { from: 'Plan', to: 'Treatment Plan', color: '#8B5CF6' },
+        ],
+      },
     ],
   },
-  {
-    name: '피부과 상담 템플릿',
-    status: '매핑 진행 중',
-    statusColor: '#F59E0B',
-    StatusIcon: ScheduleIcon,
-    mappings: [
-      { from: 'CC', to: 'Chief Complaint', color: '#4B9CD3' },
-      { from: 'Skin', to: 'Skin Exam Findings', color: '#10B981' },
-      { from: 'Dx', to: 'Assessment', color: '#F59E0B' },
-      { from: 'Plan', to: '시술/처방 계획', color: '#8B5CF6' },
-    ],
-  },
-];
+};
 
 export default function TemplateMapping() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const [hoveredCard, setHoveredCard] = useState(null);
 
   return (
@@ -117,11 +196,11 @@ export default function TemplateMapping() {
               lineHeight: 1.2,
             }}
           >
-            기존 차트 양식 그대로,{' '}
+            {t.sectionTitle}{' '}
             <Box component="span" sx={{ color: '#4B9CD3' }}>
-              3~7일
-            </Box>{' '}
-            안에 매핑
+              {t.sectionTitleHighlight}
+            </Box>
+            {t.sectionTitleEnd && ` ${t.sectionTitleEnd}`}
           </Typography>
           <Typography
             variant="body1"
@@ -133,7 +212,7 @@ export default function TemplateMapping() {
               lineHeight: 1.7,
             }}
           >
-            SOAP, 자유형식, 진료과별 양식 — 어떤 포맷이든 AI 출력을 EMR 필드에 정확히 매핑합니다
+            {t.sectionSubtitle}
           </Typography>
         </MotionBox>
 
@@ -175,7 +254,7 @@ export default function TemplateMapping() {
               </Box>
 
               <Stack spacing={{ xs: 4, md: 5 }}>
-                {steps.map((step, index) => (
+                {t.steps.map((step, index) => (
                   <MotionBox
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
@@ -260,7 +339,7 @@ export default function TemplateMapping() {
           {/* Right column: template cards */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={2}>
-              {templateCards.map((template, index) => {
+              {t.templateCards.map((template, index) => {
                 const isHovered = hoveredCard === index;
                 return (
                   <MotionCard
@@ -409,7 +488,7 @@ export default function TemplateMapping() {
               },
             }}
           >
-            우리 EMR 양식으로 매핑 가능 여부 확인
+            {t.ctaButton}
           </Button>
         </MotionBox>
       </Container>

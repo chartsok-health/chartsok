@@ -51,6 +51,37 @@ function AuthParamsHandler({ setAuthModalView, setAuthModalOpen }) {
   return null;
 }
 
+const content = {
+  ko: {
+    logo: '차트쏙',
+    navDemo: '데모',
+    navPartnerValue: '수익 구조',
+    navEconomics: '가격',
+    navPoc: 'PoC 패키지',
+    navSecurity: '보안',
+    navFaq: 'FAQ',
+    userFallback: '사용자',
+    dashboard: '대시보드',
+    logout: '로그아웃',
+    emrPartnerInquiry: 'EMR 제휴 문의',
+    clinicInquiry: '병원 도입 문의',
+  },
+  en: {
+    logo: 'chartsok',
+    navDemo: 'Demo',
+    navPartnerValue: 'Revenue',
+    navEconomics: 'Pricing',
+    navPoc: 'PoC',
+    navSecurity: 'Security',
+    navFaq: 'FAQ',
+    userFallback: 'User',
+    dashboard: 'Dashboard',
+    logout: 'Log Out',
+    emrPartnerInquiry: 'Partner Inquiry',
+    clinicInquiry: 'Clinic Inquiry',
+  },
+};
+
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -59,6 +90,7 @@ export default function Header() {
   const [authModalView, setAuthModalView] = useState('login');
   const [mounted, setMounted] = useState(false);
   const { t, locale, toggleLocale } = useI18n();
+  const ct = content[locale] || content.ko;
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobileQuery = useMediaQuery(theme.breakpoints.down('md'));
@@ -104,12 +136,12 @@ export default function Header() {
   }, []);
 
   const navItems = [
-    { label: '데모', id: 'demo' },
-    { label: '수익 구조', id: 'partner-value' },
-    { label: '가격', id: 'economics' },
-    { label: 'PoC 패키지', id: 'poc-package' },
-    { label: '보안', id: 'security' },
-    { label: 'FAQ', id: 'faq' },
+    { label: ct.navDemo, id: 'demo' },
+    { label: ct.navPartnerValue, id: 'partner-value' },
+    { label: ct.navEconomics, id: 'economics' },
+    { label: ct.navPoc, id: 'poc-package' },
+    { label: ct.navSecurity, id: 'security' },
+    { label: ct.navFaq, id: 'faq' },
   ];
 
   const scrollToSection = (id) => {
@@ -161,7 +193,7 @@ export default function Header() {
             }}
           >
             <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.85rem' }}>
-              차트쏙
+              {ct.logo}
             </Typography>
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
@@ -186,7 +218,7 @@ export default function Header() {
               </Avatar>
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {user.displayName || '사용자'}
+                  {user.displayName || ct.userFallback}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   {user.email}
@@ -206,7 +238,7 @@ export default function Header() {
                 background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
               }}
             >
-              대시보드
+              {ct.dashboard}
             </Button>
             <Button
               variant="outlined"
@@ -219,7 +251,7 @@ export default function Header() {
               }}
               sx={{ py: 1.5 }}
             >
-              로그아웃
+              {ct.logout}
             </Button>
           </>
         ) : (
@@ -237,7 +269,7 @@ export default function Header() {
                 background: 'linear-gradient(135deg, #4B9CD3 0%, #3A7BA8 100%)',
               }}
             >
-              EMR 제휴 문의
+              {ct.emrPartnerInquiry}
             </Button>
             <Button
               component={Link}
@@ -248,7 +280,7 @@ export default function Header() {
               onClick={handleDrawerToggle}
               sx={{ py: 1.5 }}
             >
-              병원 도입 문의
+              {ct.clinicInquiry}
             </Button>
           </>
         )}
@@ -380,7 +412,7 @@ export default function Header() {
                   }}
                 >
                   <Typography sx={{ color: 'white', fontWeight: 800, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                    차트쏙
+                    {ct.logo}
                   </Typography>
                 </Box>
                 <Typography
@@ -471,7 +503,7 @@ export default function Header() {
                     >
                       <Box sx={{ px: 2, py: 1.5 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {user.displayName || '사용자'}
+                          {user.displayName || ct.userFallback}
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {user.email}
@@ -485,7 +517,7 @@ export default function Header() {
                         }}
                       >
                         <DashboardIcon sx={{ mr: 1.5, fontSize: 20, color: 'text.secondary' }} />
-                        대시보드
+                        {ct.dashboard}
                       </MenuItem>
                       <MenuItem
                         onClick={async () => {
@@ -495,7 +527,7 @@ export default function Header() {
                         }}
                       >
                         <LogoutIcon sx={{ mr: 1.5, fontSize: 20, color: 'text.secondary' }} />
-                        로그아웃
+                        {ct.logout}
                       </MenuItem>
                     </Menu>
                   </>
@@ -511,7 +543,7 @@ export default function Header() {
                         fontWeight: 500,
                       }}
                     >
-                      병원 도입 문의
+                      {ct.clinicInquiry}
                     </Button>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
@@ -533,7 +565,7 @@ export default function Header() {
                           },
                         }}
                       >
-                        EMR 제휴 문의
+                        {ct.emrPartnerInquiry}
                       </Button>
                     </motion.div>
                   </>

@@ -7,7 +7,6 @@ import {
   Typography,
   Grid,
   Card,
-  CardContent,
   Chip,
   Button,
   List,
@@ -23,7 +22,6 @@ import ApiIcon from '@mui/icons-material/Api';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import SecurityIcon from '@mui/icons-material/Security';
 import WebhookIcon from '@mui/icons-material/Webhook';
-import StorageIcon from '@mui/icons-material/Storage';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmailIcon from '@mui/icons-material/Email';
 import { useI18n } from '@/lib/i18n';
@@ -83,55 +81,55 @@ const content = {
     comingSoonDesc: '상세 API 문서가 곧 공개됩니다. 미리 연동을 준비하시려면 문의해 주세요.',
   },
   en: {
-    badge: 'Developer Docs',
+    badge: 'Docs',
     title: 'chartsok API',
-    subtitle: 'Integrate with your own systems using chartsok\'s powerful API. RESTful API and Webhooks supported.',
+    subtitle: 'RESTful API and Webhooks for integration.',
     sections: [
       {
         icon: ApiIcon,
         title: 'REST API',
-        desc: 'Intuitive API based on RESTful architecture',
-        items: ['Patient info CRUD', 'Chart data CRUD', 'Audio file upload', 'Real-time status'],
+        desc: 'RESTful architecture',
+        items: ['Patient CRUD', 'Chart CRUD', 'Audio upload', 'Real-time status'],
         color: '#4B9CD3',
       },
       {
         icon: WebhookIcon,
         title: 'Webhooks',
-        desc: 'Receive real-time event notifications',
-        items: ['Chart generation complete', 'Recording processed', 'EMR transfer result', 'System alerts'],
+        desc: 'Real-time events',
+        items: ['Chart done', 'Recording done', 'EMR result', 'Alerts'],
         color: '#10B981',
       },
       {
         icon: IntegrationInstructionsIcon,
         title: 'EMR Integration',
-        desc: 'Major EMR system integration guides',
-        items: ['BitComputer integration', 'Ubicare integration', 'Custom EMR integration', 'Integration testing'],
+        desc: 'Integration guides',
+        items: ['BitComputer', 'Ubicare', 'Custom EMR', 'Testing tools'],
         color: '#F59E0B',
       },
       {
         icon: SecurityIcon,
         title: 'Auth & Security',
-        desc: 'OAuth 2.0 based secure authentication',
-        items: ['API key management', 'OAuth 2.0 auth', 'IP whitelist', 'Request signing'],
+        desc: 'OAuth 2.0 auth',
+        items: ['API keys', 'OAuth 2.0', 'IP whitelist', 'Request signing'],
         color: '#8B5CF6',
       },
     ],
     quickStart: 'Quick Start',
-    quickStartDesc: 'Get started with chartsok API in minutes.',
+    quickStartDesc: 'Get started in minutes.',
     steps: [
-      { step: '1', title: 'Get API Key', desc: 'Generate an API key from the developer console.' },
-      { step: '2', title: 'Set Up Auth', desc: 'Include the API key in request headers.' },
-      { step: '3', title: 'Make API Calls', desc: 'Call REST API endpoints to use features.' },
+      { step: '1', title: 'Get API Key', desc: 'Generate from dev console.' },
+      { step: '2', title: 'Set Auth', desc: 'Add API key to headers.' },
+      { step: '3', title: 'Call API', desc: 'Use REST endpoints.' },
     ],
     codeExample: 'Code Example',
-    sdks: 'SDKs & Libraries',
-    sdkList: ['JavaScript/TypeScript', 'Python', 'Java', 'PHP'],
-    contactTitle: 'Need API integration support?',
-    contactDesc: 'We provide dedicated technical support for enterprise customers.',
-    contactButton: 'Contact Support',
+    sdks: 'SDKs',
+    sdkList: ['JS/TS', 'Python', 'Java', 'PHP'],
+    contactTitle: 'Need integration help?',
+    contactDesc: 'Dedicated support for enterprise.',
+    contactButton: 'Contact',
     email: 'chartsok.health@gmail.com',
-    comingSoon: 'API Documentation Coming Soon',
-    comingSoonDesc: 'Detailed API documentation will be available soon. Contact us if you want to prepare integration in advance.',
+    comingSoon: 'Docs Coming Soon',
+    comingSoonDesc: 'Full API docs available soon. Contact us to prepare early.',
   },
 };
 

@@ -10,19 +10,42 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import CloudIcon from "@mui/icons-material/Cloud";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
 
-const items = [
-  { icon: AdminPanelSettingsIcon, label: "역할 기반 접근 제어 (RBAC)" },
-  { icon: HistoryIcon, label: "감사 로그 자동 기록" },
-  { icon: LockIcon, label: "전송 및 저장 데이터 암호화" },
-  { icon: FilterListIcon, label: "최소한의 데이터만 수집" },
-  { icon: DeleteSweepIcon, label: "데이터 삭제 및 보관 정책" },
-  { icon: CloudIcon, label: "Cloud / Private / On-prem 배포 지원" },
-];
+const content = {
+  ko: {
+    title: "보안 및 규정 준수",
+    subtitle: "EMR에 요구되는 보안 수준을 기본으로 충족합니다",
+    items: [
+      { icon: AdminPanelSettingsIcon, label: "역할 기반 접근 제어 (RBAC)" },
+      { icon: HistoryIcon, label: "감사 로그 자동 기록" },
+      { icon: LockIcon, label: "전송 및 저장 데이터 암호화" },
+      { icon: FilterListIcon, label: "최소한의 데이터만 수집" },
+      { icon: DeleteSweepIcon, label: "데이터 삭제 및 보관 정책" },
+      { icon: CloudIcon, label: "Cloud / Private / On-prem 배포 지원" },
+    ],
+    button: "보안 및 아키텍처 자료 요청하기",
+  },
+  en: {
+    title: "Security & Compliance",
+    subtitle: "EMR-grade security built-in",
+    items: [
+      { icon: AdminPanelSettingsIcon, label: "RBAC Access Control" },
+      { icon: HistoryIcon, label: "Auto Audit Logging" },
+      { icon: LockIcon, label: "Encryption (Transit + Rest)" },
+      { icon: FilterListIcon, label: "Minimal Data Collection" },
+      { icon: DeleteSweepIcon, label: "Retention & Deletion Policies" },
+      { icon: CloudIcon, label: "Cloud / Private / On-prem" },
+    ],
+    button: "Request Security Docs",
+  },
+};
 
 export default function SecurityCompliance() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   return (
     <Box
       id="security"
@@ -43,15 +66,15 @@ export default function SecurityCompliance() {
             SECURITY
           </Typography>
           <Typography variant="h2" sx={{ fontSize: { xs: "2rem", md: "2.75rem" }, fontWeight: 700, color: "white", mb: 2 }}>
-            보안 및 규정 준수
+            {t.title}
           </Typography>
           <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", fontSize: { xs: "1rem", md: "1.125rem" }, maxWidth: 600, mx: "auto" }}>
-            EMR에 요구되는 보안 수준을 기본으로 충족합니다
+            {t.subtitle}
           </Typography>
         </MotionBox>
 
         <Grid container spacing={3} sx={{ mb: 6 }}>
-          {items.map((item, index) => {
+          {t.items.map((item, index) => {
             const Icon = item.icon;
             return (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
@@ -111,7 +134,7 @@ export default function SecurityCompliance() {
               },
             }}
           >
-            보안 및 아키텍처 자료 요청하기
+            {t.button}
           </Button>
         </MotionBox>
       </Container>

@@ -23,8 +23,136 @@ import PauseIcon from '@mui/icons-material/Pause';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import TimerIcon from '@mui/icons-material/Timer';
+import { useI18n } from '@/lib/i18n';
 
 const MotionBox = motion.create(Box);
+
+/* ========== LOCALIZED CONTENT ========== */
+
+const demoContent = {
+  ko: {
+    heroTitle: "90초, 진료에서 차트까지",
+    heroSubtitle1: "녹음 시작부터 SOAP 차트 생성, EMR 반영, 감사 로그까지.",
+    heroSubtitle2: "하나의 워크플로우로 완성됩니다.",
+    timerSuffix: "초",
+    workflowLabel: "워크플로우",
+    pauseButton: "일시정지",
+    autoPlayButton: "자동 재생",
+    ctaButton: "우리 EMR에서 직접 체험하기",
+    searchPlaceholder: "환자 이름 또는 ID로 검색...",
+    realtimeTranscript: "실시간 텍스트 변환",
+    rawRecording: "녹음 원본",
+    soapChart: "SOAP 차트",
+    aiProcessing: "AI 분석 중...",
+    aiGenerated: "AI 생성",
+    autoInsertComplete: "자동 입력 완료",
+    auditLogTitle: "감사 추적 로그",
+    elapsedTime: "소요 시간",
+    recordedItems: "기록 항목",
+    auditStatus: "감사 상태",
+    auditNormal: "정상",
+    seconds: "초",
+    items: "건",
+    soapData: [
+      { key: 'S', label: 'Subjective', content: '3일 전부터 두통 호소, 오후에 악화, 진통제 복용 시 일시적 호전', color: '#4B9CD3' },
+      { key: 'O', label: 'Objective', content: 'BP 130/85, HR 76, 경부 근육 긴장(+), 신경학적 검사 정상', color: '#10B981' },
+      { key: 'A', label: 'Assessment', content: '긴장성 두통 (G44.2)', color: '#F59E0B' },
+      { key: 'P', label: 'Plan', content: '아세트아미노펜 500mg tid, 경부 스트레칭 교육, 2주 후 f/u', color: '#8B5CF6' },
+    ],
+    patients: [
+      { name: '김영희', age: 45, gender: 'F', dept: '내과', complaint: '두통, 오후 악화', id: '2025-00142', selected: true },
+      { name: '박준서', age: 62, gender: 'M', dept: '정형외과', complaint: '좌측 무릎 통증', id: '2025-00187', selected: false },
+      { name: '이수진', age: 33, gender: 'F', dept: '이비인후과', complaint: '인후통, 발열', id: '2025-00201', selected: false },
+    ],
+    transcriptLines: [
+      { speaker: '의사', text: '어디가 불편하세요?', color: '#4B9CD3' },
+      { speaker: '환자', text: '3일 전부터 두통이 있어요. 오후에 더 심해져요.', color: '#10B981' },
+      { speaker: '의사', text: '진통제는 복용해보셨나요?', color: '#4B9CD3' },
+      { speaker: '환자', text: '네, 먹으면 잠깐 나아졌다가 다시 아파요.', color: '#10B981' },
+      { speaker: '의사', text: '혈압 측정하고 경부 검진 하겠습니다.', color: '#4B9CD3' },
+    ],
+    emrFieldMap: [
+      { soap: 'S', field: '주소 (Chief Complaint)', value: '두통, 3일 전 발생, 오후 악화' },
+      { soap: 'O', field: '이학적 소견 (Findings)', value: 'BP 130/85, HR 76, 경부 근육 긴장(+)' },
+      { soap: 'A', field: '진단코드 (Dx)', value: '긴장성 두통 G44.2' },
+      { soap: 'P', field: '처방 / 계획 (Plan)', value: '아세트아미노펜 500mg tid, 경부 스트레칭' },
+    ],
+    auditEntries: [
+      { time: '14:23:05', action: '녹음 시작', user: '김의사', status: '완료', statusColor: '#10B981' },
+      { time: '14:24:32', action: 'AI 차트 생성', user: 'Chartsok AI', status: '완료', statusColor: '#10B981' },
+      { time: '14:24:35', action: 'EMR 반영 완료', user: '김의사', status: '완료', statusColor: '#10B981' },
+      { time: '14:24:36', action: '감사 로그 저장', user: 'System', status: '기록됨', statusColor: '#4B9CD3' },
+    ],
+    steps: [
+      { label: '환자 선택', subtitle: 'EMR에서 환자를 선택합니다', icon: <PersonSearchIcon />, accent: '#4B9CD3' },
+      { label: '진료 녹음', subtitle: 'AI가 진료 대화를 실시간 기록합니다', icon: <MicIcon />, accent: '#EF4444' },
+      { label: 'SOAP 자동 생성', subtitle: 'AI가 SOAP 차트를 자동 생성합니다', icon: <AutoAwesomeIcon />, accent: '#8B5CF6' },
+      { label: 'EMR 반영', subtitle: 'SOAP이 EMR 필드에 자동 입력됩니다', icon: <DescriptionIcon />, accent: '#10B981' },
+      { label: 'Audit Log', subtitle: '모든 기록이 감사 로그로 저장됩니다', icon: <SecurityIcon />, accent: '#F59E0B' },
+    ],
+  },
+  en: {
+    heroTitle: "90 Seconds: Visit to Chart",
+    heroSubtitle1: "From recording to SOAP generation, EMR entry, and audit log.",
+    heroSubtitle2: "One seamless workflow.",
+    timerSuffix: "sec",
+    workflowLabel: "Workflow",
+    pauseButton: "Pause",
+    autoPlayButton: "Auto Play",
+    ctaButton: "Try It In Your EMR",
+    searchPlaceholder: "Search by name or ID...",
+    realtimeTranscript: "Real-time Transcript",
+    rawRecording: "Raw Recording",
+    soapChart: "SOAP Chart",
+    aiProcessing: "AI Processing...",
+    aiGenerated: "AI Generated",
+    autoInsertComplete: "Auto-Insert Complete",
+    auditLogTitle: "Audit Trail Log",
+    elapsedTime: "Elapsed",
+    recordedItems: "Records",
+    auditStatus: "Audit Status",
+    auditNormal: "Normal",
+    seconds: "sec",
+    items: "",
+    soapData: [
+      { key: 'S', label: 'Subjective', content: 'Headache for 3 days, worse in afternoon, temporary relief with painkillers', color: '#4B9CD3' },
+      { key: 'O', label: 'Objective', content: 'BP 130/85, HR 76, neck muscle tension (+), neuro exam normal', color: '#10B981' },
+      { key: 'A', label: 'Assessment', content: 'Tension headache (G44.2)', color: '#F59E0B' },
+      { key: 'P', label: 'Plan', content: 'Acetaminophen 500mg tid, neck stretching education, f/u in 2 weeks', color: '#8B5CF6' },
+    ],
+    patients: [
+      { name: 'Y. Kim', age: 45, gender: 'F', dept: 'Internal Med', complaint: 'Headache, worse PM', id: '2025-00142', selected: true },
+      { name: 'J. Park', age: 62, gender: 'M', dept: 'Orthopedics', complaint: 'Left knee pain', id: '2025-00187', selected: false },
+      { name: 'S. Lee', age: 33, gender: 'F', dept: 'ENT', complaint: 'Sore throat, fever', id: '2025-00201', selected: false },
+    ],
+    transcriptLines: [
+      { speaker: 'Doctor', text: "What's bothering you today?", color: '#4B9CD3' },
+      { speaker: 'Patient', text: "I've had headaches for 3 days. Worse in the afternoon.", color: '#10B981' },
+      { speaker: 'Doctor', text: 'Have you tried any painkillers?', color: '#4B9CD3' },
+      { speaker: 'Patient', text: 'Yes, they help briefly but then it comes back.', color: '#10B981' },
+      { speaker: 'Doctor', text: "I'll check your BP and examine your neck.", color: '#4B9CD3' },
+    ],
+    emrFieldMap: [
+      { soap: 'S', field: 'Chief Complaint', value: 'Headache, onset 3 days ago, worse PM' },
+      { soap: 'O', field: 'Physical Exam', value: 'BP 130/85, HR 76, neck tension (+)' },
+      { soap: 'A', field: 'Diagnosis', value: 'Tension headache G44.2' },
+      { soap: 'P', field: 'Treatment Plan', value: 'Acetaminophen 500mg tid, neck stretching' },
+    ],
+    auditEntries: [
+      { time: '14:23:05', action: 'Recording started', user: 'Dr. Kim', status: 'Done', statusColor: '#10B981' },
+      { time: '14:24:32', action: 'AI chart generated', user: 'Chartsok AI', status: 'Done', statusColor: '#10B981' },
+      { time: '14:24:35', action: 'EMR updated', user: 'Dr. Kim', status: 'Done', statusColor: '#10B981' },
+      { time: '14:24:36', action: 'Audit log saved', user: 'System', status: 'Logged', statusColor: '#4B9CD3' },
+    ],
+    steps: [
+      { label: 'Select Patient', subtitle: 'Pick a patient from the EMR', icon: <PersonSearchIcon />, accent: '#4B9CD3' },
+      { label: 'Record Visit', subtitle: 'AI transcribes the conversation live', icon: <MicIcon />, accent: '#EF4444' },
+      { label: 'Generate SOAP', subtitle: 'AI creates the SOAP chart automatically', icon: <AutoAwesomeIcon />, accent: '#8B5CF6' },
+      { label: 'Push to EMR', subtitle: 'SOAP auto-populates EMR fields', icon: <DescriptionIcon />, accent: '#10B981' },
+      { label: 'Audit Log', subtitle: 'Every action logged for compliance', icon: <SecurityIcon />, accent: '#F59E0B' },
+    ],
+  },
+};
 
 /* ========== DATA ========== */
 
@@ -1385,6 +1513,9 @@ function MobileProgressBar({ activeStep, totalSteps, steps: stepDefs, onStepClic
 /* ========== MAIN DEMO COMPONENT ========== */
 
 export default function Demo() {
+  const { locale } = useI18n();
+  const t = demoContent[locale] || demoContent.ko;
+
   const [activeStep, setActiveStep] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [stepProgress, setStepProgress] = useState(0);
@@ -1578,7 +1709,7 @@ export default function Demo() {
               lineHeight: 1.15,
             }}
           >
-            90초, 진료에서 차트까지
+            {t.heroTitle}
           </Typography>
 
           {/* Subtitle */}
@@ -1592,9 +1723,9 @@ export default function Demo() {
               lineHeight: 1.7,
             }}
           >
-            녹음 시작부터 SOAP 차트 생성, EMR 반영, 감사 로그까지.
+            {t.heroSubtitle1}
             <br />
-            하나의 워크플로우로 완성됩니다.
+            {t.heroSubtitle2}
           </Typography>
 
           {/* Timer counter */}
@@ -1646,7 +1777,7 @@ export default function Demo() {
                 <MobileProgressBar
                   activeStep={activeStep}
                   totalSteps={TOTAL_STEPS}
-                  steps={steps}
+                  steps={t.steps}
                   onStepClick={handleStepClick}
                   stepProgress={stepProgress}
                   isAutoPlaying={isAutoPlaying}
@@ -1668,12 +1799,12 @@ export default function Demo() {
                       px: 1.5,
                     }}
                   >
-                    워크플로우
+                    {t.workflowLabel}
                   </Typography>
 
                   {/* Timeline nodes */}
                   <Stack spacing={0.5} sx={{ flex: 1 }}>
-                    {steps.map((step, index) => (
+                    {t.steps.map((step, index) => (
                       <Box key={index}>
                         <TimelineNode
                           step={step}
@@ -1685,13 +1816,13 @@ export default function Demo() {
                           isAutoPlaying={isAutoPlaying}
                         />
                         {/* Connecting line */}
-                        {index < steps.length - 1 && (
+                        {index < t.steps.length - 1 && (
                           <Box
                             sx={{
                               width: 2,
                               height: 16,
                               ml: '22px',
-                              bgcolor: index < activeStep ? `${steps[index].accent}60` : 'rgba(255,255,255,0.06)',
+                              bgcolor: index < activeStep ? `${t.steps[index].accent}60` : 'rgba(255,255,255,0.06)',
                               borderRadius: 1,
                               transition: 'background-color 0.3s ease',
                             }}
@@ -1738,7 +1869,7 @@ export default function Demo() {
                       color: isAutoPlaying ? '#4B9CD3' : 'rgba(255,255,255,0.5)',
                     }}
                   >
-                    {isAutoPlaying ? '일시정지' : '자동 재생'}
+                    {isAutoPlaying ? t.pauseButton : t.autoPlayButton}
                   </Typography>
                 </MotionBox>
               </Box>
@@ -1777,7 +1908,7 @@ export default function Demo() {
                           position: 'absolute',
                           inset: -4,
                           borderRadius: '50%',
-                          bgcolor: `${steps[activeStep].accent}20`,
+                          bgcolor: `${t.steps[activeStep].accent}20`,
                           filter: 'blur(8px)',
                         }}
                       />
@@ -1786,9 +1917,9 @@ export default function Demo() {
                           width: 36,
                           height: 36,
                           borderRadius: '50%',
-                          bgcolor: `${steps[activeStep].accent}20`,
+                          bgcolor: `${t.steps[activeStep].accent}20`,
                           border: '2px solid',
-                          borderColor: steps[activeStep].accent,
+                          borderColor: t.steps[activeStep].accent,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1798,7 +1929,7 @@ export default function Demo() {
                       >
                         <Typography
                           sx={{
-                            color: steps[activeStep].accent,
+                            color: t.steps[activeStep].accent,
                             fontWeight: 800,
                             fontSize: '0.85rem',
                           }}
@@ -1817,7 +1948,7 @@ export default function Demo() {
                           lineHeight: 1.2,
                         }}
                       >
-                        {steps[activeStep].label}
+                        {t.steps[activeStep].label}
                       </Typography>
                       <Typography
                         sx={{
@@ -1826,7 +1957,7 @@ export default function Demo() {
                           mt: 0.25,
                         }}
                       >
-                        {steps[activeStep].subtitle}
+                        {t.steps[activeStep].subtitle}
                       </Typography>
                     </Box>
                   </Stack>
@@ -1905,7 +2036,7 @@ export default function Demo() {
                 },
               }}
             >
-              우리 EMR에서 직접 체험하기
+              {t.ctaButton}
               <ArrowForwardIcon sx={{ ml: 1, fontSize: 20 }} />
             </Button>
           </MotionBox>

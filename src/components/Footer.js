@@ -8,8 +8,91 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import { useI18n } from '@/lib/i18n';
 
 export default function Footer() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
+
+  const content = {
+    ko: {
+      brandSubtitle: '차트쏙',
+      description: 'EMR 안에서 작동하는 AI 차트 자동화 모듈. 병원은 기존 워크플로를 유지하고, EMR은 AI 기능을 빠르게 번들링합니다.',
+      sections: [
+        {
+          title: '제품',
+          links: [
+            { label: '기능', href: '#partner-value', isSection: true },
+            { label: '통합 옵션', href: '#integration', isSection: true },
+            { label: '보안', href: '#security', isSection: true },
+          ],
+        },
+        {
+          title: '파트너',
+          links: [
+            { label: 'EMR 파트너', href: '/partners', isSection: false },
+            { label: '파트너 문의', href: '/contact?type=emr_partner', isSection: false },
+            { label: '보안 자료 요청', href: '/contact?type=security_packet', isSection: false },
+          ],
+        },
+        {
+          title: '지원',
+          links: [
+            { label: '문의', href: '/contact', isSection: false },
+            { label: '도움말', href: '/help', isSection: false },
+            { label: 'API 문서', href: '/docs', isSection: false },
+          ],
+        },
+        {
+          title: '법적 고지',
+          links: [
+            { label: '개인정보처리방침', href: '/privacy', isSection: false },
+            { label: '이용약관', href: '/terms', isSection: false },
+            { label: '보안 정책', href: '/security', isSection: false },
+          ],
+        },
+      ],
+      businessInfo: 'jpumki software 사업자등록번호: 220-60-00933',
+    },
+    en: {
+      brandSubtitle: 'chartsok',
+      description: 'AI chart module inside your EMR. Same workflow, bundled AI.',
+      sections: [
+        {
+          title: 'Product',
+          links: [
+            { label: 'Features', href: '#partner-value', isSection: true },
+            { label: 'Integration', href: '#integration', isSection: true },
+            { label: 'Security', href: '#security', isSection: true },
+          ],
+        },
+        {
+          title: 'Partners',
+          links: [
+            { label: 'EMR Partners', href: '/partners', isSection: false },
+            { label: 'Partner Inquiry', href: '/contact?type=emr_partner', isSection: false },
+            { label: 'Security Docs', href: '/contact?type=security_packet', isSection: false },
+          ],
+        },
+        {
+          title: 'Support',
+          links: [
+            { label: 'Contact', href: '/contact', isSection: false },
+            { label: 'Help', href: '/help', isSection: false },
+            { label: 'API Docs', href: '/docs', isSection: false },
+          ],
+        },
+        {
+          title: 'Legal',
+          links: [
+            { label: 'Privacy', href: '/privacy', isSection: false },
+            { label: 'Terms', href: '/terms', isSection: false },
+            { label: 'Security', href: '/security', isSection: false },
+          ],
+        },
+      ],
+      businessInfo: 'jpumki software Reg: 220-60-00933',
+    },
+  };
+
+  const c = content[locale] || content.ko;
 
   const scrollToSection = (id) => {
     if (!id || id === '#') return;
@@ -39,40 +122,7 @@ export default function Footer() {
     }
   };
 
-  const footerSections = [
-    {
-      title: '제품',
-      links: [
-        { label: '기능', href: '#partner-value', isSection: true },
-        { label: '통합 옵션', href: '#integration', isSection: true },
-        { label: '보안', href: '#security', isSection: true },
-      ],
-    },
-    {
-      title: '파트너',
-      links: [
-        { label: 'EMR 파트너', href: '/partners', isSection: false },
-        { label: '파트너 문의', href: '/contact?type=emr_partner', isSection: false },
-        { label: '보안 자료 요청', href: '/contact?type=security_packet', isSection: false },
-      ],
-    },
-    {
-      title: '지원',
-      links: [
-        { label: '문의', href: '/contact', isSection: false },
-        { label: '도움말', href: '/help', isSection: false },
-        { label: 'API 문서', href: '/docs', isSection: false },
-      ],
-    },
-    {
-      title: '법적 고지',
-      links: [
-        { label: '개인정보처리방침', href: '/privacy', isSection: false },
-        { label: '이용약관', href: '/terms', isSection: false },
-        { label: '보안 정책', href: '/security', isSection: false },
-      ],
-    },
-  ];
+  const footerSections = c.sections;
 
   return (
     <Box
@@ -104,7 +154,7 @@ export default function Footer() {
                   ml: 1,
                 }}
               >
-                차트쏙
+                {c.brandSubtitle}
               </Typography>
             </Typography>
             <Typography
@@ -116,7 +166,7 @@ export default function Footer() {
                 mb: 3,
               }}
             >
-              EMR 안에서 작동하는 AI 차트 자동화 모듈. 병원은 기존 워크플로를 유지하고, EMR은 AI 기능을 빠르게 번들링합니다.
+              {c.description}
             </Typography>
 
             {/* Social links */}
@@ -281,7 +331,7 @@ export default function Footer() {
                 fontSize: '0.7rem',
               }}
             >
-              jpumki software 사업자등록번호: 220-60-00933
+              {c.businessInfo}
             </Typography>
           </Box>
         </Box>

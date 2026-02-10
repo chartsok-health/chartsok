@@ -25,10 +25,74 @@ import GoogleIcon from '@mui/icons-material/Google';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useAuth } from '@/lib/AuthContext';
+import { useI18n } from '@/lib/i18n';
 
 const MotionPaper = motion.create(Paper);
 
+const content = {
+  ko: {
+    signUp: '회원가입',
+    signUpSubtitle: '14일 무료 체험을 시작하세요',
+    name: '이름',
+    email: '이메일',
+    password: '비밀번호',
+    confirmPassword: '비밀번호 확인',
+    pwLength: '8자 이상',
+    pwUppercase: '대문자 포함',
+    pwLowercase: '소문자 포함',
+    pwNumber: '숫자 포함',
+    terms: '이용약관',
+    and: ' 및 ',
+    privacy: '개인정보처리방침',
+    agreeToTerms: '에 동의합니다',
+    or: '또는',
+    googleSignUp: 'Google로 가입하기',
+    alreadyHaveAccount: '이미 계정이 있으신가요?',
+    logIn: '로그인',
+    errorAgreeTerms: '이용약관에 동의해주세요.',
+    errorPasswordMismatch: '비밀번호가 일치하지 않습니다.',
+    errorPasswordRequirements: '비밀번호 조건을 충족해주세요.',
+    errorEmailInUse: '이미 사용 중인 이메일입니다.',
+    errorInvalidEmail: '올바른 이메일 주소를 입력해주세요.',
+    errorWeakPassword: '더 강력한 비밀번호를 사용해주세요.',
+    errorOperationNotAllowed: '이메일/비밀번호 로그인이 비활성화되어 있습니다.',
+    errorDefault: '회원가입에 실패했습니다. 다시 시도해주세요.',
+    helperPasswordMismatch: '비밀번호가 일치하지 않습니다',
+  },
+  en: {
+    signUp: 'Sign Up',
+    signUpSubtitle: 'Start your 14-day free trial',
+    name: 'Name',
+    email: 'Email',
+    password: 'Password',
+    confirmPassword: 'Confirm Password',
+    pwLength: 'At least 8 characters',
+    pwUppercase: 'Contains uppercase',
+    pwLowercase: 'Contains lowercase',
+    pwNumber: 'Contains number',
+    terms: 'Terms of Service',
+    and: ' and ',
+    privacy: 'Privacy Policy',
+    agreeToTerms: 'I agree to the',
+    or: 'or',
+    googleSignUp: 'Sign up with Google',
+    alreadyHaveAccount: 'Already have an account?',
+    logIn: 'Log In',
+    errorAgreeTerms: 'Please agree to the Terms of Service.',
+    errorPasswordMismatch: 'Passwords do not match.',
+    errorPasswordRequirements: 'Please meet password requirements.',
+    errorEmailInUse: 'This email is already in use.',
+    errorInvalidEmail: 'Please enter a valid email address.',
+    errorWeakPassword: 'Please use a stronger password.',
+    errorOperationNotAllowed: 'Email/password login is not enabled.',
+    errorDefault: 'Sign up failed. Please try again.',
+    helperPasswordMismatch: 'Passwords do not match',
+  },
+};
+
 export default function SignupPage() {
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
   const { signup, loginWithGoogle } = useAuth();
   const router = useRouter();
 
@@ -67,17 +131,17 @@ export default function SignupPage() {
     setError('');
 
     if (!agreeTerms) {
-      setError('이용약관에 동의해주세요.');
+      setError(t.errorAgreeTerms);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t.errorPasswordMismatch);
       return;
     }
 
     if (!isPasswordValid) {
-      setError('비밀번호 조건을 충족해주세요.');
+      setError(t.errorPasswordRequirements);
       return;
     }
 
@@ -95,7 +159,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     if (!agreeTerms) {
-      setError('이용약관에 동의해주세요.');
+      setError(t.errorAgreeTerms);
       return;
     }
 
@@ -115,15 +179,15 @@ export default function SignupPage() {
   const getErrorMessage = (code) => {
     switch (code) {
       case 'auth/email-already-in-use':
-        return '이미 사용 중인 이메일입니다.';
+        return t.errorEmailInUse;
       case 'auth/invalid-email':
-        return '올바른 이메일 주소를 입력해주세요.';
+        return t.errorInvalidEmail;
       case 'auth/weak-password':
-        return '더 강력한 비밀번호를 사용해주세요.';
+        return t.errorWeakPassword;
       case 'auth/operation-not-allowed':
-        return '이메일/비밀번호 로그인이 비활성화되어 있습니다.';
+        return t.errorOperationNotAllowed;
       default:
-        return '회원가입에 실패했습니다. 다시 시도해주세요.';
+        return t.errorDefault;
     }
   };
 
@@ -192,10 +256,10 @@ export default function SignupPage() {
               chartsok
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
-              회원가입
+              {t.signUp}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              14일 무료 체험을 시작하세요
+              {t.signUpSubtitle}
             </Typography>
           </Box>
 
@@ -210,7 +274,7 @@ export default function SignupPage() {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="이름"
+              label={t.name}
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -219,7 +283,7 @@ export default function SignupPage() {
             />
             <TextField
               fullWidth
-              label="이메일"
+              label={t.email}
               name="email"
               type="email"
               value={formData.email}
@@ -229,7 +293,7 @@ export default function SignupPage() {
             />
             <TextField
               fullWidth
-              label="비밀번호"
+              label={t.password}
               name="password"
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
@@ -253,16 +317,16 @@ export default function SignupPage() {
             {/* Password Requirements */}
             {formData.password && (
               <Box sx={{ mb: 2, pl: 1 }}>
-                <PasswordCheck valid={passwordChecks.length} text="8자 이상" />
-                <PasswordCheck valid={passwordChecks.uppercase} text="대문자 포함" />
-                <PasswordCheck valid={passwordChecks.lowercase} text="소문자 포함" />
-                <PasswordCheck valid={passwordChecks.number} text="숫자 포함" />
+                <PasswordCheck valid={passwordChecks.length} text={t.pwLength} />
+                <PasswordCheck valid={passwordChecks.uppercase} text={t.pwUppercase} />
+                <PasswordCheck valid={passwordChecks.lowercase} text={t.pwLowercase} />
+                <PasswordCheck valid={passwordChecks.number} text={t.pwNumber} />
               </Box>
             )}
 
             <TextField
               fullWidth
-              label="비밀번호 확인"
+              label={t.confirmPassword}
               name="confirmPassword"
               type={showPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
@@ -271,7 +335,7 @@ export default function SignupPage() {
               error={formData.confirmPassword && formData.password !== formData.confirmPassword}
               helperText={
                 formData.confirmPassword && formData.password !== formData.confirmPassword
-                  ? '비밀번호가 일치하지 않습니다'
+                  ? t.helperPasswordMismatch
                   : ''
               }
               sx={{ mb: 2 }}
@@ -288,14 +352,15 @@ export default function SignupPage() {
               }
               label={
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {locale === 'en' ? `${t.agreeToTerms} ` : ''}
                   <Link href="/terms" style={{ color: '#4B9CD3', textDecoration: 'none' }}>
-                    이용약관
+                    {t.terms}
                   </Link>
-                  {' 및 '}
+                  {t.and}
                   <Link href="/privacy" style={{ color: '#4B9CD3', textDecoration: 'none' }}>
-                    개인정보처리방침
+                    {t.privacy}
                   </Link>
-                  에 동의합니다
+                  {locale === 'ko' ? t.agreeToTerms : ''}
                 </Typography>
               }
               sx={{ mb: 3 }}
@@ -315,14 +380,14 @@ export default function SignupPage() {
                 fontSize: '1rem',
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '회원가입'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t.signUp}
             </Button>
           </Box>
 
           {/* Divider */}
           <Divider sx={{ my: 3 }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              또는
+              {t.or}
             </Typography>
           </Divider>
 
@@ -346,13 +411,13 @@ export default function SignupPage() {
               },
             }}
           >
-            Google로 가입하기
+            {t.googleSignUp}
           </Button>
 
           {/* Login Link */}
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              이미 계정이 있으신가요?{' '}
+              {t.alreadyHaveAccount}{' '}
               <Link href="/auth/login" style={{ textDecoration: 'none' }}>
                 <Typography
                   component="span"
@@ -363,7 +428,7 @@ export default function SignupPage() {
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  로그인
+                  {t.logIn}
                 </Typography>
               </Link>
             </Typography>

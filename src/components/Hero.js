@@ -451,27 +451,19 @@ export default function Hero() {
             <MotionBox variants={fadeUp}>
               <Typography
                 variant="h1"
+                component="h1"
                 sx={{
-                  fontSize: { xs: '1.85rem', sm: '2.25rem', md: '2.75rem', lg: '3.15rem', xl: '3.5rem' },
+                  fontSize: { xs: '1.75rem', sm: '2.1rem', md: '2.5rem', lg: '2.9rem', xl: '3.25rem' },
                   fontWeight: 800,
                   color: '#0F172A',
-                  lineHeight: 1.15,
-                  mb: 0.5,
+                  lineHeight: { xs: 1.2, sm: 1.15 },
+                  mb: { xs: 2.5, sm: 3 },
                   letterSpacing: '-0.025em',
+                  wordBreak: 'keep-all',
                 }}
               >
                 {t('hero.title')}
-              </Typography>
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: '1.85rem', sm: '2.25rem', md: '2.75rem', lg: '3.15rem', xl: '3.5rem' },
-                  fontWeight: 800,
-                  lineHeight: 1.15,
-                  mb: { xs: 2.5, sm: 3 },
-                  letterSpacing: '-0.025em',
-                }}
-              >
+                <br />
                 <Box
                   component="span"
                   sx={{

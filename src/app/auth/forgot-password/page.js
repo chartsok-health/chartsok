@@ -18,11 +18,57 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailIcon from '@mui/icons-material/Email';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useAuth } from '@/lib/AuthContext';
+import { useI18n } from '@/lib/i18n';
 
 const MotionPaper = motion.create(Paper);
 
+const content = {
+  ko: {
+    title: '비밀번호 찾기',
+    subtitle1: '가입한 이메일 주소를 입력하시면',
+    subtitle2: '비밀번호 재설정 링크를 보내드립니다.',
+    email: '이메일',
+    sendResetLink: '재설정 링크 보내기',
+    backToLogin: '로그인으로 돌아가기',
+    successTitle: '이메일을 확인해주세요',
+    successMessage: (email) => (
+      <>
+        <strong>{email}</strong>로 비밀번호 재설정 링크를 보냈습니다.
+        이메일을 확인하고 링크를 클릭하여 비밀번호를 재설정하세요.
+      </>
+    ),
+    spamNotice: '이메일이 도착하지 않았다면 스팸 폴더를 확인해주세요.',
+    errorInvalidEmail: '올바른 이메일 주소를 입력해주세요.',
+    errorUserNotFound: '등록되지 않은 이메일입니다.',
+    errorTooManyRequests: '너무 많은 요청이 있었습니다. 잠시 후 다시 시도해주세요.',
+    errorDefault: '요청 처리에 실패했습니다. 다시 시도해주세요.',
+  },
+  en: {
+    title: 'Reset Password',
+    subtitle1: 'Enter your registered email address',
+    subtitle2: "and we'll send you a password reset link.",
+    email: 'Email',
+    sendResetLink: 'Send Reset Link',
+    backToLogin: 'Back to Login',
+    successTitle: 'Check Your Email',
+    successMessage: (email) => (
+      <>
+        We've sent a password reset link to <strong>{email}</strong>.
+        Check your email and click the link to reset your password.
+      </>
+    ),
+    spamNotice: "If you don't see the email, check your spam folder.",
+    errorInvalidEmail: 'Please enter a valid email address.',
+    errorUserNotFound: 'Email not found.',
+    errorTooManyRequests: 'Too many requests. Please try again later.',
+    errorDefault: 'Request failed. Please try again.',
+  },
+};
+
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
+  const { locale } = useI18n();
+  const t = content[locale] || content.ko;
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -47,13 +93,13 @@ export default function ForgotPasswordPage() {
   const getErrorMessage = (code) => {
     switch (code) {
       case 'auth/invalid-email':
-        return '올바른 이메일 주소를 입력해주세요.';
+        return t.errorInvalidEmail;
       case 'auth/user-not-found':
-        return '등록되지 않은 이메일입니다.';
+        return t.errorUserNotFound;
       case 'auth/too-many-requests':
-        return '너무 많은 요청이 있었습니다. 잠시 후 다시 시도해주세요.';
+        return t.errorTooManyRequests;
       default:
-        return '요청 처리에 실패했습니다. 다시 시도해주세요.';
+        return t.errorDefault;
     }
   };
 
@@ -100,16 +146,15 @@ export default function ForgotPasswordPage() {
             </Box>
 
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 2 }}>
-              이메일을 확인해주세요
+              {t.successTitle}
             </Typography>
 
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-              <strong>{email}</strong>로 비밀번호 재설정 링크를 보냈습니다.
-              이메일을 확인하고 링크를 클릭하여 비밀번호를 재설정하세요.
+              {t.successMessage(email)}
             </Typography>
 
             <Alert severity="info" sx={{ mb: 4, borderRadius: 2, textAlign: 'left' }}>
-              이메일이 도착하지 않았다면 스팸 폴더를 확인해주세요.
+              {t.spamNotice}
             </Alert>
 
             <Button
@@ -120,7 +165,7 @@ export default function ForgotPasswordPage() {
               size="large"
               sx={{ py: 1.5, fontWeight: 600 }}
             >
-              로그인으로 돌아가기
+              {t.backToLogin}
             </Button>
           </MotionPaper>
         </Container>
@@ -180,11 +225,11 @@ export default function ForgotPasswordPage() {
             </Box>
 
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main', mb: 1 }}>
-              비밀번호 찾기
+              {t.title}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              가입한 이메일 주소를 입력하시면<br />
-              비밀번호 재설정 링크를 보내드립니다.
+              {t.subtitle1}<br />
+              {t.subtitle2}
             </Typography>
           </Box>
 
@@ -199,7 +244,7 @@ export default function ForgotPasswordPage() {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="이메일"
+              label={t.email}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -221,7 +266,7 @@ export default function ForgotPasswordPage() {
                 fontSize: '1rem',
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '재설정 링크 보내기'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t.sendResetLink}
             </Button>
           </Box>
 
@@ -236,7 +281,7 @@ export default function ForgotPasswordPage() {
                   '&:hover': { textDecoration: 'underline' },
                 }}
               >
-                로그인으로 돌아가기
+                {t.backToLogin}
               </Typography>
             </Link>
           </Box>

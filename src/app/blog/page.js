@@ -490,7 +490,7 @@ export default function BlogPage() {
                             {post.title}
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, lineHeight: 1.6, flex: 1, fontSize: '0.85rem' }}>
-                            {post.excerpt.length > 80 ? post.excerpt.slice(0, 80) + '...' : post.excerpt}
+                            {post.excerpt.length > 120 ? post.excerpt.slice(0, 120) + '...' : post.excerpt}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: 1.5 }}>
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>{post.author}</Typography>
